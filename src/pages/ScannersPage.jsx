@@ -174,7 +174,7 @@ const PhishingScanner = () => {
                     <Icon name="link" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
                     <h3 className="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Spam/Phishing URL Scanner</h3>
                     <p className="text-gray-500 dark:text-gray-400 mt-2">Enter a URL to check if it's a known phishing or spam site.</p>
-                    <div className="mt-6 flex gap-2">
+                    <div className="mt-6 flex flex-col md:flex-row gap-2">
                         <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
                         <button onClick={handleScan} disabled={isScanning || !url} className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-500">{isScanning ? 'Scanning...' : 'Scan URL'}</button>
                     </div>
@@ -238,7 +238,7 @@ const BreachDetector = () => {
                     <Icon name="user" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
                     <h3 className="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Data Breach Detector</h3>
                     <p className="text-gray-500 dark:text-gray-400 mt-2">Enter an email address to see if it has been exposed in a known data breach.</p>
-                    <div className="mt-6 flex gap-2">
+                    <div className="mt-6 flex flex-col md:flex-row gap-2">
                         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
                         <button onClick={handleCheck} disabled={isChecking || !email} className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-500">{isChecking ? 'Checking...' : 'Check Email'}</button>
                     </div>
