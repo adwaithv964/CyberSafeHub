@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary font-mono;
+    overflow-x: hidden;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background-color: theme('colors.primary');
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: theme('colors.accent.DEFAULT');
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: theme('colors.accent.hover');
+  }
+
+  /* Custom Text Selection */
+  ::selection {
+    background-color: theme('colors.accent.glow');
+    color: theme('colors.text-primary');
+  }
+}
