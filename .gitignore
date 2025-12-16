@@ -137,3 +137,12 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Ignore ClamAV program files
+server/clamav-1.4.3.win.x64/
+server/clamav/
+server/node_modules/
+server/uploads/
+server/logs/
+
+

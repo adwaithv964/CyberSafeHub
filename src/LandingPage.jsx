@@ -1,5 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from './contexts/AuthContext';
+import ThemedModal from './components/ThemedModal';
+import Input from './components/Input';
+import Button from './components/Button';
+import Icon from './components/Icon';
 
 const TypingText = ({ text, delay = 0 }) => {
   const letters = Array.from(text);
@@ -47,7 +52,66 @@ const TypingText = ({ text, delay = 0 }) => {
   );
 };
 
-export const LandingPage = ({ onEnter }) => {
+export const LandingPage = () => {
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login, signup, googleSignIn } = useAuth();
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    try {
+      setError('');
+      setLoading(true);
+      await login(email, password);
+    } catch (err) {
+      setError('Failed to log in: ' + err.message);
+    }
+    setLoading(false);
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault();
+    if (password !== passwordConfirm) {
+      return setError('Passwords do not match');
+    }
+    try {
+      setError('');
+      setLoading(true);
+      await signup(email, password);
+    } catch (err) {
+      setError('Failed to create an account: ' + err.message);
+    }
+    setLoading(false);
+  }
+
+  async function handleGoogleSignIn() {
+    try {
+      setError('');
+      setLoading(true);
+      await googleSignIn();
+    } catch (err) {
+      setError('Failed to sign in with Google: ' + err.message);
+    }
+    setLoading(false);
+  }
+
+  const openLogin = () => {
+    setShowLogin(true);
+    setShowRegister(false);
+    setError('');
+  };
+
+  const openRegister = () => {
+    setShowRegister(true);
+    setShowLogin(false);
+    setError('');
+  };
+
   return (
     <div className="relative flex flex-col items-center justify-center h-screen w-screen bg-background overflow-hidden">
       {/* Background Glitch Effect */}
@@ -69,9 +133,7 @@ export const LandingPage = ({ onEnter }) => {
           transition={{ duration: 1, ease: "easeOut" }}
           className="mb-4"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent drop-shadow-[0_0_10px_rgba(0,168,232,0.8)]">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          </svg>
+          <Icon name="shield" className="w-24 h-24 text-accent drop-shadow-[0_0_10px_rgba(0,168,232,0.8)]" />
         </motion.div>
 
         <h1 className="text-5xl md:text-7xl font-bold text-text-primary mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
@@ -88,7 +150,7 @@ export const LandingPage = ({ onEnter }) => {
         </motion.p>
 
         <motion.button
-          onClick={onEnter}
+          onClick={openLogin}
           className="px-8 py-4 bg-accent text-background font-bold rounded-lg text-lg tracking-widest uppercase transition-all duration-300 transform hover:scale-105 hover:bg-accent-hover focus:outline-none focus:ring-4 focus:ring-accent-glow shadow-lg shadow-accent-glow"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -97,6 +159,93 @@ export const LandingPage = ({ onEnter }) => {
           Secure The System
         </motion.button>
       </div>
+
+      {/* Login Modal */}
+      <ThemedModal isOpen={showLogin} onClose={() => setShowLogin(false)} title="Access Control">
+        {error && <div className="bg-danger/20 text-danger p-3 rounded mb-4 text-sm mix-blend-screen">{error}</div>}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="agent@cybersafe.com"
+            icon="user"
+            required
+          />
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            icon="lock"
+            required
+          />
+          <div className="flex flex-col gap-3 mt-6">
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Authenticating...' : 'Login'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={handleGoogleSignIn} disabled={loading} className="w-full">
+              Login with Google
+            </Button>
+          </div>
+          <div className="text-center mt-4">
+            <span className="text-text-secondary text-sm">New Agent? </span>
+            <button type="button" onClick={openRegister} className="text-accent hover:underline text-sm">
+              Register Protocol
+            </button>
+          </div>
+        </form>
+      </ThemedModal>
+
+      {/* Register Modal */}
+      <ThemedModal isOpen={showRegister} onClose={() => setShowRegister(false)} title="New Agent Registration">
+        {error && <div className="bg-danger/20 text-danger p-3 rounded mb-4 text-sm mix-blend-screen">{error}</div>}
+        <form onSubmit={handleSignup} className="space-y-4">
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="agent@cybersafe.com"
+            icon="user"
+            required
+          />
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            icon="lock"
+            required
+          />
+          <Input
+            label="Confirm Password"
+            type="password"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            placeholder="••••••••"
+            icon="lock"
+            required
+          />
+          <div className="flex flex-col gap-3 mt-6">
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Registering...' : 'Register'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={handleGoogleSignIn} disabled={loading} className="w-full">
+              Register with Google
+            </Button>
+          </div>
+          <div className="text-center mt-4">
+            <span className="text-text-secondary text-sm">Already verified? </span>
+            <button type="button" onClick={openLogin} className="text-accent hover:underline text-sm">
+              Login Protocol
+            </button>
+          </div>
+        </form>
+      </ThemedModal>
     </div>
   );
 };

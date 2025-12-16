@@ -10,11 +10,16 @@ import PasswordVaultPage from './pages/PasswordVaultPage';
 import DigitalPrivacyPage from './pages/DigitalPrivacyPage';
 import EmergencyGuidesPage from './pages/EmergencyGuidesPage';
 import SettingsPage from './pages/SettingsPage';
+import NetworkToolPage from './pages/NetworkToolPage';
+import CyberNewsPage from './pages/CyberNewsPage';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import BackgroundBlobs from './components/BackgroundBlobs';
 
-export default function App() {
-    const [hasEntered, setHasEntered] = useState(false);
+function AppContent() {
+    const { currentUser, logout } = useAuth();
     const [activePage, setActivePage] = useState('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [error, setError] = useState('');
 
     // Enforce dark mode for this theme
     useEffect(() => {
@@ -34,11 +39,22 @@ export default function App() {
         duration: 0.5,
     };
 
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } catch (err) {
+            setError('Failed to log out');
+            console.error(err);
+        }
+    }
+
     const renderPage = () => {
         let componentToRender;
         switch (activePage) {
-            case 'dashboard': componentToRender = <Dashboard />; break;
+            case 'dashboard': componentToRender = <Dashboard onNavigate={setActivePage} />; break;
+            case 'network': componentToRender = <NetworkToolPage />; break;
             case 'scanners': componentToRender = <ScannersPage />; break;
+            case 'news': componentToRender = <CyberNewsPage />; break;
             case 'assistant': componentToRender = <CyberAssistantPage />; break;
             case 'healthcheck': componentToRender = <HealthCheckPage />; break;
             case 'vault': componentToRender = <PasswordVaultPage />; break;
@@ -84,57 +100,76 @@ export default function App() {
         </a>
     );
 
-    if (!hasEntered) {
-        return <LandingPage onEnter={() => setHasEntered(true)} />;
+    if (!currentUser) {
+        return <LandingPage />;
     }
 
     return (
-        <div className="bg-background min-h-screen font-sans text-text-primary">
+        <div className="min-h-screen font-sans text-text-primary relative overflow-hidden">
+            <BackgroundBlobs />
             {/* Mobile Header */}
-            <div className="md:hidden flex items-center p-4 bg-primary border-b border-border-color sticky top-0 z-50 gap-3">
-                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-text-primary p-1">
+            <div className="md:hidden flex items-center p-4 glass-panel m-2 sticky top-2 z-50 gap-3">
+                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-text-primary p-1 hover:text-accent transition-colors">
                     <Icon name={isSidebarOpen ? "x" : "menu"} className="w-6 h-6" />
                 </button>
                 <div className="flex items-center gap-2">
                     <Icon name="shield" className="w-8 h-8 text-accent drop-shadow-glow-accent" />
-                    <h1 className="text-xl font-bold text-text-primary">CyberSafeHub</h1>
+                    <h1 className="text-xl font-bold text-text-primary tracking-wider">CyberSafeHub</h1>
                 </div>
             </div>
 
-            <div className="flex relative">
+            <div className="flex relative items-start p-4 gap-4 h-screen overflow-hidden">
                 {/* Mobile Sidebar Overlay */}
                 {isSidebarOpen && (
                     <div
-                        className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                        className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm"
                         onClick={() => setIsSidebarOpen(false)}
                     />
                 )}
 
-                <aside className={`w-64 bg-primary h-screen border-r border-border-color p-4 flex flex-col fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:sticky md:top-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                    <div className="flex items-center gap-2 px-2 py-4 border-b border-border-color">
+                <aside className={`w-64 glass-panel h-[calc(100vh-2rem)] flex flex-col fixed inset-y-4 left-4 z-40 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:relative md:inset-auto md:left-auto md:h-full ${isSidebarOpen ? 'translate-x-0' : '-translate-x-[120%]'}`}>
+                    <div className="flex items-center gap-2 px-6 py-6 border-b border-glass-border">
                         <Icon name="shield" className="w-8 h-8 text-accent drop-shadow-glow-accent" />
-                        <h1 className="text-xl font-bold text-text-primary">CyberSafeHub</h1>
+                        <h1 className="text-xl font-bold text-text-primary tracking-wider">CyberSafeHub</h1>
                     </div>
-                    <nav className="mt-8 flex-grow space-y-2">
+                    <nav className="mt-6 flex-grow space-y-2 px-4 overflow-y-auto custom-scrollbar">
                         <NavLink pageName="dashboard" icon="layoutDashboard">Dashboard</NavLink>
+                        <NavLink pageName="network" icon="globe">IP & DNS Checker</NavLink>
                         <NavLink pageName="scanners" icon="scan">Scanners</NavLink>
-                        <NavLink pageName="assistant" icon="messageCircle">Cyber Assistant</NavLink>
-                        <NavLink pageName="healthcheck" icon="checkCircle">Health Check</NavLink>
                         <NavLink pageName="vault" icon="lock">Password Vault</NavLink>
+                        <NavLink pageName="assistant" icon="messageCircle">Cyber Assistant</NavLink>
+                        <NavLink pageName="news" icon="newspaper">Cyber News</NavLink>
+                        <NavLink pageName="healthcheck" icon="checkCircle">Health Check</NavLink>
                         <NavLink pageName="privacy" icon="book">Digital Privacy</NavLink>
                         <NavLink pageName="emergency" icon="alertTriangle">Emergency Guides</NavLink>
                     </nav>
-                    <div className="mt-auto">
+                    <div className="mt-auto space-y-2 p-4 border-t border-glass-border">
                         <NavLink pageName="settings" icon="settings">Settings</NavLink>
+                        <button
+                            onClick={handleLogout}
+                            className="w-full relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 text-danger hover:bg-danger/10 hover:shadow-glow-danger"
+                        >
+                            <Icon name="logOut" className="w-5 h-5 z-10" />
+                            <span className="z-10">Sign Out</span>
+                        </button>
                     </div>
                 </aside>
 
-                <main className="flex-1 p-8 overflow-y-auto h-screen">
+                <main className="flex-1 glass-panel h-full overflow-y-auto p-8 relative">
                     <AnimatePresence mode="wait">
                         {renderPage()}
                     </AnimatePresence>
                 </main>
             </div>
         </div>
+    );
+}
+
+
+export default function App() {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
     );
 }

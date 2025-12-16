@@ -1,7 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Icon from '../components/Icon';
+import VaultModal from '../components/VaultModals'; // Import the modal
 import { callGeminiAPI } from '../utils/geminiApi';
 import { simpleMarkdownToHtml } from '../utils/markdown';
+import { checkPasswordStrength } from '../utils/securityScanners';
+import { logActivity } from '../utils/activityLogger';
+import { useAuth } from '../contexts/AuthContext'; // To get userId
+
+const API_BASE_URL = 'http://localhost:3001/api/vault';
 
 const PasswordVaultPage = () => {
     // State for Password Generator
@@ -18,6 +24,18 @@ const PasswordVaultPage = () => {
     const [aiAdvice, setAiAdvice] = useState('');
     const [isGeneratingAdvice, setIsGeneratingAdvice] = useState(false);
 
+    // --- Vault State ---
+    const { currentUser } = useAuth();
+    const [vaultItems, setVaultItems] = useState([]);
+    const [activeTab, setActiveTab] = useState('all');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalType, setModalType] = useState('login');
+    const [editingItem, setEditingItem] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [vaultError, setVaultError] = useState('');
+
+
+    // --- Generator Logic ---
     const generatePassword = useCallback(() => {
         const lower = 'abcdefghijklmnopqrstuvwxyz';
         const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -33,6 +51,7 @@ const PasswordVaultPage = () => {
             pass += charSet.charAt(Math.floor(Math.random() * charSet.length));
         }
         setGeneratedPassword(pass);
+        logActivity('VAULT', 'Generated New Password', 'Strong password created');
         setCopySuccess('');
     }, [passwordLength, includeUppercase, includeNumbers, includeSymbols]);
 
@@ -40,10 +59,10 @@ const PasswordVaultPage = () => {
         generatePassword();
     }, [generatePassword]);
 
-    const copyToClipboard = async () => {
-        if (!generatedPassword) return;
+    const copyToClipboard = async (text) => {
+        if (!text) return;
         try {
-            await navigator.clipboard.writeText(generatedPassword);
+            await navigator.clipboard.writeText(text);
             setCopySuccess('Copied!');
             setTimeout(() => setCopySuccess(''), 2000);
         } catch (err) {
@@ -52,30 +71,11 @@ const PasswordVaultPage = () => {
         }
     };
 
-    const checkPasswordStrength = (password) => {
-        let score = 0;
-        if (password.length > 8) score++;
-        if (password.length > 12) score++;
-        if (/[A-Z]/.test(password)) score++;
-        if (/[0-9]/.test(password)) score++;
-        if (/[^A-Za-z0-9]/.test(password)) score++;
-
-        const strengthLevels = [
-            { label: 'Very Weak', color: 'bg-red-500' },
-            { label: 'Weak', color: 'bg-orange-500' },
-            { label: 'Medium', color: 'bg-yellow-500' },
-            { label: 'Strong', color: 'bg-green-500' },
-            { label: 'Very Strong', color: 'bg-emerald-500' },
-        ];
-
-        const finalScore = Math.floor((score / 5) * 100);
-        const levelIndex = Math.min(Math.floor(score), 4);
-        setStrength({ score: finalScore, ...strengthLevels[levelIndex] });
-    };
-
+    // --- Strength Checker Logic ---
     useEffect(() => {
         if (passwordToCheck) {
-            checkPasswordStrength(passwordToCheck);
+            const result = checkPasswordStrength(passwordToCheck);
+            setStrength(result);
         } else {
             setStrength({ score: 0, label: 'Very Weak', color: 'bg-red-500' });
             setAiAdvice('');
@@ -92,13 +92,125 @@ const PasswordVaultPage = () => {
         setIsGeneratingAdvice(false);
     };
 
+    // --- Vault Logic ---
+    const fetchVaultItems = useCallback(async () => {
+        if (!currentUser) return;
+        setIsLoading(true);
+        setVaultError('');
+        try {
+            const res = await fetch(`${API_BASE_URL}/${currentUser.uid}`);
+            if (!res.ok) throw new Error('Failed to fetch vault items');
+            const data = await res.json();
+            setVaultItems(data);
+        } catch (err) {
+            console.error(err);
+            setVaultError('Could not load vault items. Ensure server is running.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [currentUser]);
+
+    useEffect(() => {
+        fetchVaultItems();
+    }, [fetchVaultItems]);
+
+    const handleSaveItem = async (itemData) => {
+        if (!currentUser) return;
+        try {
+            const payload = {
+                userId: currentUser.uid,
+                ...itemData
+            };
+
+            let res;
+            if (editingItem) {
+                // Update
+                res = await fetch(`${API_BASE_URL}/${editingItem._id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(itemData)
+                });
+            } else {
+                // Create
+                res = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            if (!res.ok) throw new Error('Failed to save item');
+
+            fetchVaultItems(); // Refresh list
+            logActivity('VAULT', editingItem ? 'Updated Item' : 'New Item Added', `Type: ${itemData.type}`);
+        } catch (err) {
+            console.error(err);
+            setVaultError('Failed to save item.');
+        } finally {
+            setEditingItem(null);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm('Are you sure you want to delete this item?')) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete');
+            fetchVaultItems();
+            logActivity('VAULT', 'Deleted Item', 'Permanently removed vault item');
+        } catch (err) {
+            console.error(err);
+            setVaultError('Failed to delete item.');
+        }
+    };
+
+    const openAddModal = (type) => {
+        setModalType(type);
+        setEditingItem(null);
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (item) => {
+        setEditingItem(item);
+        setModalType(item.type);
+        setIsModalOpen(true);
+    };
+
+    // Filter Logic
+    const filteredItems = activeTab === 'all'
+        ? vaultItems
+        : vaultItems.filter(item => item.type === activeTab);
+
+    // Helper to get copy value based on type
+    const getCopyValue = (item) => {
+        switch (item.type) {
+            case 'login': return item.data.password;
+            case 'card': return item.data.cardNumber;
+            case 'identity': return item.data.idNumber;
+            case 'note': return item.data.content;
+            default: return '';
+        }
+    };
+
+    const getIconForType = (type) => {
+        switch (type) {
+            case 'login': return 'globe';
+            case 'card': return 'creditCard';
+            case 'identity': return 'user';
+            case 'note': return 'fileText';
+            default: return 'lock';
+        }
+    };
+
+
     return (
         <>
             <header className="mb-8">
                 <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Password Tools & Vault</h2>
                 <p className="text-gray-500 dark:text-gray-400">Generate, analyze, and securely store your passwords.</p>
             </header>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Left Column: Generator and Analyzer */}
                 <div className="space-y-8">
                     {/* Password Generator */}
@@ -107,7 +219,7 @@ const PasswordVaultPage = () => {
                         <div className="relative mb-4">
                             <input type="text" readOnly value={generatedPassword} className="w-full p-4 pr-24 bg-gray-100 dark:bg-gray-900 rounded-lg text-lg font-mono text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700" />
                             <div className="absolute inset-y-0 right-2 flex items-center gap-2">
-                                <button onClick={copyToClipboard} className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50" title="Copy password">
+                                <button onClick={() => copyToClipboard(generatedPassword)} className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50" title="Copy password">
                                     <Icon name="copy" className="w-6 h-6" />
                                 </button>
                                 <button onClick={generatePassword} className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title="Generate new password">
@@ -115,14 +227,14 @@ const PasswordVaultPage = () => {
                                 </button>
                             </div>
                         </div>
-                        {copySuccess && <p className="text-green-500 text-sm mb-4">{copySuccess}</p>}
+                        {copySuccess === 'Copied!' && <p className="text-green-500 text-sm mb-4">Copied to clipboard!</p>}
 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <label htmlFor="length" className="text-gray-700 dark:text-gray-300">Password Length: <span className="font-bold">{passwordLength}</span></label>
                                 <input id="length" type="range" min="8" max="32" value={passwordLength} onChange={(e) => setPasswordLength(e.target.value)} className="w-48" />
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 flex-wrap">
                                 <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><input type="checkbox" checked={includeUppercase} onChange={() => setIncludeUppercase(p => !p)} className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500" /> A-Z</label>
                                 <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><input type="checkbox" checked={includeNumbers} onChange={() => setIncludeNumbers(p => !p)} className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500" /> 0-9</label>
                                 <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><input type="checkbox" checked={includeSymbols} onChange={() => setIncludeSymbols(p => !p)} className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500" /> !@#$</label>
@@ -164,18 +276,121 @@ const PasswordVaultPage = () => {
                     </div>
                 </div>
 
-                {/* Right Column: Vault (Placeholder) */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">My Secure Vault</h3>
-                    <div className="text-center py-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                        <Icon name="lock" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
-                        <p className="mt-4 text-lg font-semibold text-gray-700 dark:text-gray-200">Vault functionality is coming soon!</p>
-                        <p className="text-gray-500 dark:text-gray-400">Securely store and manage your passwords here.</p>
+                {/* Right Column: Vault Dashboard */}
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                            <Icon name="lock" className="w-6 h-6 text-accent" />
+                            My Secure Vault
+                        </h3>
+                        {/* Quick Add Menu */}
+                        <div className="flex gap-2">
+                            <div className="relative bg-gray-100 dark:bg-gray-700 rounded-lg p-1 flex">
+                                <button onClick={() => openAddModal('login')} className="p-2 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all" title="Add Login"><Icon name="globe" className="w-4 h-4" /></button>
+                                <button onClick={() => openAddModal('card')} className="p-2 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all" title="Add specific card"><Icon name="creditCard" className="w-4 h-4" /></button>
+                                <button onClick={() => openAddModal('identity')} className="p-2 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all" title="Add Identity"><Icon name="user" className="w-4 h-4" /></button>
+                                <button onClick={() => openAddModal('note')} className="p-2 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all" title="Add Note"><Icon name="fileText" className="w-4 h-4" /></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 mb-4 border-b border-gray-200 dark:border-gray-700">
+                        {[
+                            { id: 'all', label: 'All' },
+                            { id: 'login', label: 'Logins' },
+                            { id: 'card', label: 'Cards' },
+                            { id: 'identity', label: 'Identities' },
+                            { id: 'note', label: 'Notes' }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+                                    ? 'bg-accent text-white'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Items List */}
+                    <div className="flex-1 overflow-y-auto space-y-3 min-h-[400px]">
+                        {isLoading && <p className="text-center text-gray-500 py-10">Loading your vault...</p>}
+                        {vaultError && <p className="text-center text-red-500 py-10">{vaultError}</p>}
+
+                        {!isLoading && !vaultError && filteredItems.length === 0 && (
+                            <div className="text-center py-20 opacity-50">
+                                <Icon name="shield" className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                                <p>No items in your vault yet.</p>
+                                <p className="text-sm">Click the icons above to add your first item.</p>
+                            </div>
+                        )}
+
+                        {filteredItems.map(item => (
+                            <div key={item._id} className="group relative p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-accent dark:hover:border-accent transition-all">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-white dark:bg-gray-600 rounded-full shadow-sm text-accent">
+                                            <Icon name={getIconForType(item.type)} className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.name}</h4>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{item.type} • {new Date(item.createdAt).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {/* Autofill / Copy Action */}
+                                        <button
+                                            onClick={() => copyToClipboard(getCopyValue(item))}
+                                            className="p-2 bg-white dark:bg-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 transition-colors"
+                                            title="Copy main value"
+                                        >
+                                            <Icon name="copy" className="w-4 h-4" />
+                                        </button>
+                                        {/* Edit Action */}
+                                        <button
+                                            onClick={() => openEditModal(item)}
+                                            className="p-2 bg-white dark:bg-gray-600 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400 transition-colors"
+                                        >
+                                            <Icon name="edit" className="w-4 h-4" />
+                                        </button>
+                                        {/* Delete Action */}
+                                        <button
+                                            onClick={() => handleDelete(item._id)}
+                                            className="p-2 bg-white dark:bg-gray-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition-colors"
+                                        >
+                                            <Icon name="trash" className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Quick Preview of data (Optional - masked) */}
+                                <div className="mt-3 text-sm text-gray-600 dark:text-gray-400 truncate font-mono bg-gray-200 dark:bg-gray-900/50 p-2 rounded">
+                                    {item.type === 'login' && (item.data.username || '***')}
+                                    {item.type === 'card' && `**** **** **** ${item.data.cardNumber?.slice(-4) || '****'}`}
+                                    {item.type === 'identity' && (item.data.firstName ? `${item.data.firstName} ${item.data.lastName}` : 'Functionality')}
+                                    {item.type === 'note' && (item.data.content?.slice(0, 30) + '...')}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
+
+            <VaultModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSaveItem}
+                initialData={editingItem}
+                type={modalType}
+            />
         </>
     );
 };
 
 export default PasswordVaultPage;
+

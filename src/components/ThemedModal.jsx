@@ -14,9 +14,9 @@ const ThemedModal = ({ isOpen, onClose, title, children }) => (
                     initial={{ scale: 0.8, y: 50 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.8, y: 50 }}
-                    className="bg-primary border border-border-color rounded-2xl shadow-xl w-full max-w-md m-4"
+                    className="glass-panel w-full max-w-md m-4 relative overflow-hidden"
                 >
-                    <div className="p-6 border-b border-border-color flex justify-between items-center">
+                    <div className="p-6 border-b border-glass-border flex justify-between items-center">
                         <h3 className="text-xl font-bold text-text-primary">{title}</h3>
                         <button onClick={onClose} className="text-text-secondary hover:text-accent text-3xl leading-none">&times;</button>
                     </div>

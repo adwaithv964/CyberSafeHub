@@ -21,9 +21,9 @@ const SettingsPage = () => {
     };
 
     const SettingsSection = ({ title, subtitle, children }) => (
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">{title}</h3>
-            <p className="text-gray-500 dark:text-gray-400 mt-1 mb-6">{subtitle}</p>
+        <div className="glass-panel p-8">
+            <h3 className="text-xl font-bold text-text-primary">{title}</h3>
+            <p className="text-text-secondary mt-1 mb-6">{subtitle}</p>
             <div className="space-y-6">{children}</div>
         </div>
     );
@@ -49,17 +49,17 @@ const SettingsPage = () => {
                             <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-2xl">U</div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
-                                <input type="text" defaultValue="User" className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                <input type="text" defaultValue="User" className="mt-1 block w-full px-3 py-2 glass-input" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                                <input type="email" defaultValue="user@example.com" className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                <input type="email" defaultValue="user@example.com" className="mt-1 block w-full px-3 py-2 glass-input" />
                             </div>
                         </div>
                         <button className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Update Profile</button>
                         <hr className="dark:border-gray-600" />
                         <p className="font-medium text-gray-800 dark:text-gray-100">Change Password</p>
-                        <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Change Password</button>
+                        <button className="px-4 py-2 border border-glass-border text-sm font-medium rounded-md text-text-primary bg-glass-100 hover:bg-glass-200">Change Password</button>
                     </SettingsSection>
                 );
             case 'security':
@@ -107,7 +107,7 @@ const SettingsPage = () => {
     };
 
     const NavItem = ({ tab, icon, children }) => (
-        <button onClick={() => setActiveTab(tab)} className={`flex items-center gap-3 w-full px-3 py-2 text-left rounded-lg text-sm transition-colors ${activeTab === tab ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+        <button onClick={() => setActiveTab(tab)} className={`flex items-center gap-3 w-full px-3 py-2 text-left rounded-lg text-sm transition-colors ${activeTab === tab ? 'bg-accent/20 text-accent font-semibold shadow-glow-accent' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}>
             <Icon name={icon} className="w-5 h-5" />
             {children}
         </button>
