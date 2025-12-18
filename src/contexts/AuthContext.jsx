@@ -6,7 +6,15 @@ import {
     signOut,
     onAuthStateChanged,
     GoogleAuthProvider,
-    signInWithPopup
+    signInWithPopup,
+    updateProfile,
+    updateEmail,
+    updatePassword,
+    multiFactor,
+    TotpMultiFactorGenerator,
+    TotpSecret,
+    getMultiFactorResolver,
+    deleteUser
 } from 'firebase/auth';
 import { logActivity } from '../utils/activityLogger';
 
@@ -48,6 +56,53 @@ export function AuthProvider({ children }) {
         });
     }
 
+    function updateUserProfile(user, profileData) {
+        return updateProfile(user, profileData).then(() => {
+            logActivity('AUTH', 'Profile Updated', 'User updated profile details');
+        });
+    }
+
+    function updateUserEmail(user, email) {
+        return updateEmail(user, email).then(() => {
+            logActivity('AUTH', 'Email Updated', `New Email: ${email}`);
+        });
+    }
+
+    function updateUserPassword(user, password) {
+        return updatePassword(user, password).then(() => {
+            logActivity('AUTH', 'Password Changed', 'User changed password');
+        });
+    }
+
+    // MFA: Step 1 - Generate Secret for Enrollment
+    async function mfaGenerateSecret(user) {
+        const session = await multiFactor(user).getSession();
+        const secret = await TotpMultiFactorGenerator.generateSecret(session);
+        return secret; // Contains secretKey, generateQrCodeUrl, etc.
+    }
+
+    // MFA: Step 2 - Verify Code and Enable MFA
+    async function mfaEnable(user, secret, code) {
+        const multiFactorAssertion = TotpMultiFactorGenerator.assertionForEnrollment(secret, code);
+        await multiFactor(user).enroll(multiFactorAssertion, "Authenticator App");
+        logActivity('AUTH', 'MFA Enabled', 'User enabled TOTP MFA');
+    }
+
+    // MFA: Step 3 - Resolve Login Challenge
+    async function mfaResolveSignIn(resolver, verificationId, code) {
+        const multiFactorAssertion = TotpMultiFactorGenerator.assertionForSignIn(verificationId, code);
+        const userCredential = await resolver.resolveSignIn(multiFactorAssertion);
+        logActivity('AUTH', 'MFA Login', 'User passed MFA challenge');
+        return userCredential;
+    }
+
+    function deleteAccount(user) {
+        return deleteUser(user).then(() => {
+            logActivity('AUTH', 'Account Deleted', 'User permanently deleted their account');
+        });
+    }
+
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setCurrentUser(user);
@@ -62,7 +117,15 @@ export function AuthProvider({ children }) {
         signup,
         login,
         logout,
-        googleSignIn
+        googleSignIn,
+        updateUserProfile,
+        updateUserEmail,
+        updateUserPassword,
+        mfaGenerateSecret,
+        mfaEnable,
+        mfaResolveSignIn,
+        getMultiFactorResolver,
+        deleteAccount
     };
 
     return (

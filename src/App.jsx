@@ -6,18 +6,31 @@ import Dashboard from './pages/Dashboard';
 import ScannersPage from './pages/ScannersPage';
 import CyberAssistantPage from './pages/CyberAssistantPage';
 import HealthCheckPage from './pages/HealthCheckPage';
+import DeadDrop from './components/tools/DeadDrop';
+import MetadataWasher from './components/tools/MetadataWasher';
+import UsernameDetective from './components/tools/UsernameDetective';
 import PasswordVaultPage from './pages/PasswordVaultPage';
 import DigitalPrivacyPage from './pages/DigitalPrivacyPage';
 import EmergencyGuidesPage from './pages/EmergencyGuidesPage';
 import SettingsPage from './pages/SettingsPage';
 import NetworkToolPage from './pages/NetworkToolPage';
 import CyberNewsPage from './pages/CyberNewsPage';
+import SteganographyPage from './pages/SteganographyPage';
+import CyberToolsPage from './pages/CyberToolsPage';
+import CyberAcademyPage from './pages/CyberAcademyPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import BackgroundBlobs from './components/BackgroundBlobs';
 
 function AppContent() {
     const { currentUser, logout } = useAuth();
-    const [activePage, setActivePage] = useState('dashboard');
+    const [activePage, setActivePage] = useState(() => {
+        const path = window.location.pathname;
+        if (path.includes('/tools/dead-drop')) return 'dead-drop';
+        if (path.includes('/tools/metadata-washer')) return 'metadata-washer';
+        if (path.includes('/tools/username-detective')) return 'username-detective';
+        if (path.startsWith('/tools')) return 'tools';
+        return 'dashboard';
+    });
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [error, setError] = useState('');
 
@@ -60,6 +73,11 @@ function AppContent() {
             case 'vault': componentToRender = <PasswordVaultPage />; break;
             case 'privacy': componentToRender = <DigitalPrivacyPage />; break;
             case 'emergency': componentToRender = <EmergencyGuidesPage />; break;
+            case 'academy': componentToRender = <CyberAcademyPage />; break;
+            case 'tools': componentToRender = <CyberToolsPage onNavigate={setActivePage} />; break;
+            case 'dead-drop': componentToRender = <DeadDrop onNavigate={setActivePage} />; break;
+            case 'metadata-washer': componentToRender = <MetadataWasher onNavigate={setActivePage} />; break;
+            case 'username-detective': componentToRender = <UsernameDetective onNavigate={setActivePage} />; break;
             case 'settings': componentToRender = <SettingsPage />; break;
             default: componentToRender = <Dashboard />;
         }
@@ -83,6 +101,7 @@ function AppContent() {
             href="#"
             onClick={(e) => {
                 e.preventDefault();
+                if (pageName === 'tools') window.history.pushState({}, '', '/tools');
                 setActivePage(pageName);
                 setIsSidebarOpen(false);
             }}
@@ -138,8 +157,10 @@ function AppContent() {
                         <NavLink pageName="scanners" icon="scan">Scanners</NavLink>
                         <NavLink pageName="vault" icon="lock">Password Vault</NavLink>
                         <NavLink pageName="assistant" icon="messageCircle">Cyber Assistant</NavLink>
-                        <NavLink pageName="news" icon="newspaper">Cyber News</NavLink>
                         <NavLink pageName="healthcheck" icon="checkCircle">Health Check</NavLink>
+                        <NavLink pageName="tools" icon="terminal">Cyber Tools</NavLink>
+                        <NavLink pageName="academy" icon="academicCap">Cyber Academy</NavLink>
+                        <NavLink pageName="news" icon="newspaper">Cyber News</NavLink>
                         <NavLink pageName="privacy" icon="book">Digital Privacy</NavLink>
                         <NavLink pageName="emergency" icon="alertTriangle">Emergency Guides</NavLink>
                     </nav>

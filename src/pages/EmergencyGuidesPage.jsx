@@ -1,89 +1,153 @@
 import React, { useState } from 'react';
 import Icon from '../components/Icon';
+import EmergencyGuideCard from '../components/EmergencyGuideCard';
+import EmergencyWizard from '../components/EmergencyWizard';
+import EmergencyContacts from '../components/EmergencyContacts';
+import { emergencyGuides } from '../utils/emergencyData';
 
 const EmergencyGuidesPage = () => {
     const [selectedGuide, setSelectedGuide] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [panicMode, setPanicMode] = useState(false);
 
-    const guides = {
-        phished: {
-            title: "I've Been Phished",
-            description: "You clicked a suspicious link or provided your details on a fake website. Here’s how to respond immediately.",
-            steps: [
-                { title: "Step 1: Disconnect from the Internet", content: "Immediately disconnect your device from the internet to prevent any further data transmission or malware from spreading." },
-                { title: "Step 2: Change Your Password", content: "From a different, trusted device, change the password for the account that was compromised. If you use that password anywhere else, change it there too." },
-                { title: "Step 3: Scan for Malware", content: "Run a full scan with your antivirus software to check if anything malicious was installed on your device." },
-                { title: "Step 4: Report the Phishing Attempt", content: "Report the email to your email provider and the company that was being impersonated. This helps them take action against the attackers." },
-                { title: "Step 5: Monitor Your Accounts", content: "Keep a close eye on your bank statements, credit reports, and online accounts for any suspicious activity." }
-            ]
-        },
-        hacked: {
-            title: "My Account Was Hacked",
-            description: "You've noticed unauthorized activity or you've been locked out of one of your online accounts. Take these steps now.",
-            steps: [
-                { title: "Step 1: Try to Reclaim the Account", content: "Use the account recovery process for the service (e.g., 'Forgot Password'). This is often the fastest way to regain control." },
-                { title: "Step 2: Change Passwords Everywhere", content: "If you regain access, immediately set a new, strong, unique password. Then, change the passwords for any other accounts that used the same or similar password." },
-                { title: "Step 3: Enable Two-Factor Authentication (2FA)", content: "If you haven't already, enable 2FA on all important accounts. This provides a crucial second layer of security." },
-                { title: "Step 4: Inform Your Contacts", content: "Let your friends, family, and contacts know that your account was compromised, so they can be wary of any strange messages sent from you." },
-                { title: "Step 5: Review Account Activity", content: "Check for any unauthorized posts, messages, or changes made by the hacker and correct them." }
-            ]
-        },
-        ransomware: {
-            title: "I Have Ransomware",
-            description: "Your files are encrypted, and you see a message demanding payment. It's a stressful situation, but follow these guidelines.",
-            steps: [
-                { title: "Step 1: Isolate the Infected Device", content: "Disconnect the computer from the network (both wired and wireless) to stop the ransomware from spreading to other devices." },
-                { title: "Step 2: Do NOT Pay the Ransom", content: "Law enforcement and security experts advise against paying. There's no guarantee you'll get your files back, and it encourages the criminals." },
-                { title: "Step 3: Identify the Ransomware", content: "Use a service like NoMoreRansom.org to identify the type of ransomware. They may have a free decryption tool available." },
-                { title: "Step 4: Restore from a Backup", content: "If you have a recent, clean backup of your files, you can restore your system to its pre-infected state. This is the most reliable recovery method." },
-                { title: "Step 5: Report the Incident", content: "Report the attack to local law enforcement or a national cybersecurity agency. This helps track and combat ransomware gangs." }
-            ]
-        }
-    };
-
-    if (selectedGuide) {
-        const guide = guides[selectedGuide];
-        return (
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <button onClick={() => setSelectedGuide(null)} className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold mb-6 hover:underline">
-                    <Icon name="arrowLeft" className="w-5 h-5" />
-                    Back to All Guides
-                </button>
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{guide.title}</h2>
-                <p className="text-gray-500 dark:text-gray-400 mt-2 mb-8">{guide.description}</p>
-                <div className="space-y-6">
-                    {guide.steps.map((step, index) => (
-                        <div key={index} className="flex items-start gap-4">
-                            <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">{index + 1}</div>
-                            <div>
-                                <h4 className="font-bold text-lg text-gray-800 dark:text-gray-100">{step.title}</h4>
-                                <p className="text-gray-600 dark:text-gray-300">{step.content}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    }
+    const filteredGuides = emergencyGuides.filter(guide =>
+        guide.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        guide.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
-        <>
-            <header className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">"What to Do If..." Emergency Guides</h2>
-                <p className="text-gray-500 dark:text-gray-400">Step-by-step guides for common cybersecurity emergencies.</p>
-            </header>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Object.keys(guides).map(key => {
-                    const guide = guides[key];
-                    return (
-                        <button key={key} onClick={() => setSelectedGuide(key)} className="text-left p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition-all">
-                            <Icon name="alertTriangle" className="w-8 h-8 text-red-500 mb-3" />
-                            <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100">{guide.title}</h3>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{guide.description}</p>
+        <div className={`min-h-screen transition-colors duration-500 ${panicMode ? 'bg-red-50/50 dark:bg-black' : ''}`}>
+
+            {/* Header Section */}
+            {!selectedGuide && (
+                <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h2 className={`text-3xl font-bold ${panicMode ? 'text-red-600' : 'text-gray-800 dark:text-gray-100'}`}>
+                                "What to Do If..."
+                            </h2>
+                            {panicMode && (
+                                <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold uppercase tracking-widest rounded-full animate-pulse">
+                                    Panic Mode Active
+                                </span>
+                            )}
+                        </div>
+                        <p className={`text-gray-500 dark:text-gray-400 ${panicMode ? 'hidden' : 'block'}`}>
+                            Step-by-step guides for common cybersecurity emergencies.
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setPanicMode(!panicMode)}
+                            className={`
+                                flex items-center gap-2 px-5 py-2.5 rounded-full font-bold shadow-lg transition-all transform hover:scale-105
+                                ${panicMode
+                                    ? 'bg-gray-800 text-white hover:bg-gray-700'
+                                    : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-red-500/30'
+                                }
+                            `}
+                        >
+                            <Icon name={panicMode ? "shieldCheck" : "shieldAlert"} className="w-5 h-5" />
+                            {panicMode ? 'Exit Panic Mode' : 'Panic Mode'}
                         </button>
-                    )
-                })}
+                    </div>
+                </header>
+            )}
+
+            {/* Main Content Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+                {/* Left Column: Guides or Wizard */}
+                <div className="lg:col-span-3">
+                    {selectedGuide ? (
+                        <EmergencyWizard
+                            guide={selectedGuide}
+                            onBack={() => setSelectedGuide(null)}
+                            panicMode={panicMode}
+                        />
+                    ) : (
+                        <>
+                            {/* Search Bar */}
+                            <div className="relative mb-8">
+                                <Icon name="scan" className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Describe your emergency (e.g., 'ransomware', 'hacked')..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className={`
+                                        w-full pl-12 pr-4 py-4 rounded-xl text-lg outline-none border transition-all
+                                        ${panicMode
+                                            ? 'bg-white border-red-300 text-red-900 placeholder-red-300 focus:ring-4 focus:ring-red-500/20'
+                                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'
+                                        }
+                                    `}
+                                />
+                            </div>
+
+                            {/* Grid of Guides */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {filteredGuides.map(guide => (
+                                    <EmergencyGuideCard
+                                        key={guide.id}
+                                        guide={guide}
+                                        onClick={setSelectedGuide}
+                                        panicMode={panicMode}
+                                    />
+                                ))}
+                                {filteredGuides.length === 0 && (
+                                    <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+                                        <Icon name="search" className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                        <p className="text-lg">No guides found matching "{searchTerm}"</p>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* Right Column: Sidebar (Contacts & Quick Actions) */}
+                <div className="space-y-6">
+                    <EmergencyContacts />
+
+                    {/* Quick Tips Card */}
+                    {!panicMode && (
+                        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+                            <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                                <Icon name="lightbulb" className="w-5 h-5" />
+                                Pro Tip
+                            </h3>
+                            <p className="text-blue-100 text-sm mb-4">
+                                Most security incidents can be contained if you act quickly. Don't panic—follow the steps carefully.
+                            </p>
+                            <div className="text-xs font-mono bg-blue-800/30 p-3 rounded border border-blue-500/30">
+                                Global Emergency: 112 / 911 <br />
+                                Cyber Crime: ic3.gov
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Panic Mode Explanation (Only visible when NOT in panic mode) */}
+                    {!panicMode && (
+                        <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-2xl p-6">
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg shrink-0">
+                                    <Icon name="shieldAlert" className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-1">What is Panic Mode?</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        Simplifies the interface and highlights critical actions for high-stress situations.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
             </div>
-        </>
+        </div>
     );
 };
 

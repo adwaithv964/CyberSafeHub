@@ -60,7 +60,13 @@ export const LandingPage = () => {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, signup, googleSignIn } = useAuth();
+
+  // MFA State
+  const [showMfa, setShowMfa] = useState(false);
+  const [mfaResolver, setMfaResolver] = useState(null);
+  const [mfaCode, setMfaCode] = useState('');
+
+  const { login, signup, googleSignIn, getMultiFactorResolver, mfaResolveSignIn } = useAuth();
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -69,7 +75,32 @@ export const LandingPage = () => {
       setLoading(true);
       await login(email, password);
     } catch (err) {
-      setError('Failed to log in: ' + err.message);
+      if (err.code === 'auth/multi-factor-auth-required') {
+        setMfaResolver(getMultiFactorResolver(err));
+        setShowMfa(true);
+        setShowLogin(false); // Close generic login modal
+        setError('');
+      } else {
+        setError('Failed to log in: ' + err.message);
+      }
+    }
+    setLoading(false);
+  }
+
+  async function handleMfaSubmit(e) {
+    e.preventDefault();
+    try {
+      setError('');
+      setLoading(true);
+      // Use the first hint (assuming single MFA enrollment for now)
+      const hint = mfaResolver.hints[0];
+      await mfaResolveSignIn(mfaResolver, hint.uid, mfaCode);
+      setShowMfa(false);
+      setMfaResolver(null);
+      // Auth state change will trigger redirect/app load via AuthContext
+    } catch (err) {
+      setError('MFA Verification failed: ' + err.message);
+      console.error(err);
     }
     setLoading(false);
   }
@@ -246,6 +277,37 @@ export const LandingPage = () => {
           </div>
         </form>
       </ThemedModal>
-    </div>
+
+      {/* MFA Verification Modal */}
+      <ThemedModal isOpen={showMfa} onClose={() => { setShowMfa(false); setMfaResolver(null); }} title="Security Verification">
+        {error && <div className="bg-danger/20 text-danger p-3 rounded mb-4 text-sm mix-blend-screen">{error}</div>}
+        <form onSubmit={handleMfaSubmit} className="space-y-4">
+          <div className="flex flex-col items-center">
+            <Icon name="shield" className="w-16 h-16 text-accent mb-4" />
+            <p className="text-center text-text-secondary mb-4">
+              Enter the 6-digit code from your authenticator app to verify your identity.
+            </p>
+            <Input
+              label="Verification Code"
+              type="text"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value)}
+              placeholder="123456"
+              icon="lock"
+              required
+              className="text-center tracking-[0.5em] font-mono text-xl"
+            />
+          </div>
+          <div className="flex flex-col gap-3 mt-6">
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Verifying...' : 'Verify'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => { setShowMfa(false); openLogin(); }} disabled={loading} className="w-full">
+              Back to Login
+            </Button>
+          </div>
+        </form>
+      </ThemedModal>
+    </div >
   );
 };

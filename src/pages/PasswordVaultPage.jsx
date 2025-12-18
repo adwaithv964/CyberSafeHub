@@ -51,13 +51,19 @@ const PasswordVaultPage = () => {
             pass += charSet.charAt(Math.floor(Math.random() * charSet.length));
         }
         setGeneratedPassword(pass);
-        logActivity('VAULT', 'Generated New Password', 'Strong password created');
+        setGeneratedPassword(pass);
+        // Removed automatic log here to prevent logging on mount
         setCopySuccess('');
     }, [passwordLength, includeUppercase, includeNumbers, includeSymbols]);
 
     useEffect(() => {
         generatePassword();
     }, [generatePassword]);
+
+    const handleGenerateClick = () => {
+        generatePassword();
+        logActivity('VAULT', 'Generated New Password', 'Strong password created');
+    };
 
     const copyToClipboard = async (text) => {
         if (!text) return;
@@ -184,10 +190,10 @@ const PasswordVaultPage = () => {
     // Helper to get copy value based on type
     const getCopyValue = (item) => {
         switch (item.type) {
-            case 'login': return item.data.password;
-            case 'card': return item.data.cardNumber;
-            case 'identity': return item.data.idNumber;
-            case 'note': return item.data.content;
+            case 'login': return item.data?.password;
+            case 'card': return item.data?.cardNumber;
+            case 'identity': return item.data?.idNumber;
+            case 'note': return item.data?.content;
             default: return '';
         }
     };
@@ -222,7 +228,7 @@ const PasswordVaultPage = () => {
                                 <button onClick={() => copyToClipboard(generatedPassword)} className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50" title="Copy password">
                                     <Icon name="copy" className="w-6 h-6" />
                                 </button>
-                                <button onClick={generatePassword} className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title="Generate new password">
+                                <button onClick={handleGenerateClick} className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title="Generate new password">
                                     <Icon name="refreshCw" className="w-6 h-6" />
                                 </button>
                             </div>
@@ -370,10 +376,10 @@ const PasswordVaultPage = () => {
 
                                 {/* Quick Preview of data (Optional - masked) */}
                                 <div className="mt-3 text-sm text-gray-600 dark:text-gray-400 truncate font-mono bg-gray-200 dark:bg-gray-900/50 p-2 rounded">
-                                    {item.type === 'login' && (item.data.username || '***')}
-                                    {item.type === 'card' && `**** **** **** ${item.data.cardNumber?.slice(-4) || '****'}`}
-                                    {item.type === 'identity' && (item.data.firstName ? `${item.data.firstName} ${item.data.lastName}` : 'Functionality')}
-                                    {item.type === 'note' && (item.data.content?.slice(0, 30) + '...')}
+                                    {item.type === 'login' && (item.data?.username || '***')}
+                                    {item.type === 'card' && `**** **** **** ${item.data?.cardNumber?.slice(-4) || '****'}`}
+                                    {item.type === 'identity' && (item.data?.firstName ? `${item.data.firstName} ${item.data.lastName}` : 'Functionality')}
+                                    {item.type === 'note' && (item.data?.content ? (item.data.content.slice(0, 30) + '...') : '')}
                                 </div>
                             </div>
                         ))}

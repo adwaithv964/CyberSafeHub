@@ -1,11 +1,14 @@
 const express = require('express');
+const axios = require('axios');
 const cors = require('cors');
+
 const multer = require('multer');
 const NodeClam = require('clamscan');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const VaultItem = require('./models/VaultItem');
+const Secret = require('./models/Secret');
 require('dotenv').config({ path: '../.env' }); // Load from root .env if running from server dir
 
 const app = express();
@@ -161,6 +164,86 @@ app.post('/scan', upload.single('file'), async (req, res) => {
             error: 'Scan failed. Ensure ClamAV is installed and configured.',
             details: err.message
         });
+    }
+});
+
+
+// --- Dead Drop API Routes ---
+
+// Create Secret
+app.post('/api/secrets', async (req, res) => {
+    try {
+        const { encryptedData, authHash } = req.body;
+        const newSecret = new Secret({ encryptedData, authHash });
+        await newSecret.save();
+        res.status(201).json({ id: newSecret._id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// View Secret (Delete after view)
+app.post('/api/secrets/:id/view', async (req, res) => {
+    try {
+        const { authHash } = req.body;
+        const secret = await Secret.findById(req.params.id);
+
+        if (!secret) {
+            return res.status(404).json({ error: 'Secret not found or expired' });
+        }
+
+        // Verify Hash (Client sends hash, we compare)
+        if (secret.authHash !== authHash) {
+            return res.status(403).json({ error: 'Invalid password/key' });
+        }
+
+        // Return Data
+        const data = secret.encryptedData;
+
+        // Self Destruct (Delete BEFORE sending to ensure it's gone)
+        await Secret.findByIdAndDelete(req.params.id);
+
+        res.json({ encryptedData: data });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- OSINT API Routes ---
+
+app.post('/api/osint/check', async (req, res) => {
+    const { username, site } = req.body;
+    if (!username || !site || !site.url) {
+        return res.status(400).json({ status: 'error', message: 'Missing username or site info' });
+    }
+
+    const targetUrl = site.url.replace('USERNAME', username);
+
+    try {
+        const response = await axios.get(targetUrl, {
+            timeout: 5000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            },
+            validateStatus: function (status) {
+                return status < 500; // Resolve only if the status code is less than 500
+            }
+        });
+
+        if (response.status === 200) {
+            // Some sites return 200 even for 404 pages, but most standard ones don't.
+            // We can add specific logic for sites like Instagram if needed later.
+            res.json({ status: 'found', url: targetUrl });
+        } else if (response.status === 404) {
+            res.json({ status: 'not_found' });
+        } else {
+            // Other codes like 403, 401 might mean "Protected" or "Login Required"
+            res.json({ status: 'potential', url: targetUrl });
+        }
+    } catch (error) {
+        // Network error or timeout
+        res.json({ status: 'error', message: error.message, url: targetUrl });
     }
 });
 
