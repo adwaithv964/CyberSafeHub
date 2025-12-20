@@ -9,6 +9,7 @@ import HealthCheckPage from './pages/HealthCheckPage';
 import DeadDrop from './components/tools/DeadDrop';
 import MetadataWasher from './components/tools/MetadataWasher';
 import UsernameDetective from './components/tools/UsernameDetective';
+import WiFiRadar from './components/tools/WiFiRadar';
 import PasswordVaultPage from './pages/PasswordVaultPage';
 import DigitalPrivacyPage from './pages/DigitalPrivacyPage';
 import EmergencyGuidesPage from './pages/EmergencyGuidesPage';
@@ -27,7 +28,9 @@ function AppContent() {
         const path = window.location.pathname;
         if (path.includes('/tools/dead-drop')) return 'dead-drop';
         if (path.includes('/tools/metadata-washer')) return 'metadata-washer';
+        if (path.includes('/tools/metadata-washer')) return 'metadata-washer';
         if (path.includes('/tools/username-detective')) return 'username-detective';
+        if (path.includes('/tools/wifi-radar')) return 'wifi-radar';
         if (path.startsWith('/tools')) return 'tools';
         return 'dashboard';
     });
@@ -78,6 +81,7 @@ function AppContent() {
             case 'dead-drop': componentToRender = <DeadDrop onNavigate={setActivePage} />; break;
             case 'metadata-washer': componentToRender = <MetadataWasher onNavigate={setActivePage} />; break;
             case 'username-detective': componentToRender = <UsernameDetective onNavigate={setActivePage} />; break;
+            case 'wifi-radar': componentToRender = <WiFiRadar onNavigate={setActivePage} />; break;
             case 'settings': componentToRender = <SettingsPage />; break;
             default: componentToRender = <Dashboard />;
         }

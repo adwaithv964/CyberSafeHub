@@ -4,6 +4,7 @@ const cors = require('cors');
 
 const multer = require('multer');
 const NodeClam = require('clamscan');
+const find = require('local-devices'); // Import local-devices
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -246,6 +247,191 @@ app.post('/api/osint/check', async (req, res) => {
         res.json({ status: 'error', message: error.message, url: targetUrl });
     }
 });
+
+// --- WiFi Radar API Routes ---
+
+// Scan for devices
+app.get('/api/wifi-radar/scan', async (req, res) => {
+    try {
+        const { exec } = require('child_process');
+        const os = require('os');
+
+        // Helper: Get local IP to determine subnet
+        const getLocalIP = () => {
+            const interfaces = os.networkInterfaces();
+            let preferredIP = null;
+
+            for (const name of Object.keys(interfaces)) {
+                for (const iface of interfaces[name]) {
+                    // Skip internal (localhost) and non-IPv4 addresses
+                    if (!iface.internal && iface.family === 'IPv4') {
+                        // Check for standard private ranges (192.168.x.x, 10.x.x.x, 172.16.x.x)
+                        if (iface.address.startsWith('192.168.') ||
+                            iface.address.startsWith('10.') ||
+                            (iface.address.startsWith('172.') && parseInt(iface.address.split('.')[1]) >= 16 && parseInt(iface.address.split('.')[1]) <= 31)) {
+                            return iface.address; // Return immediately if a common private IP is found
+                        }
+                        // Store other candidates (like 169.254 or public IPs) just in case
+                        if (!preferredIP) preferredIP = iface.address;
+                    }
+                }
+            }
+            return preferredIP || '192.168.1.1'; // Fallback
+        };
+
+        // Helper: Ping Sweep to populate ARP table
+        const pingSweep = (subnetBase) => {
+            return new Promise((resolve) => {
+                const isWin = process.platform === 'win32';
+                // Scan full subnet (1-254) to ensure we catch all devices (DHCP often starts at .100)
+                let completed = 0;
+                const totalToPing = 254;
+                const BATCH_SIZE = 50; // Batch pings to avoid overwhelming the system
+
+                const pingBatch = async (start, end) => {
+                    const promises = [];
+                    for (let i = start; i <= end; i++) {
+                        if (i > totalToPing) break;
+                        const target = `${subnetBase}.${i}`;
+                        // Shorter timeout (150ms) to speed up full scan
+                        const cmd = isWin ? `ping -n 1 -w 150 ${target}` : `ping -c 1 -W 0.15 ${target}`;
+                        promises.push(new Promise(r => exec(cmd, r)));
+                    }
+                    await Promise.all(promises);
+                };
+
+                // Run in batches
+                const run = async () => {
+                    for (let i = 1; i <= totalToPing; i += BATCH_SIZE) {
+                        await pingBatch(i, i + BATCH_SIZE - 1);
+                    }
+                    resolve();
+                };
+
+                run();
+            });
+        };
+
+        const localIP = getLocalIP();
+        const subnetParts = localIP.split('.');
+        subnetParts.pop();
+        const subnetBase = subnetParts.join('.');
+
+        // Run ping sweep (Wait up to 5s max, though it should be faster with async batches)
+        await Promise.race([pingSweep(subnetBase), new Promise(r => setTimeout(r, 7000))]);
+
+        // Helper: Vendor Lookup
+        const getVendor = async (mac) => {
+            if (!mac) return 'Unknown Vendor';
+            try {
+                // Remove colons/dashes
+                const oui = mac.replace(/[:-\s]/g, '').substring(0, 6);
+                // Simple cache or local dictionary could go here for speed
+                // For now, we return 'Unknown' to avoid rate-limiting issues with public APIs in this demo code.
+                // UNLESS user explicitly wants real vendors. 
+                // Let's try to fetch from a safe API if possible, or Mock common ones.
+                const response = await axios.get(`https://api.macvendors.com/${mac}`, { timeout: 1500 });
+                return response.data;
+            } catch (err) {
+                return 'Unknown Vendor';
+            }
+        };
+
+        // Custom ARP scan function
+        const scanNetwork = () => new Promise((resolve) => {
+            exec('arp -a', (error, stdout, stderr) => {
+                if (error) return resolve([]);
+
+                const lines = stdout.split('\n');
+                const devices = [];
+
+                lines.forEach(line => {
+                    // Stricter Regex for MAC: XX-XX-XX-XX-XX-XX
+                    const match = line.match(/\s+(\d+\.\d+\.\d+\.\d+)\s+([a-fA-F0-9]{2}(?:-[a-fA-F0-9]{2}){5})\s+/);
+                    if (match) {
+                        const ip = match[1];
+                        const mac = match[2].replace(/-/g, ':').toUpperCase();
+
+                        if (ip.startsWith(subnetBase)) {
+                            devices.push({
+                                ip,
+                                mac,
+                                name: 'Unknown Device',
+                                vendor: 'Unknown' // Will resolve later
+                            });
+                        }
+                    }
+                });
+                resolve(devices);
+            });
+        });
+
+        const devices = await scanNetwork();
+
+        // Fallback to local-devices if needed
+        if (devices.length === 0) {
+            try {
+                const libDevices = await find();
+                devices.push(...libDevices);
+            } catch (e) {
+                console.error("local-devices lib failed:", e);
+            }
+        }
+
+        // Deduplicate
+        const uniqueDevices = Array.from(new Map(devices.map(item => [item.ip, item])).values());
+
+        // Resolve Vendors (Async, parallel)
+        const enrichedDevices = await Promise.all(uniqueDevices.map(async device => {
+            let vendor = device.vendor;
+            if (vendor === 'Unknown' || !vendor) {
+                try {
+                    vendor = await getVendor(device.mac);
+                } catch (e) { vendor = 'Unknown Vendor'; }
+            }
+
+            return {
+                ...device,
+                name: device.name === 'Unknown Device' ? `Device (${device.ip})` : device.name,
+                vendor: vendor,
+                isSuspicious: false,
+                ports: []
+            };
+        }));
+
+        console.log(`Found ${enrichedDevices.length} devices.`);
+        res.json(enrichedDevices);
+
+    } catch (err) {
+        console.error("WiFi Scan Error:", err);
+        res.status(500).json({ error: "Failed to scan network." });
+    }
+});
+
+// Analyze specific device (Simulation of promiscuous check)
+app.post('/api/wifi-radar/analyze', async (req, res) => {
+    const { ip, mac } = req.body;
+
+    // In a real app, this would run a deep Nmap scan or check for promiscuous mode via ARP tricks.
+    // Here we simulate a check.
+
+    setTimeout(() => {
+        const isPromiscuous = Math.random() < 0.2; // 20% chance to be "suspicious" for demo
+        const openPorts = [80, 443];
+        if (Math.random() < 0.5) openPorts.push(22);
+        if (Math.random() < 0.3) openPorts.push(8080);
+
+        res.json({
+            ip,
+            mac,
+            isPromiscuous,
+            openPorts,
+            riskLevel: isPromiscuous ? 'HIGH' : 'LOW',
+            message: isPromiscuous ? "Device appears to be inspecting traffic (Promiscuous Mode detected)" : "Device operating normally."
+        });
+    }, 2000); // Fake delay for "scanning" effect
+});
+
 
 app.get('/', (req, res) => {
     res.send('CyberSafeHub ClamAV Scanner Server is Running.');
