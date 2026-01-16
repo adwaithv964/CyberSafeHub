@@ -12,7 +12,92 @@ const VaultItem = require('./models/VaultItem');
 require('dotenv').config({ path: '../.env' }); // Load from root .env if running from server dir
 
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:5173", // Allow Vite dev server
+        methods: ["GET", "POST"]
+    }
+});
+
 const port = 3001;
+
+// --- Socket.IO Signaling Logic ---
+// Store nearby users: socketId -> { ip, name }
+const nearbyUsers = new Map();
+
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
+    // Get IP for nearby detection
+    const clientIp = socket.handshake.address;
+
+    socket.on('join-room', (roomId, userId) => {
+        socket.join(roomId);
+        socket.to(roomId).emit('user-connected', userId);
+
+        socket.on('disconnect', () => {
+            socket.to(roomId).emit('user-disconnected', userId);
+        });
+    });
+
+    // --- Nearby Share Logic ---
+    socket.on('join-nearby', (name) => {
+        nearbyUsers.set(socket.id, { ip: clientIp, name: name });
+        console.log(`User ${name} joined nearby with IP ${clientIp}`);
+    });
+
+    socket.on('get-nearby-users', () => {
+        const users = [];
+        nearbyUsers.forEach((data, id) => {
+            // Filter by same IP (basic local network matching)
+            // In a real scenario, might need subnet matching or STUN.
+            // For now, exact string match of what the server sees.
+            if (id !== socket.id && data.ip === clientIp) {
+                users.push({ id, name: data.name });
+            }
+        });
+        socket.emit('nearby-users-list', users);
+    });
+
+    socket.on('request-connection', (targetId, senderName) => {
+        io.to(targetId).emit('connection-request', {
+            senderId: socket.id,
+            senderName: senderName
+        });
+    });
+
+    socket.on('accept-connection', (targetId) => {
+        io.to(targetId).emit('connection-accepted', {
+            accepterId: socket.id
+        });
+    });
+    // ---------------------------
+
+    // Handle Signaling
+    socket.on('offer', (payload) => {
+        io.to(payload.target).emit('offer', payload);
+    });
+
+    socket.on('answer', (payload) => {
+        io.to(payload.target).emit('answer', payload);
+    });
+
+    socket.on('ice-candidate', (payload) => {
+        io.to(payload.target).emit('ice-candidate', payload);
+    });
+
+    socket.on('disconnect', () => {
+        if (nearbyUsers.has(socket.id)) {
+            nearbyUsers.delete(socket.id);
+        }
+        console.log('User disconnected:', socket.id);
+    });
+});
+
 
 // Enable CORS for frontend
 app.use(cors());
@@ -506,7 +591,7 @@ app.get('/', (req, res) => {
     res.send('CyberSafeHub ClamAV Scanner Server is Running.');
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Scanner server listening on port ${port}`);
     console.log(`Make sure ClamAV is installed on this system!`);
 });

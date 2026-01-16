@@ -65,6 +65,20 @@ export default function CyberToolsPage({ onNavigate }) {
                     </p>
                 </motion.div>
 
+                <motion.div
+                    whileHover={{ scale: 1.02, translateY: -5 }}
+                    className="bg-glass-panel p-6 rounded-xl border border-glass-border cursor-pointer hover:border-green-400 hover:shadow-glow-green transition-all group"
+                    onClick={() => handleToolSelect('secure-share')}
+                >
+                    <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center mb-4 group-hover:bg-green-500/20 transition-colors">
+                        <Icon name="share2" className="w-6 h-6 text-green-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-text-primary mb-2">Secure Share</h3>
+                    <p className="text-text-secondary text-sm">
+                        P2P Encrypted File Transfer directly between devices. No server storage.
+                    </p>
+                </motion.div>
+
 
             </div>
         </div>
