@@ -3,7 +3,7 @@ import Icon from '../components/Icon';
 import ThemedModal from '../components/ThemedModal';
 import Header from '../components/Header';
 import { callGeminiAPI } from '../utils/geminiApi';
-import { simpleMarkdownToHtml } from '../utils/markdown';
+import ReactMarkdown from 'react-markdown';
 import { checkBreaches } from '../utils/securityScanners';
 import { logActivity } from '../utils/activityLogger';
 
@@ -529,7 +529,9 @@ const BreachDetector = () => {
                                             {actionPlan && (
                                                 <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-900 rounded-lg text-left">
                                                     <h4 className="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2">Your Personalized Action Plan</h4>
-                                                    <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(actionPlan) }} />
+                                                    <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                                                        <ReactMarkdown>{actionPlan}</ReactMarkdown>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

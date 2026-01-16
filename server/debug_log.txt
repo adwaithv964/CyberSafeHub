@@ -1,0 +1,18 @@
+Starting diagnostic...
+oui: FAILED - Cannot find module 'oui'
+Require stack:
+- C:\Projects\CyberSafeHub\server\test_diagnose.js
+multicast-dns: LOADED OK
+Done.
+Starting diagnostic...
+oui: FAILED - Cannot find module 'oui'
+Require stack:
+- C:\Projects\CyberSafeHub\server\test_diagnose.js
+multicast-dns: LOADED OK
+Done.
+Starting diagnostic...
+oui: FAILED - Cannot find module 'oui'
+Require stack:
+- C:\Projects\CyberSafeHub\server\test_diagnose.js
+multicast-dns: LOADED OK
+Done.

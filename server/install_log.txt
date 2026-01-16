@@ -1,0 +1,30 @@
+npm verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+npm info using npm@10.9.3
+npm info using node@v22.20.0
+npm verbose title npm install oui@latest
+npm verbose argv "install" "oui@latest" "--save" "--loglevel" "verbose"
+npm verbose logfile logs-max:10 dir:C:\Users\adwai\AppData\Local\npm-cache\_logs\2025-12-20T15_39_48_486Z-
+npm verbose logfile C:\Users\adwai\AppData\Local\npm-cache\_logs\2025-12-20T15_39_48_486Z-debug-0.log
+npm http fetch GET 200 https://registry.npmjs.org/oui 811ms (cache miss)
+npm http fetch GET 200 https://registry.npmjs.org/oui 428ms (cache revalidated)
+npm http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 731ms
+npm http cache https://registry.npmjs.org/ip 5ms (cache hit)
+npm http cache https://registry.npmjs.org/local-devices 4ms (cache hit)
+
+up to date, audited 102 packages in 2s
+
+16 packages are looking for funding
+  run `npm fund` for details
+
+2 high severity vulnerabilities
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+npm verbose cwd C:\Projects\CyberSafeHub\server
+npm verbose os Windows_NT 10.0.26200
+npm verbose node v22.20.0
+npm verbose npm  v10.9.3
+npm verbose exit 0
+npm info ok

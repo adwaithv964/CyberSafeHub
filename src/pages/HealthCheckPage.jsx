@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../components/Icon';
 import { callGeminiAPI } from '../utils/geminiApi';
-import { simpleMarkdownToHtml } from '../utils/markdown';
+import ReactMarkdown from 'react-markdown';
 import { checkIpInfo, checkBrowserSecurity, checkBreaches, checkBatteryFingerprinting, checkCyberHygiene } from '../utils/securityScanners';
 import { useAuth } from '../contexts/AuthContext';
 import { logActivity } from '../utils/activityLogger';
@@ -273,7 +273,9 @@ const HealthCheckPage = () => {
                             {aiSummary && (
                                 <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg">
                                     <h4 className="font-bold text-lg text-indigo-800 dark:text-indigo-200 mb-2 flex items-center gap-2"><Icon name="sparkles" className="w-5 h-5" /> AI Summary</h4>
-                                    <div className="prose prose-sm dark:prose-invert max-w-none text-indigo-700 dark:text-indigo-300" dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(aiSummary) }} />
+                                    <div className="prose prose-sm dark:prose-invert max-w-none text-indigo-700 dark:text-indigo-300">
+                                        <ReactMarkdown>{aiSummary}</ReactMarkdown>
+                                    </div>
                                 </div>
                             )}
 

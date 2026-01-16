@@ -21,19 +21,7 @@ export default function CyberToolsPage({ onNavigate }) {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <motion.div
-                    whileHover={{ scale: 1.02, translateY: -5 }}
-                    className="bg-glass-panel p-6 rounded-xl border border-glass-border cursor-pointer hover:border-accent hover:shadow-glow-accent transition-all group"
-                    onClick={() => handleToolSelect('dead-drop')}
-                >
-                    <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
-                        <Icon name="skull" className="w-6 h-6 text-accent" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-text-primary mb-2">Dead Drop</h3>
-                    <p className="text-text-secondary text-sm">
-                        Share secrets securely. Create encrypted, self-destructing links that vanish after being viewed.
-                    </p>
-                </motion.div>
+
 
                 <motion.div
                     whileHover={{ scale: 1.02, translateY: -5 }}

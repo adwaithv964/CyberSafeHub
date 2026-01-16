@@ -9,7 +9,6 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const VaultItem = require('./models/VaultItem');
-const Secret = require('./models/Secret');
 require('dotenv').config({ path: '../.env' }); // Load from root .env if running from server dir
 
 const app = express();
@@ -169,47 +168,7 @@ app.post('/scan', upload.single('file'), async (req, res) => {
 });
 
 
-// --- Dead Drop API Routes ---
 
-// Create Secret
-app.post('/api/secrets', async (req, res) => {
-    try {
-        const { encryptedData, authHash } = req.body;
-        const newSecret = new Secret({ encryptedData, authHash });
-        await newSecret.save();
-        res.status(201).json({ id: newSecret._id });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// View Secret (Delete after view)
-app.post('/api/secrets/:id/view', async (req, res) => {
-    try {
-        const { authHash } = req.body;
-        const secret = await Secret.findById(req.params.id);
-
-        if (!secret) {
-            return res.status(404).json({ error: 'Secret not found or expired' });
-        }
-
-        // Verify Hash (Client sends hash, we compare)
-        if (secret.authHash !== authHash) {
-            return res.status(403).json({ error: 'Invalid password/key' });
-        }
-
-        // Return Data
-        const data = secret.encryptedData;
-
-        // Self Destruct (Delete BEFORE sending to ensure it's gone)
-        await Secret.findByIdAndDelete(req.params.id);
-
-        res.json({ encryptedData: data });
-
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 // --- OSINT API Routes ---
 
@@ -320,27 +279,78 @@ app.get('/api/wifi-radar/scan', async (req, res) => {
         // Run ping sweep (Wait up to 5s max, though it should be faster with async batches)
         await Promise.race([pingSweep(subnetBase), new Promise(r => setTimeout(r, 7000))]);
 
-        // Helper: Vendor Lookup
-        const getVendor = async (mac) => {
+
+        // Helper: Local Vendor Lookup
+
+
+        // Helper: Local Vendor Lookup (Manual JSON)
+        const getVendorLocal = (mac) => {
             if (!mac) return 'Unknown Vendor';
             try {
-                // Remove colons/dashes
-                const oui = mac.replace(/[:-\s]/g, '').substring(0, 6);
-                // Simple cache or local dictionary could go here for speed
-                // For now, we return 'Unknown' to avoid rate-limiting issues with public APIs in this demo code.
-                // UNLESS user explicitly wants real vendors. 
-                // Let's try to fetch from a safe API if possible, or Mock common ones.
-                const response = await axios.get(`https://api.macvendors.com/${mac}`, { timeout: 1500 });
-                return response.data;
+                // Remove colons/dashes and take first 6 chars
+                const cleanMac = mac.replace(/[:-\s]/g, '').toUpperCase();
+                const prefix = cleanMac.substring(0, 6);
+
+                const formattedPrefix = `${prefix.substring(0, 2)}:${prefix.substring(2, 4)}:${prefix.substring(4, 6)}`;
+
+
+                // Load vendors
+                const vendors = require('./vendors.json');
+
+                // Try Exact Match
+                if (vendors[formattedPrefix]) {
+                    return vendors[formattedPrefix];
+                }
+
+                // Try case-insensitive keys just in case
+                const key = Object.keys(vendors).find(k => k.toUpperCase() === formattedPrefix);
+                if (key) return vendors[key];
+
+
+                return 'Unknown Vendor';
             } catch (err) {
+                console.error("Vendor lookup error:", err.message);
                 return 'Unknown Vendor';
             }
+        };
+
+        // Helper: mDNS Discovery
+        const scanMdns = () => {
+            return new Promise((resolve) => {
+                const mDNS = require('multicast-dns');
+                const mdns = mDNS();
+                const devices = {};
+
+                mdns.on('response', (response) => {
+                    response.answers.forEach(a => {
+                        if (a.type === 'A' && a.data) {
+                            devices[a.data] = a.name; // Map IP to Name
+                        }
+                    });
+                    response.additionals.forEach(a => {
+                        if (a.type === 'A' && a.data) {
+                            devices[a.data] = a.name;
+                        }
+                    });
+                });
+
+                // Query for all services
+                mdns.query({ questions: [{ name: '_services._dns-sd._udp.local', type: 'PTR' }] });
+
+                // Use a short timeout to gather responses
+                setTimeout(() => {
+                    mdns.destroy();
+                    resolve(devices);
+                }, 2500);
+            });
         };
 
         // Custom ARP scan function
         const scanNetwork = () => new Promise((resolve) => {
             exec('arp -a', (error, stdout, stderr) => {
-                if (error) return resolve([]);
+                if (error) {
+                    return resolve([]);
+                }
 
                 const lines = stdout.split('\n');
                 const devices = [];
@@ -352,12 +362,12 @@ app.get('/api/wifi-radar/scan', async (req, res) => {
                         const ip = match[1];
                         const mac = match[2].replace(/-/g, ':').toUpperCase();
 
-                        if (ip.startsWith(subnetBase)) {
+                        if (ip.startsWith(subnetBase) && !ip.endsWith('.255')) {
                             devices.push({
                                 ip,
                                 mac,
                                 name: 'Unknown Device',
-                                vendor: 'Unknown' // Will resolve later
+                                vendor: 'Unknown'
                             });
                         }
                     }
@@ -365,6 +375,12 @@ app.get('/api/wifi-radar/scan', async (req, res) => {
                 resolve(devices);
             });
         });
+
+        // Start ping sweep and mDNS in parallel
+        const [_, mdnsDevices] = await Promise.all([
+            Promise.race([pingSweep(subnetBase), new Promise(r => setTimeout(r, 7000))]),
+            scanMdns()
+        ]);
 
         const devices = await scanNetwork();
 
@@ -381,18 +397,71 @@ app.get('/api/wifi-radar/scan', async (req, res) => {
         // Deduplicate
         const uniqueDevices = Array.from(new Map(devices.map(item => [item.ip, item])).values());
 
-        // Resolve Vendors (Async, parallel)
+
+        // Helper: Resolve Hostname (Reverse DNS)
+        const resolveHostname = (ip) => {
+            const dns = require('dns').promises;
+            return new Promise(async (resolve) => {
+                try {
+                    const hostnames = await Promise.race([
+                        dns.reverse(ip),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+                    ]);
+                    if (hostnames && hostnames.length > 0) {
+                        resolve(hostnames[0]);
+                    } else {
+                        resolve(null);
+                    }
+                } catch (err) {
+                    resolve(null);
+                }
+            });
+        };
+
+
+        // Resolve Vendors and Hostnames (Async, parallel)
         const enrichedDevices = await Promise.all(uniqueDevices.map(async device => {
             let vendor = device.vendor;
-            if (vendor === 'Unknown' || !vendor) {
-                try {
-                    vendor = await getVendor(device.mac);
-                } catch (e) { vendor = 'Unknown Vendor'; }
+            let hostname = null;
+
+
+
+            // Parallel lookup for Vendor and Hostname
+            const [vendorResult, hostnameResult] = await Promise.all([
+                Promise.resolve(getVendorLocal(device.mac)),
+                resolveHostname(device.ip)
+            ]);
+
+
+
+            vendor = vendorResult;
+            hostname = hostnameResult;
+            let mdnsName = mdnsDevices[device.ip];
+
+            if (mdnsName) {
+
+                // Clean up mDNS name (remove .local)
+                if (mdnsName.endsWith('.local')) {
+                    mdnsName = mdnsName.replace('.local', '');
+                }
+            }
+
+            let displayName = device.name;
+            if (displayName === 'Unknown Device') {
+                if (mdnsName) {
+                    displayName = mdnsName;
+                } else if (hostname) {
+                    displayName = hostname;
+                } else {
+                    displayName = `Device (${device.ip})`;
+                }
             }
 
             return {
                 ...device,
-                name: device.name === 'Unknown Device' ? `Device (${device.ip})` : device.name,
+                name: displayName,
+                hostname: hostname,
+                mdnsName: mdnsName,
                 vendor: vendor,
                 isSuspicious: false,
                 ports: []

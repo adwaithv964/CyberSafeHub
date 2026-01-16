@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Icon from '../components/Icon';
 import VaultModal from '../components/VaultModals'; // Import the modal
 import { callGeminiAPI } from '../utils/geminiApi';
-import { simpleMarkdownToHtml } from '../utils/markdown';
+import ReactMarkdown from 'react-markdown';
 import { checkPasswordStrength } from '../utils/securityScanners';
 import { logActivity } from '../utils/activityLogger';
 import { useAuth } from '../contexts/AuthContext'; // To get userId
@@ -276,7 +276,9 @@ const PasswordVaultPage = () => {
                         {aiAdvice && (
                             <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg">
                                 <h4 className="font-bold text-lg text-indigo-800 dark:text-indigo-200 mb-2 flex items-center gap-2"><Icon name="sparkles" className="w-5 h-5" /> AI Advisor</h4>
-                                <div className="prose prose-sm dark:prose-invert max-w-none text-indigo-700 dark:text-indigo-300" dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(aiAdvice) }} />
+                                <div className="prose prose-sm dark:prose-invert max-w-none text-indigo-700 dark:text-indigo-300">
+                                    <ReactMarkdown>{aiAdvice}</ReactMarkdown>
+                                </div>
                             </div>
                         )}
                     </div>
