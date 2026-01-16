@@ -1155,6 +1155,13 @@ export default function SecureShare({ onNavigate }) {
 
     return (
         <div className="max-w-6xl mx-auto p-4">
+            <button
+                onClick={() => onNavigate('tools')}
+                className="mb-6 flex items-center gap-2 text-text-secondary hover:text-accent transition-colors"
+            >
+                <Icon name="arrowLeft" className="w-5 h-5" />
+                <span>Back to Tools</span>
+            </button>
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-text-primary flex items-center gap-3">
                     <Icon name="share2" className="w-8 h-8 text-accent" />
