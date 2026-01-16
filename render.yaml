@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: cybersafehub-backend
+    env: docker
+    plan: free
+    dockerContext: .
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: CLAMAV_PORT
+        value: 3310
+      - key: CLAMAV_HOST
+        value: localhost
+    buildCommand: ""
+    startCommand: ""

@@ -10,6 +10,7 @@ import MetadataWasher from './components/tools/MetadataWasher';
 import UsernameDetective from './components/tools/UsernameDetective';
 import WiFiRadar from './components/tools/WiFiRadar';
 import SecureShare from './components/tools/SecureShare';
+import ConversionSystem from './components/tools/conversion/ConversionSystem';
 import PasswordVaultPage from './pages/PasswordVaultPage';
 import DigitalPrivacyPage from './pages/DigitalPrivacyPage';
 import EmergencyGuidesPage from './pages/EmergencyGuidesPage';
@@ -31,6 +32,7 @@ function AppContent() {
         if (path.includes('/tools/username-detective')) return 'username-detective';
         if (path.includes('/tools/wifi-radar')) return 'wifi-radar';
         if (path.includes('/tools/secure-share')) return 'secure-share';
+        if (path.includes('/tools/conversion-system')) return 'conversion-system';
         // if (path.startsWith('/tools')) return 'tools'; // Commented out to make Dashboard default on refresh
         return 'dashboard';
     });
@@ -82,6 +84,7 @@ function AppContent() {
             case 'username-detective': componentToRender = <UsernameDetective onNavigate={setActivePage} />; break;
             case 'wifi-radar': componentToRender = <WiFiRadar onNavigate={setActivePage} />; break;
             case 'secure-share': componentToRender = <SecureShare onNavigate={setActivePage} />; break;
+            case 'conversion-system': componentToRender = <ConversionSystem onNavigate={setActivePage} />; break;
             case 'settings': componentToRender = <SettingsPage />; break;
             default: componentToRender = <Dashboard />;
         }

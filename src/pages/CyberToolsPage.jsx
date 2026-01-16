@@ -79,6 +79,20 @@ export default function CyberToolsPage({ onNavigate }) {
                     </p>
                 </motion.div>
 
+                <motion.div
+                    whileHover={{ scale: 1.02, translateY: -5 }}
+                    className="bg-glass-panel p-6 rounded-xl border border-glass-border cursor-pointer hover:border-orange-400 hover:shadow-glow-orange transition-all group"
+                    onClick={() => handleToolSelect('conversion-system')}
+                >
+                    <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center mb-4 group-hover:bg-orange-500/20 transition-colors">
+                        <Icon name="fileText" className="w-6 h-6 text-orange-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-text-primary mb-2">All-in-One Converter</h3>
+                    <p className="text-text-secondary text-sm">
+                        Merge, Split, Compress, and Convert PDFs and Images. 20+ Tools in one place.
+                    </p>
+                </motion.div>
+
 
             </div>
         </div>
