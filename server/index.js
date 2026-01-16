@@ -18,12 +18,12 @@ const { Server } = require("socket.io");
 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173", // Allow Vite dev server
+        origin: process.env.FRONTEND_URL || "http://localhost:5173", // Allow Vercel app or local dev
         methods: ["GET", "POST"]
     }
 });
 
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 // --- Socket.IO Signaling Logic ---
 // Store nearby users: socketId -> { ip, name }

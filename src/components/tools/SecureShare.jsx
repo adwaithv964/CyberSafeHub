@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '../Icon';
 import { io } from "socket.io-client";
+import API_BASE_URL from '../../config';
 
 // --- Configuration ---
-// In production, this should be an environment variable.
-const SOCKET_URL = "http://localhost:3001";
+const SOCKET_URL = API_BASE_URL;
 
 export default function SecureShare({ onNavigate }) {
     const [mode, setMode] = useState('menu'); // 'menu', 'send', 'receive'
@@ -463,8 +463,8 @@ export default function SecureShare({ onNavigate }) {
                     onClick={sendFile}
                     disabled={connectionStatus !== 'connected' || !selectedFile || transferStatus === 'sending'}
                     className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${connectionStatus === 'connected' && selectedFile
-                            ? 'bg-accent text-black hover:shadow-glow-accent'
-                            : 'bg-glass-border text-text-secondary cursor-not-allowed'
+                        ? 'bg-accent text-black hover:shadow-glow-accent'
+                        : 'bg-glass-border text-text-secondary cursor-not-allowed'
                         }`}
                 >
                     {transferStatus === 'sending' ? `Sending... ${progress}%` : 'Send Securely'}

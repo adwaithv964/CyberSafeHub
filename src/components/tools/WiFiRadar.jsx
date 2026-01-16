@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaWifi, FaNetworkWired, FaServer, FaMobileAlt, FaLaptop, FaQuestion, FaExclamationTriangle, FaShieldAlt, FaSearch } from 'react-icons/fa';
 import axios from 'axios';
 
+import API_BASE_URL from '../../config';
+
 const WiFiRadar = ({ onNavigate }) => {
     const [scanning, setScanning] = useState(false);
     const [devices, setDevices] = useState([]);
@@ -15,7 +17,7 @@ const WiFiRadar = ({ onNavigate }) => {
         setDevices([]); // Clear previous results
         try {
             // Use the actual backend endpoint:
-            const response = await axios.get('http://localhost:3001/api/wifi-radar/scan');
+            const response = await axios.get(`${API_BASE_URL}/api/wifi-radar/scan`);
             setDevices(response.data);
         } catch (err) {
             console.error("Scan failed:", err);
@@ -40,7 +42,7 @@ const WiFiRadar = ({ onNavigate }) => {
         setAnalyzingIds(prev => [...prev, id]);
 
         try {
-            const response = await axios.post('http://localhost:3001/api/wifi-radar/analyze', {
+            const response = await axios.post(`${API_BASE_URL}/api/wifi-radar/analyze`, {
                 ip: device.ip,
                 mac: device.mac
             });
