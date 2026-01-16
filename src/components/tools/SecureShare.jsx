@@ -14,10 +14,15 @@ export default function SecureShare({ onNavigate }) {
     const [connectionStatus, setConnectionStatus] = useState('disconnected'); // disconnected, connecting, connected, failed
     const [transferStatus, setTransferStatus] = useState('idle'); // idle, sending, receiving, completed, error
     const [progress, setProgress] = useState(0);
+    const [isChannelReady, setIsChannelReady] = useState(false); // Track data channel open state
 
     // Sender State
     const [generatedCode, setGeneratedCode] = useState('');
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [currentFileIndex, setCurrentFileIndex] = useState(0);
+    const selectedFilesRef = useRef([]);
+    const currentFileIndexRef = useRef(0);
+
 
     // Receiver State
     const [inputCode, setInputCode] = useState((new Array(6)).fill(''));
@@ -32,6 +37,10 @@ export default function SecureShare({ onNavigate }) {
     const peerConnection = useRef(null);
     const dataChannel = useRef(null);
     const socketRef = useRef(null);
+
+    const isTransferCancelled = useRef(false);
+    const fileStreamRef = useRef(null); // For writing to disk
+    const [incomingMetadata, setIncomingMetadata] = useState(null); // For receiver approval
 
     // --- Socket Initialization ---
     useEffect(() => {
@@ -95,6 +104,11 @@ export default function SecureShare({ onNavigate }) {
                 }
             });
 
+            newSocket.on('disconnect-peer', () => {
+                console.log("Peer disconnected");
+                handleDisconnect(false);
+            });
+
             return () => {
                 newSocket.disconnect();
                 if (peerConnection.current) {
@@ -102,6 +116,7 @@ export default function SecureShare({ onNavigate }) {
                 }
                 socketRef.current = null;
                 setSocket(null);
+                setIsChannelReady(false);
             };
         }
     }, [mode, shareType]);
@@ -124,6 +139,12 @@ export default function SecureShare({ onNavigate }) {
             }
         };
 
+        pc.oniceconnectionstatechange = () => {
+            if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'closed') {
+                handleDisconnect(false);
+            }
+        };
+
         pc.ondatachannel = (event) => {
             const receiveChannel = event.channel;
             setupDataChannel(receiveChannel);
@@ -137,9 +158,15 @@ export default function SecureShare({ onNavigate }) {
         channel.onopen = () => {
             console.log("Data Channel Open");
             setTransferStatus('idle');
+            setIsChannelReady(true);
         };
 
         channel.onmessage = handleDataChannelMessage;
+
+        channel.onclose = () => {
+            console.log("Data Channel Closed");
+            setIsChannelReady(false);
+        };
     };
 
     const remotePeerIdRef = useRef(null);
@@ -191,44 +218,171 @@ export default function SecureShare({ onNavigate }) {
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
     };
 
+    // --- Disconnect & Cancel Logic ---
+    const handleDisconnect = (emitEvent = true) => {
+        console.log("Disconnecting peer...");
+
+        if (emitEvent && socketRef.current && remotePeerIdRef.current) {
+            socketRef.current.emit('disconnect-peer', { target: remotePeerIdRef.current });
+        }
+
+        if (peerConnection.current) {
+            peerConnection.current.close();
+        }
+
+        if (dataChannel.current) {
+            dataChannel.current.close();
+        }
+
+        if (fileStreamRef.current) {
+            fileStreamRef.current.close().catch(e => console.error("Error closing stream", e));
+            fileStreamRef.current = null;
+        }
+
+        setConnectionStatus('disconnected');
+        setTransferStatus('idle');
+        setProgress(0);
+        setIsChannelReady(false);
+        remotePeerIdRef.current = null;
+        isTransferCancelled.current = true;
+        setIncomingMetadata(null);
+
+        receivedBuffers.current = [];
+        receivedSize.current = 0;
+        fileMetadata.current = null;
+    };
+
+    const handleCancelTransfer = () => {
+        isTransferCancelled.current = true;
+        setTransferStatus('idle');
+        setProgress(0);
+    };
+
     // --- File Transfer Logic ---
-    const CHUNK_SIZE = 16384;
+    const CHUNK_SIZE = 65536; // 64KB
 
     const sendFile = async () => {
-        if (!selectedFile || !dataChannel.current) return;
-        setTransferStatus('sending');
+        if (selectedFilesRef.current.length === 0 || !dataChannel.current) return;
+        setTransferStatus('sending'); // Start the overall process
+        isTransferCancelled.current = false;
 
-        // Send Metadata first
-        dataChannel.current.send(JSON.stringify({
-            type: 'metadata',
-            name: selectedFile.name,
-            size: selectedFile.size,
-            fileType: selectedFile.type
-        }));
+        // Reset index if starting fresh
+        if (transferStatus !== 'sending') {
+            currentFileIndexRef.current = 0;
+            setCurrentFileIndex(0);
+        }
 
-        const buffer = await selectedFile.arrayBuffer();
-        let offset = 0;
+        processNextFile();
+    };
 
-        const sendChunk = () => {
-            if (offset >= buffer.byteLength) {
-                setTransferStatus('completed');
+    const processNextFile = () => {
+        const index = currentFileIndexRef.current;
+        const files = selectedFilesRef.current;
+
+        if (index >= files.length) {
+            setTransferStatus('completed');
+            return;
+        }
+
+        const file = files[index];
+        if (!file || !dataChannel.current) return;
+
+        try {
+            if (dataChannel.current.readyState !== 'open') {
+                console.error("Attempted to send but channel is not open");
+                setTransferStatus('error');
                 return;
             }
 
-            const chunk = buffer.slice(offset, offset + CHUNK_SIZE);
-            dataChannel.current.send(chunk);
-            offset += CHUNK_SIZE;
+            // Send Metadata for CURRENT file
+            dataChannel.current.send(JSON.stringify({
+                type: 'metadata',
+                name: file.name,
+                size: file.size,
+                fileType: file.type,
+                fileIndex: index,
+                totalFiles: files.length
+            }));
 
-            setProgress(Math.min(100, Math.round((offset / buffer.byteLength) * 100)));
+            setTransferStatus('waiting-for-ack');
+        } catch (error) {
+            console.error("Error in processNextFile:", error);
+            setTransferStatus('error');
+        }
+    };
 
-            if (dataChannel.current.bufferedAmount > 1000 * 1000) {
-                setTimeout(sendChunk, 50);
-            } else {
-                setTimeout(sendChunk, 0);
+
+    const startStreamingFile = () => {
+        const index = currentFileIndexRef.current;
+        const file = selectedFilesRef.current[index];
+
+        if (!file || !dataChannel.current) return;
+
+        setTransferStatus('sending');
+
+        const channel = dataChannel.current;
+        channel.bufferedAmountLowThreshold = 65536; // 64KB low watermark
+
+        let offset = 0;
+        const reader = new FileReader();
+
+        const readSlice = () => {
+            if (isTransferCancelled.current) return;
+            if (channel.readyState !== 'open') {
+                setTransferStatus('error');
+                return;
+            }
+
+            const slice = file.slice(offset, offset + CHUNK_SIZE);
+            reader.readAsArrayBuffer(slice);
+        };
+
+        reader.onload = (e) => {
+            const buffer = e.target.result;
+            try {
+                if (channel.bufferedAmount > 256 * 1024) { // 256KB Safety cap
+                    const onBufferedAmountLow = () => {
+                        channel.removeEventListener('bufferedamountlow', onBufferedAmountLow);
+                        sendData(buffer);
+                    };
+                    channel.addEventListener('bufferedamountlow', onBufferedAmountLow);
+                } else {
+                    sendData(buffer);
+                }
+            } catch (err) {
+                console.error("Error sending chunk", err);
+                setTransferStatus('error');
             }
         };
 
-        sendChunk();
+        const sendData = (buffer) => {
+            try {
+                channel.send(buffer);
+                offset += buffer.byteLength;
+                setProgress(Math.round((offset / file.size) * 100));
+
+                if (offset < file.size) {
+                    readSlice();
+                } else {
+                    // File Completed
+                    currentFileIndexRef.current += 1;
+                    setCurrentFileIndex(currentFileIndexRef.current);
+
+                    // Move to next file immediately
+                    setTimeout(processNextFile, 100);
+                }
+            } catch (error) {
+                console.error("Critical error in sendData", error);
+                // If queue full happens despite check, wait for drain
+                if (error.name === 'OperationError') {
+                    setTimeout(() => sendData(buffer), 50);
+                } else {
+                    setTransferStatus('error');
+                }
+            }
+        };
+
+        readSlice();
     };
 
     // Receiver Buffers
@@ -236,46 +390,111 @@ export default function SecureShare({ onNavigate }) {
     const receivedSize = useRef(0);
     const fileMetadata = useRef(null);
 
-    const handleDataChannelMessage = (event) => {
+
+    const handleDataChannelMessage = async (event) => {
         const data = event.data;
 
         if (typeof data === 'string') {
             try {
-                const metadata = JSON.parse(data);
-                if (metadata.type === 'metadata') {
-                    fileMetadata.current = metadata;
-                    receivedBuffers.current = [];
-                    receivedSize.current = 0;
-                    setTransferStatus('receiving');
+                const message = JSON.parse(data);
+
+                if (message.type === 'metadata') {
+                    setIncomingMetadata(message);
+                    setTransferStatus('waiting-for-accept');
+                    // Do not auto-start. Wait for user to accept.
+                } else if (message.type === 'ACK') {
+                    // Sender received ACK, start streaming
+                    startStreamingFile();
                 }
             } catch (e) {
-                console.error("Error parsing metadata", e);
+                console.error("Error parsing message", e);
             }
         } else {
-            receivedBuffers.current.push(data);
-            receivedSize.current += data.byteLength;
+            // Binary Data (Chunk)
+            setTransferStatus('receiving');
+            const arrayBuffer = data;
 
-            if (fileMetadata.current) {
-                setProgress(Math.min(100, Math.round((receivedSize.current / fileMetadata.current.size) * 100)));
+            if (fileStreamRef.current) {
+                // Stream to disk
+                try {
+                    await fileStreamRef.current.write(arrayBuffer);
+                    receivedSize.current += arrayBuffer.byteLength;
 
-                if (receivedSize.current >= fileMetadata.current.size) {
-                    saveReceivedFile();
+                    if (incomingMetadata) {
+                        setProgress(Math.min(100, Math.round((receivedSize.current / incomingMetadata.size) * 100)));
+
+                        if (receivedSize.current >= incomingMetadata.size) {
+                            await fileStreamRef.current.close();
+                            fileStreamRef.current = null;
+                            setTransferStatus('completed');
+                            setIncomingMetadata(null);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error writing to file stream", err);
+                    setTransferStatus('error');
+                }
+            } else {
+                // Flashback: RAM Buffer (Fallback)
+                receivedBuffers.current.push(arrayBuffer);
+                receivedSize.current += arrayBuffer.byteLength;
+
+                if (incomingMetadata) {
+                    setProgress(Math.min(100, Math.round((receivedSize.current / incomingMetadata.size) * 100)));
+
+                    if (receivedSize.current >= incomingMetadata.size) {
+                        saveReceivedFile();
+                    }
                 }
             }
         }
     };
 
+    const handleAcceptDownload = async () => {
+        if (!incomingMetadata) return;
+
+        try {
+            // Try to use File System Access API
+            if (window.showSaveFilePicker) {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: incomingMetadata.name,
+                });
+                const writable = await handle.createWritable();
+                fileStreamRef.current = writable;
+            } else {
+                console.warn("File System Access API not supported. Using RAM buffer.");
+            }
+        } catch (err) {
+            console.error("Error getting file handle (user might have cancelled):", err);
+            return; // Don't start transfer if user cancelled
+        }
+
+        // Ready to receive
+        receivedBuffers.current = [];
+        receivedSize.current = 0;
+
+        // Send ACK
+        if (dataChannel.current) {
+            dataChannel.current.send(JSON.stringify({ type: 'ACK' }));
+        }
+
+        setTransferStatus('receiving');
+    };
+
     const saveReceivedFile = () => {
         setTransferStatus('completed');
-        const blob = new Blob(receivedBuffers.current, { type: fileMetadata.current.fileType });
+        const blob = new Blob(receivedBuffers.current, { type: incomingMetadata.fileType });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement('a');
         a.href = url;
-        a.download = fileMetadata.current.name;
+        a.download = incomingMetadata.name;
         a.click();
         URL.revokeObjectURL(url);
+        setIncomingMetadata(null);
     };
+
+
 
 
     // --- UI Helpers ---
@@ -296,8 +515,13 @@ export default function SecureShare({ onNavigate }) {
     };
 
     const handleFileSelect = (e) => {
-        if (e.target.files[0]) {
-            setSelectedFile(e.target.files[0]);
+        if (e.target.files && e.target.files.length > 0) {
+            const files = Array.from(e.target.files);
+            setSelectedFiles(files);
+            selectedFilesRef.current = files;
+            setCurrentFileIndex(0);
+            currentFileIndexRef.current = 0;
+            setTransferStatus('idle'); // Reset status on new select
         }
     };
 
@@ -306,6 +530,10 @@ export default function SecureShare({ onNavigate }) {
         if (!isVisible) {
             if (socket) socket.emit('join-nearby', deviceName);
             setIsVisible(true);
+        } else {
+            // Stop visibility
+            if (socket) socket.emit('leave-nearby', deviceName);
+            setIsVisible(false);
         }
     };
 
@@ -418,7 +646,7 @@ export default function SecureShare({ onNavigate }) {
                                         </div>
                                         <span className="font-medium">{user.name}</span>
                                     </div>
-                                    <Icon name="arrowRight" className="w-4 h-4 text-text-secondary" />
+                                    <Icon name="arrowLeft" className="w-4 h-4 text-text-secondary rotate-180" />
                                 </div>
                             ))
                         )}
@@ -427,24 +655,32 @@ export default function SecureShare({ onNavigate }) {
             )}
 
             <div className="space-y-6">
-                <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${selectedFile ? 'border-accent bg-accent/5' : 'border-glass-border hover:border-text-secondary'}`}>
+                <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${selectedFiles.length > 0 ? 'border-accent bg-accent/5' : 'border-glass-border hover:border-text-secondary'}`}>
                     <input
                         type="file"
                         id="fileInput"
+                        multiple
                         onChange={handleFileSelect}
                         className="hidden"
                     />
                     <label htmlFor="fileInput" className="cursor-pointer block">
-                        {selectedFile ? (
+                        {selectedFiles.length > 0 ? (
                             <div>
                                 <Icon name="file" className="w-12 h-12 text-accent mx-auto mb-2" />
-                                <p className="font-semibold text-lg">{selectedFile.name}</p>
-                                <p className="text-sm text-text-secondary">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                                <p className="font-semibold text-lg">{selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} selected</p>
+                                <p className="text-sm text-text-secondary mt-1">
+                                    {selectedFiles[0].name} {selectedFiles.length > 1 && `+ ${selectedFiles.length - 1} more`}
+                                </p>
+                                {transferStatus === 'sending' || transferStatus === 'waiting-for-ack' ? (
+                                    <p className="text-xs text-accent mt-2 font-mono">
+                                        Processing: {currentFileIndex + 1} / {selectedFiles.length}
+                                    </p>
+                                ) : null}
                             </div>
                         ) : (
                             <div>
-                                <Icon name="upload" className="w-12 h-12 text-text-secondary mx-auto mb-2" />
-                                <p className="text-lg">Click to select a file</p>
+                                <Icon name="uploadCloud" className="w-12 h-12 text-text-secondary mx-auto mb-2" />
+                                <p className="text-lg">Click to select files</p>
                             </div>
                         )}
                     </label>
@@ -452,23 +688,47 @@ export default function SecureShare({ onNavigate }) {
 
                 <div className="flex items-center justify-between bg-black/20 p-4 rounded-lg">
                     <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500 shadow-glow-green' : 'bg-red-500'}`} />
+                        <div className={`w-3 h-3 rounded-full ${isChannelReady ? 'bg-green-500 shadow-glow-green' : (connectionStatus === 'connected' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500')}`} />
                         <span className="text-sm font-medium">
-                            {connectionStatus === 'connected' ? 'Peer Connected' : 'Waiting for Peer...'}
+                            {connectionStatus === 'connected'
+                                ? (isChannelReady ? 'Peer Connected & Ready' : 'Initializing Secure Channel...')
+                                : 'Waiting for Peer...'}
                         </span>
                     </div>
                 </div>
 
-                <button
-                    onClick={sendFile}
-                    disabled={connectionStatus !== 'connected' || !selectedFile || transferStatus === 'sending'}
-                    className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${connectionStatus === 'connected' && selectedFile
-                        ? 'bg-accent text-black hover:shadow-glow-accent'
-                        : 'bg-glass-border text-text-secondary cursor-not-allowed'
-                        }`}
-                >
-                    {transferStatus === 'sending' ? `Sending... ${progress}%` : 'Send Securely'}
-                </button>
+                {connectionStatus === 'connected' && (
+                    <button
+                        onClick={() => handleDisconnect(true)}
+                        className="w-full py-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-colors font-medium border border-red-500/20"
+                    >
+                        Disconnect Peer
+                    </button>
+                )}
+
+                <div className="flex gap-4">
+                    {transferStatus === 'sending' && (
+                        <button
+                            onClick={handleCancelTransfer}
+                            className="flex-1 py-4 bg-red-500/20 text-red-500 rounded-xl font-bold text-lg hover:bg-red-500/30 transition-all border border-red-500/20"
+                        >
+                            Cancel Transfer
+                        </button>
+                    )}
+
+                    <button
+                        onClick={sendFile}
+                        disabled={!isChannelReady || selectedFiles.length === 0 || transferStatus === 'sending'}
+                        className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all ${isChannelReady && selectedFiles.length > 0
+                            ? 'bg-accent text-black hover:shadow-glow-accent'
+                            : 'bg-glass-border text-text-secondary cursor-not-allowed'
+                            }`}
+                    >
+                        {transferStatus === 'sending' || transferStatus === 'waiting-for-ack'
+                            ? `Sending ${currentFileIndex + 1}/${selectedFiles.length} (${progress}%)`
+                            : 'Send Securely'}
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -507,6 +767,14 @@ export default function SecureShare({ onNavigate }) {
                     >
                         Connect to Room
                     </button>
+                    {connectionStatus === 'connected' && (
+                        <button
+                            onClick={() => handleDisconnect(true)}
+                            className="w-full py-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-colors font-medium border border-red-500/20"
+                        >
+                            Disconnect
+                        </button>
+                    )}
                 </>
             ) : (
                 <>
@@ -531,10 +799,9 @@ export default function SecureShare({ onNavigate }) {
 
                         <button
                             onClick={toggleVisibility}
-                            disabled={isVisible}
-                            className={`px-6 py-2 rounded-lg font-medium transition-all ${isVisible ? 'bg-green-500/20 text-green-400 cursor-default' : 'bg-accent text-black hover:bg-accent-hover'}`}
+                            className={`px-6 py-2 rounded-lg font-medium transition-all ${isVisible ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-accent text-black hover:bg-accent-hover'}`}
                         >
-                            {isVisible ? 'Visible to Nearby Devices' : 'Make Visible'}
+                            {isVisible ? 'Stop Visibility' : 'Make Visible'}
                         </button>
                     </div>
                 </>
@@ -543,16 +810,26 @@ export default function SecureShare({ onNavigate }) {
             <div className="space-y-4">
                 <div className="flex items-center justify-between bg-black/20 p-4 rounded-lg">
                     <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500 shadow-glow-green' : 'bg-red-500'}`} />
+                        <div className={`w-3 h-3 rounded-full ${isChannelReady ? 'bg-green-500 shadow-glow-green' : (connectionStatus === 'connected' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500')}`} />
                         <span className="text-sm font-medium">
-                            {connectionStatus === 'connected' ? 'Connected to Peer' : 'Disconnected'}
+                            {connectionStatus === 'connected'
+                                ? (isChannelReady ? 'Connected to Peer' : 'Initializing...')
+                                : 'Disconnected'}
                         </span>
                     </div>
+                    {connectionStatus === 'connected' && shareType === 'nearby' && (
+                        <button
+                            onClick={() => handleDisconnect(true)}
+                            className="text-xs bg-red-500/20 text-red-500 px-3 py-1 rounded-full hover:bg-red-500/30 transition-colors"
+                        >
+                            Disconnect
+                        </button>
+                    )}
                 </div>
 
                 {transferStatus !== 'idle' && (
                     <div className="bg-black/30 p-6 rounded-xl text-center">
-                        <Icon name={transferStatus === 'completed' ? "checkCircle" : "download"} className={`w-12 h-12 mx-auto mb-4 ${transferStatus === 'completed' ? 'text-green-400' : 'text-accent animate-bounce'}`} />
+                        <Icon name={transferStatus === 'completed' ? "checkCircle" : "downloadCloud"} className={`w-12 h-12 mx-auto mb-4 ${transferStatus === 'completed' ? 'text-green-400' : 'text-accent animate-bounce'}`} />
                         <p className="text-lg font-bold mb-2">
                             {transferStatus === 'receiving' ? 'Receiving File...' : 'Transfer Complete'}
                         </p>
@@ -584,6 +861,39 @@ export default function SecureShare({ onNavigate }) {
                             <div className="flex gap-4">
                                 <button onClick={() => setIncomingRequest(null)} className="flex-1 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30">Decline</button>
                                 <button onClick={acceptRequest} className="flex-1 py-2 bg-accent text-black rounded-lg hover:bg-accent-hover font-bold">Accept</button>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* File Acceptance Modal */}
+            <AnimatePresence>
+                {/* Using incomingMetadata instead of incomingRequest here for file acceptance */}
+                {incomingMetadata && transferStatus === 'waiting-for-accept' && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-2xl"
+                    >
+                        <div className="bg-glass-panel p-6 rounded-xl border border-accent w-3/4 text-center">
+                            <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Icon name="downloadCloud" className="w-8 h-8 text-accent" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Incoming File</h3>
+                            <p className="text-white font-semibold mb-1">{incomingMetadata.name}</p>
+                            <p className="text-text-secondary mb-6">{(incomingMetadata.size / 1024 / 1024).toFixed(2)} MB</p>
+
+                            <div className="flex gap-4">
+                                <button onClick={() => {
+                                    setIncomingMetadata(null);
+                                    setTransferStatus('idle');
+                                }} className="flex-1 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30">Decline</button>
+
+                                <button onClick={handleAcceptDownload} className="flex-1 py-2 bg-accent text-black rounded-lg hover:bg-accent-hover font-bold">
+                                    Save & Accept
+                                </button>
                             </div>
                         </div>
                     </motion.div>
