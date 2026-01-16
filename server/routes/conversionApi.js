@@ -80,7 +80,9 @@ router.post('/job', upload.single('file'), async (req, res) => {
 
         // Validate
         const sourceExt = path.extname(req.file.originalname).replace('.', '').toLowerCase();
+        console.log(`[DEBUG] Converting: ${sourceExt} -> ${targetFormat}`);
         const validation = validateConversion(sourceExt, targetFormat);
+        console.log(`[DEBUG] Validation Result:`, validation);
 
         if (!validation.allowed) {
             fs.unlinkSync(req.file.path);

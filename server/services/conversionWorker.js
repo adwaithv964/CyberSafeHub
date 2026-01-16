@@ -7,6 +7,7 @@ const ffmpegPath = require('ffmpeg-static');
 const sharp = require('sharp');
 const libre = require('libreoffice-convert');
 libre.convertAsync = promisify(libre.convert);
+const PDFDocument = require('pdfkit');
 
 // Configure FFmpeg
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -44,10 +45,9 @@ class ConversionWorker {
             const target = job.targetFormat.toLowerCase();
             const sourceExt = path.extname(job.sourceFile.path).replace('.', '').toLowerCase();
 
-            // Special Case: Image -> PDF (Use Sharp for simpler local support, or PDFKit)
-            // LibreOffice can do it too, but Sharp is lightweight for single images.
+            // Special Case: Image -> PDF (Use PDFKit for pure JS stability)
             if (target === 'pdf' && imageFormats.includes(sourceExt)) {
-                await this.runSharp(inputPath, outputPath, 'pdf');
+                await this.runPdfKit(inputPath, outputPath);
             }
             else if (videoFormats.includes(target) || audioFormats.includes(target)) {
                 await this.runFfmpeg(inputPath, outputPath, target, (p) => this.updateProgress(job, p));
@@ -94,6 +94,29 @@ class ConversionWorker {
 
     // --- ENGINES ---
 
+    async runPdfKit(input, output) {
+        return new Promise((resolve, reject) => {
+            try {
+                const doc = new PDFDocument({ autoFirstPage: false });
+                const stream = fs.createWriteStream(output);
+
+                doc.pipe(stream);
+
+                // Load image to get dimensions
+                const img = doc.openImage(input);
+                doc.addPage({ size: [img.width, img.height] });
+                doc.image(img, 0, 0);
+
+                doc.end();
+
+                stream.on('finish', resolve);
+                stream.on('error', reject);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
     async runFfmpeg(input, output, format, onProgress) {
         return new Promise((resolve, reject) => {
             const cmd = ffmpeg(input);
@@ -121,11 +144,6 @@ class ConversionWorker {
             pipeline.png({ compressionLevel: 9, adaptiveFiltering: true });
         } else if (format === 'webp') {
             pipeline.webp({ quality: 100, lossless: true }); // Prefer lossless if possible or high quality
-        } else if (format === 'pdf') {
-            // Sharp doesn't allow direct .toFile('x.pdf') without .toFormat('pdf')
-            // It wraps image in a PDF page.
-            // Note: Use 'file' input if possible for meta preservation
-            pipeline.toFormat('pdf');
         }
 
         await pipeline.toFile(output);
