@@ -66,7 +66,7 @@ export function UniversalConverter({ onBack }) {
             setIsProcessing(false);
 
             // Trigger Download
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+            const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
             window.location.href = `${API_URL}/api/convert/download/${job.id}`;
         }
         if (job && job.status === 'failed') {
@@ -97,7 +97,7 @@ export function UniversalConverter({ onBack }) {
             formData.append('format', outputFormat.toLowerCase());
             if (confirmed) formData.append('confirm', 'true');
 
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+            const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 
             // 1. Create Job
             const res = await axios.post(`${API_URL}/api/convert/job`, formData);
