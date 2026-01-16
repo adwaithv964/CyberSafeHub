@@ -1,4 +1,4 @@
-FROM node:18-bustery
+FROM node:18-bullseye
 
 # Install System Dependencies
 # 1. LibreOffice (for Documents)
