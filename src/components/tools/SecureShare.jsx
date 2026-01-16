@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '../Icon';
 import { io } from "socket.io-client";
+import QRCode from 'qrcode'; // Use default export
+import { Html5QrcodeScanner } from "html5-qrcode";
+import LZString from 'lz-string';
 import API_BASE_URL from '../../config';
 
 // --- Configuration ---
@@ -9,7 +12,7 @@ const SOCKET_URL = API_BASE_URL;
 
 export default function SecureShare({ onNavigate }) {
     const [mode, setMode] = useState('menu'); // 'menu', 'send', 'receive'
-    const [shareType, setShareType] = useState('global'); // 'global', 'nearby'
+    const [shareType, setShareType] = useState('global'); // 'global', 'nearby', 'offline'
     const [socket, setSocket] = useState(null);
     const [connectionStatus, setConnectionStatus] = useState('disconnected'); // disconnected, connecting, connected, failed
     const [transferStatus, setTransferStatus] = useState('idle'); // idle, sending, receiving, completed, error
@@ -41,6 +44,12 @@ export default function SecureShare({ onNavigate }) {
     const isTransferCancelled = useRef(false);
     const fileStreamRef = useRef(null); // For writing to disk
     const [incomingMetadata, setIncomingMetadata] = useState(null); // For receiver approval
+
+    // Offline State
+    const [offlineStep, setOfflineStep] = useState('init'); // init, generate-offer, scan-offer, generate-answer, scan-answer
+    const [qrData, setQrData] = useState('');
+    const [scannerRef, setScannerRef] = useState(null);
+    const isOfflineScanning = useRef(false);
 
     // --- Socket Initialization ---
     useEffect(() => {
@@ -256,6 +265,25 @@ export default function SecureShare({ onNavigate }) {
         isTransferCancelled.current = true;
         setTransferStatus('idle');
         setProgress(0);
+
+        // Notify peer to stop sending
+        if (dataChannel.current && dataChannel.current.readyState === 'open') {
+            try {
+                dataChannel.current.send(JSON.stringify({ type: 'CANCEL' }));
+            } catch (e) {
+                console.error("Failed to send cancel signal", e);
+            }
+        }
+
+        // Close file stream if open
+        if (fileStreamRef.current) {
+            fileStreamRef.current.close().catch(e => console.error(e));
+            fileStreamRef.current = null;
+        }
+
+        // Reset buffers
+        receivedBuffers.current = [];
+        receivedSize.current = 0;
     };
 
     // --- File Transfer Logic ---
@@ -389,6 +417,7 @@ export default function SecureShare({ onNavigate }) {
     const receivedBuffers = useRef([]);
     const receivedSize = useRef(0);
     const fileMetadata = useRef(null);
+    const lastProgressUpdate = useRef(0);
 
 
     const handleDataChannelMessage = async (event) => {
@@ -400,34 +429,56 @@ export default function SecureShare({ onNavigate }) {
 
                 if (message.type === 'metadata') {
                     setIncomingMetadata(message);
+                    fileMetadata.current = message; // Persist in ref for callbacks
                     setTransferStatus('waiting-for-accept');
-                    // Do not auto-start. Wait for user to accept.
                 } else if (message.type === 'ACK') {
-                    // Sender received ACK, start streaming
                     startStreamingFile();
+                } else if (message.type === 'CANCEL') {
+                    // Peer cancelled transfer
+                    isTransferCancelled.current = true;
+                    setTransferStatus('idle');
+                    setProgress(0);
+                    setIncomingMetadata(null);
                 }
             } catch (e) {
                 console.error("Error parsing message", e);
             }
         } else {
             // Binary Data (Chunk)
+            if (isTransferCancelled.current) return; // IGNORE chunks if cancelled
+
             setTransferStatus('receiving');
             const arrayBuffer = data;
+            const meta = fileMetadata.current; // Use ref for reliability
 
             if (fileStreamRef.current) {
-                // Stream to disk
                 try {
                     await fileStreamRef.current.write(arrayBuffer);
                     receivedSize.current += arrayBuffer.byteLength;
 
-                    if (incomingMetadata) {
-                        setProgress(Math.min(100, Math.round((receivedSize.current / incomingMetadata.size) * 100)));
+                    if (meta) {
+                        const now = Date.now();
+                        // Throttle updates to every 100ms unless complete
+                        if (now - lastProgressUpdate.current > 100 || receivedSize.current >= meta.size) {
+                            const percent = Math.min(100, Math.round((receivedSize.current / meta.size) * 100));
+                            setProgress(percent);
+                            lastProgressUpdate.current = now;
+                        }
 
-                        if (receivedSize.current >= incomingMetadata.size) {
+                        if (receivedSize.current >= meta.size) {
                             await fileStreamRef.current.close();
                             fileStreamRef.current = null;
-                            setTransferStatus('completed');
-                            setIncomingMetadata(null);
+                            receivedBuffers.current = [];
+                            receivedSize.current = 0;
+
+                            // Check if this was the last file
+                            if (meta.fileIndex + 1 >= meta.totalFiles) {
+                                setTransferStatus('completed');
+                                setIncomingMetadata(null); // Clear metadata only on full completion
+                                fileMetadata.current = null;
+                            } else {
+                                // Wait for next metadata
+                            }
                         }
                     }
                 } catch (err) {
@@ -435,14 +486,19 @@ export default function SecureShare({ onNavigate }) {
                     setTransferStatus('error');
                 }
             } else {
-                // Flashback: RAM Buffer (Fallback)
+                // Flashback: RAM Buffer
                 receivedBuffers.current.push(arrayBuffer);
                 receivedSize.current += arrayBuffer.byteLength;
 
-                if (incomingMetadata) {
-                    setProgress(Math.min(100, Math.round((receivedSize.current / incomingMetadata.size) * 100)));
+                if (meta) {
+                    const now = Date.now();
+                    if (now - lastProgressUpdate.current > 100 || receivedSize.current >= meta.size) {
+                        const percent = Math.min(100, Math.round((receivedSize.current / meta.size) * 100));
+                        setProgress(percent);
+                        lastProgressUpdate.current = now;
+                    }
 
-                    if (receivedSize.current >= incomingMetadata.size) {
+                    if (receivedSize.current >= meta.size) {
                         saveReceivedFile();
                     }
                 }
@@ -452,6 +508,9 @@ export default function SecureShare({ onNavigate }) {
 
     const handleAcceptDownload = async () => {
         if (!incomingMetadata) return;
+
+        // Reset cancellation state for new transfer
+        isTransferCancelled.current = false;
 
         try {
             // Try to use File System Access API
@@ -562,7 +621,161 @@ export default function SecureShare({ onNavigate }) {
     }, [mode, shareType, socket]);
 
 
+    // --- Offline Mode Helpers ---
+    const initiateOffline = async () => {
+        const pc = createPeerConnection();
+        peerConnection.current = pc;
+
+        // Create Data Channel immediately as we are the "Offerer"
+        const channel = pc.createDataChannel("fileTransfer");
+        setupDataChannel(channel);
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        // Wait for ICE gathering to complete for a self-contained offer
+        // Usually we send ICE candidates separately, but for QR (Offline),
+        // we need the FULL SDP with candidates embedded, or mostly complete.
+        // A simple trick is to wait a bit or use 'iceGatheringState' change.
+        // For simplicity here, we assume the initial offer has enough candidates (host candidates).
+
+        // Compress SDP
+        const compressed = LZString.compressToBase64(JSON.stringify(offer));
+        setQrData(compressed);
+        setOfflineStep('generate-offer');
+
+        // Render QR
+        setTimeout(() => {
+            const canvas = document.getElementById('qr-canvas');
+            if (canvas) QRCode.toCanvas(canvas, compressed, { width: 300 }, (error) => {
+                if (error) console.error(error);
+            });
+        }, 100);
+    };
+
+    const handleOfflineScan = async (decodedText) => {
+        try {
+            const decompressed = LZString.decompressFromBase64(decodedText);
+            const signal = JSON.parse(decompressed);
+
+
+            if (!peerConnection.current) {
+                const pc = createPeerConnection(); // Fixed: Use correct helper name
+                peerConnection.current = pc;
+            }
+            const pc = peerConnection.current;
+
+            if (signal.type === 'offer') {
+                // We are Receiver
+                await pc.setRemoteDescription(new RTCSessionDescription(signal));
+
+                // Handle Data Channel (will happen in 'ondatachannel')
+
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+
+                const compressedAnswer = LZString.compressToBase64(JSON.stringify(answer));
+                setQrData(compressedAnswer);
+                setOfflineStep('generate-answer');
+
+                setTimeout(() => {
+                    const canvas = document.getElementById('qr-canvas');
+                    if (canvas) QRCode.toCanvas(canvas, compressedAnswer, { width: 300 }, (error) => {
+                        if (error) console.error(error);
+                    });
+                }, 100);
+
+            } else if (signal.type === 'answer') {
+                // We are Sender
+                await pc.setRemoteDescription(new RTCSessionDescription(signal));
+                setConnectionStatus('connected');
+                setIsChannelReady(true);
+                setOfflineStep('connected');
+            }
+        } catch (e) {
+            console.error("Scan Error", e);
+        }
+    };
+
+    const startScanner = () => {
+        if (scannerRef) return;
+        setOfflineStep('scanning'); // Generic scanning step
+        setTimeout(() => {
+            const scanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                 /* verbose= */ false
+            );
+            scanner.render((decodedText) => {
+                console.log("Scanned:", decodedText);
+                scanner.clear();
+                setScannerRef(null);
+                handleOfflineScan(decodedText);
+            }, (error) => {
+                // console.warn(error);
+            });
+            setScannerRef(scanner);
+        }, 100);
+    };
+
+
     // --- Render ---
+
+    const renderOffline = () => (
+        <div className="max-w-xl mx-auto mt-8 bg-glass-panel p-8 rounded-2xl border border-glass-border">
+            <button onClick={() => { setMode('menu'); if (scannerRef) scannerRef.clear(); }} className="mb-6 flex items-center gap-2 text-text-secondary hover:text-accent">
+                <Icon name="arrowLeft" className="w-4 h-4" /> Back
+            </button>
+            <h2 className="text-2xl font-bold mb-6 text-center">Offline Sharing (QR)</h2>
+
+            {offlineStep === 'init' && (
+                <div className="space-y-4">
+                    <button onClick={initiateOffline} className="w-full py-4 bg-accent text-black rounded-xl font-bold hover:shadow-glow-accent">
+                        I want to SEND (Generate QR)
+                    </button>
+                    <button onClick={startScanner} className="w-full py-4 bg-glass-border text-white rounded-xl font-bold hover:bg-glass-panel-hover">
+                        I want to RECEIVE (Scan QR)
+                    </button>
+                </div>
+            )}
+
+            {(offlineStep === 'generate-offer' || offlineStep === 'generate-answer') && (
+                <div className="flex flex-col items-center">
+                    <p className="mb-4 text-text-secondary">
+                        {offlineStep === 'generate-offer' ? 'Ask receiver to scan this QR Code.' : 'Ask sender to scan this QR Answer.'}
+                    </p>
+                    <canvas id="qr-canvas" className="rounded-xl border border-white/20 mb-6"></canvas>
+                    {offlineStep === 'generate-offer' && (
+                        <button onClick={() => { setOfflineStep('scanning'); startScanner(); }} className="px-6 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30">
+                            Next: Scan Answer
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {offlineStep === 'scanning' && (
+                <div className="flex flex-col items-center">
+                    <p className="mb-4 text-text-secondary">Scan the QR code on the other device.</p>
+                    <div id="reader" className="w-full max-w-sm overflow-hidden rounded-xl border border-white/20"></div>
+                </div>
+            )}
+
+            {offlineStep === 'connected' && (
+                <div className="text-center">
+                    <Icon name="checkCircle" className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                    <p className="text-xl font-bold text-green-500 mb-6">Connected!</p>
+                    <div className="flex gap-4">
+                        <button onClick={() => setMode('send')} className="flex-1 py-3 bg-accent text-black rounded-xl font-bold">
+                            Send File
+                        </button>
+                        <button onClick={() => setMode('receive')} className="flex-1 py-3 bg-glass-border text-white rounded-xl font-bold">
+                            Receive File
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 
     const renderMenu = () => (
         <div className="max-w-2xl mx-auto mt-8">
@@ -579,12 +792,24 @@ export default function SecureShare({ onNavigate }) {
                 >
                     Nearby Share (WiFi)
                 </button>
+                <button
+                    onClick={() => setShareType('offline')}
+                    className={`flex-1 py-3 rounded-xl font-medium transition-all ${shareType === 'offline' ? 'bg-accent text-black shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
+                >
+                    Offline (QR)
+                </button>
             </div>
 
             <div className="grid grid-cols-2 gap-8">
                 <motion.button
                     whileHover={{ scale: 1.05 }}
-                    onClick={() => setMode('send')}
+                    onClick={() => {
+                        if (shareType === 'offline') {
+                            setMode('offline');
+                        } else {
+                            setMode('send');
+                        }
+                    }}
                     className="bg-glass-panel p-8 rounded-2xl border border-glass-border hover:border-accent hover:shadow-glow-accent flex flex-col items-center gap-4 transition-all"
                 >
                     <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center">
@@ -592,13 +817,19 @@ export default function SecureShare({ onNavigate }) {
                     </div>
                     <h2 className="text-2xl font-bold">Send File</h2>
                     <p className="text-text-secondary text-center">
-                        {shareType === 'global' ? 'Create a secure room and share code.' : 'Scan for nearby devices to send.'}
+                        {shareType === 'global' ? 'Create a secure room and share code.' : (shareType === 'nearby' ? 'Scan for nearby devices to send.' : 'Generate QR code to connect.')}
                     </p>
                 </motion.button>
 
                 <motion.button
                     whileHover={{ scale: 1.05 }}
-                    onClick={() => setMode('receive')}
+                    onClick={() => {
+                        if (shareType === 'offline') {
+                            setMode('offline');
+                        } else {
+                            setMode('receive');
+                        }
+                    }}
                     className="bg-glass-panel p-8 rounded-2xl border border-glass-border hover:border-blue-400 hover:shadow-glow-blue flex flex-col items-center gap-4 transition-all"
                 >
                     <div className="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center">
@@ -606,7 +837,7 @@ export default function SecureShare({ onNavigate }) {
                     </div>
                     <h2 className="text-2xl font-bold">Receive File</h2>
                     <p className="text-text-secondary text-center">
-                        {shareType === 'global' ? 'Enter a code to join room.' : 'Make device visible to nearby senders.'}
+                        {shareType === 'global' ? 'Enter a code to join room.' : (shareType === 'nearby' ? 'Make device visible to nearby senders.' : 'Scan QR code to connect.')}
                     </p>
                 </motion.button>
             </div>
@@ -828,11 +1059,31 @@ export default function SecureShare({ onNavigate }) {
                 </div>
 
                 {transferStatus !== 'idle' && (
-                    <div className="bg-black/30 p-6 rounded-xl text-center">
+                    <div className="bg-black/30 p-6 rounded-xl text-center relative">
+                        {/* Cancel Button for Receiver */}
+                        {transferStatus === 'receiving' && (
+                            <button
+                                onClick={handleCancelTransfer}
+                                className="absolute top-2 right-2 p-2 text-text-secondary hover:text-red-500 transition-colors"
+                                title="Cancel Transfer"
+                            >
+                                <Icon name="x" className="w-5 h-5" />
+                            </button>
+                        )}
+
                         <Icon name={transferStatus === 'completed' ? "checkCircle" : "downloadCloud"} className={`w-12 h-12 mx-auto mb-4 ${transferStatus === 'completed' ? 'text-green-400' : 'text-accent animate-bounce'}`} />
                         <p className="text-lg font-bold mb-2">
-                            {transferStatus === 'receiving' ? 'Receiving File...' : 'Transfer Complete'}
+                            {transferStatus === 'receiving' ? (
+                                <span>Receiving <span className="text-accent">{incomingMetadata?.name}</span>...</span>
+                            ) : 'Transfer Complete'}
                         </p>
+
+                        {incomingMetadata && (
+                            <p className="text-xs text-text-secondary mb-3">
+                                {incomingMetadata.fileIndex + 1} of {incomingMetadata.totalFiles} files
+                            </p>
+                        )}
+
                         <div className="w-full bg-glass-border h-2 rounded-full overflow-hidden">
                             <div className="h-full bg-accent transition-all duration-300" style={{ width: `${progress}%` }} />
                         </div>
@@ -923,6 +1174,7 @@ export default function SecureShare({ onNavigate }) {
                     {mode === 'menu' && renderMenu()}
                     {mode === 'send' && renderSend()}
                     {mode === 'receive' && renderReceive()}
+                    {mode === 'offline' && renderOffline()}
                 </motion.div>
             </AnimatePresence>
         </div>
