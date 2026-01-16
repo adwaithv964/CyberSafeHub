@@ -16,3 +16,28 @@ Require stack:
 - C:\Projects\CyberSafeHub\server\test_diagnose.js
 multicast-dns: LOADED OK
 Done.
+Starting Debug...
+FFmpeg Path from ffmpeg-static: C:\Projects\CyberSafeHub\server\node_modules\ffmpeg-static\ffmpeg.exe
+Formats available: 413
+AAC available: true
+WMA available: false
+MP3 available: true
+Codecs available: 606
+AAC codec: {"type":"audio","description":"AAC (Advanced Audio Coding) (decoders: aac aac_fixed) (encoders: aac aac_mf)","intraFrameOnly":true,"isLossy":true,"isLossless":false,"canEncode":true,"canDecode":true}
+Starting Debug...
+FFmpeg Path from ffmpeg-static: C:\Projects\CyberSafeHub\server\node_modules\ffmpeg-static\ffmpeg.exe
+Formats available: 413
+AAC available: true
+WMA available: false
+MP3 available: true
+Codecs available: 606
+AAC codec: {"type":"audio","description":"AAC (Advanced Audio Coding) (decoders: aac aac_fixed) (encoders: aac aac_mf)","intraFrameOnly":true,"isLossy":true,"isLossless":false,"canEncode":true,"canDecode":true}
+Starting Debug...
+FFmpeg Path from ffmpeg-static: C:\Projects\CyberSafeHub\server\node_modules\ffmpeg-static\ffmpeg.exe
+Formats available: 413
+AAC available: true
+WMA available: false
+MP3 available: true
+WAV available: true
+Codecs available: 606
+AAC codec: {"type":"audio","description":"AAC (Advanced Audio Coding) (decoders: aac aac_fixed) (encoders: aac aac_mf)","intraFrameOnly":true,"isLossy":true,"isLossless":false,"canEncode":true,"canDecode":true}

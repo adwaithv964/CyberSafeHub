@@ -157,6 +157,10 @@ const connectDB = async () => {
 
 connectDB();
 
+// --- Conversion Routes ---
+const convertRoute = require('./routes/conversionApi');
+app.use('/api/convert', convertRoute);
+
 // --- Vault API Routes ---
 
 // Get all items for a user
