@@ -6,7 +6,7 @@ export const useJobPolling = () => {
     const [error, setError] = useState(null);
     const pollTimer = useRef(null);
 
-    const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
     const startPolling = (jobId) => {
         setJob({ id: jobId, status: 'queued', progress: 0 });

@@ -123,8 +123,11 @@ router.post('/job', upload.single('file'), async (req, res) => {
 
     } catch (err) {
         console.error("Job Creation Error:", err);
-        if (req.file) fs.unlinkSync(req.file.path);
-        res.status(500).json({ error: 'Failed to create job' });
+        console.error(err.stack); // Log full stack trace
+        if (req.file && fs.existsSync(req.file.path)) {
+            try { fs.unlinkSync(req.file.path); } catch (e) { }
+        }
+        res.status(500).json({ error: 'Failed to create job', details: err.message });
     }
 });
 
