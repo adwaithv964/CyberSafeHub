@@ -42,8 +42,14 @@ class ConversionWorker {
             const docFormats = ['pdf', 'docx', 'doc', 'odt', 'rtf', 'txt', 'html', 'md'];
 
             const target = job.targetFormat.toLowerCase();
+            const sourceExt = path.extname(job.sourceFile.path).replace('.', '').toLowerCase();
 
-            if (videoFormats.includes(target) || audioFormats.includes(target)) {
+            // Special Case: Image -> PDF (Use Sharp for simpler local support, or PDFKit)
+            // LibreOffice can do it too, but Sharp is lightweight for single images.
+            if (target === 'pdf' && imageFormats.includes(sourceExt)) {
+                await this.runSharp(inputPath, outputPath, 'pdf');
+            }
+            else if (videoFormats.includes(target) || audioFormats.includes(target)) {
                 await this.runFfmpeg(inputPath, outputPath, target, (p) => this.updateProgress(job, p));
             }
             else if (imageFormats.includes(target)) {
@@ -115,6 +121,11 @@ class ConversionWorker {
             pipeline.png({ compressionLevel: 9, adaptiveFiltering: true });
         } else if (format === 'webp') {
             pipeline.webp({ quality: 100, lossless: true }); // Prefer lossless if possible or high quality
+        } else if (format === 'pdf') {
+            // Sharp doesn't allow direct .toFile('x.pdf') without .toFormat('pdf')
+            // It wraps image in a PDF page.
+            // Note: Use 'file' input if possible for meta preservation
+            pipeline.toFormat('pdf');
         }
 
         await pipeline.toFile(output);

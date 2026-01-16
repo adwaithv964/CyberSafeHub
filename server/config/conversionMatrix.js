@@ -123,6 +123,10 @@ const validateConversion = (sourceFormat, targetFormat) => {
         if ((source.category === CATEGORIES.DOCUMENT || source.category === CATEGORIES.VECTOR) && target.category === CATEGORIES.IMAGE) {
             return { allowed: true, warning: WARNINGS.RASTERIZATION };
         }
+        // Exception: Image -> PDF (Wrapper)
+        if (source.category === CATEGORIES.IMAGE && target.category === CATEGORIES.DOCUMENT && t === 'pdf') {
+            return { allowed: true, warning: null };
+        }
         return { allowed: false, reason: BLOCKED_REASONS.CATEGORY_MISMATCH };
     }
 

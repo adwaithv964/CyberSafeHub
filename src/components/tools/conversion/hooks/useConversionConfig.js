@@ -59,6 +59,11 @@ export const useConversionConfig = () => {
                     validTargets.push(targetExt);
                     return;
                 }
+                // Exception: Image -> PDF
+                if (source.category === 'image' && target.category === 'document' && targetExt === 'pdf') {
+                    validTargets.push(targetExt.toUpperCase());
+                    return;
+                }
                 return;
             }
 
