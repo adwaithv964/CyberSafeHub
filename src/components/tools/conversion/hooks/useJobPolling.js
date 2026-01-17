@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../../../config';
+import { API_BASE_URL } from '../../../../config';
 
 export const useJobPolling = () => {
     const [job, setJob] = useState(null);

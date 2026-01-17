@@ -6,7 +6,7 @@ import { FormatSelector } from './FormatSelector';
 import { useConversionConfig } from '../hooks/useConversionConfig';
 import { useJobPolling } from '../hooks/useJobPolling';
 import { WarningModal } from '../components/WarningModal';
-import { API_BASE_URL } from '../../../config';
+import { API_BASE_URL } from '../../../../config';
 
 export function UniversalConverter({ onBack }) {
     const [file, setFile] = useState(null);
