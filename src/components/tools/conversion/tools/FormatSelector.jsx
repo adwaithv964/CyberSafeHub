@@ -72,7 +72,7 @@ export function FormatSelector({ label, value, onChange, isOpen, onToggle, onClo
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute top-full left-0 mt-2 w-[600px] bg-[#1a1d21] border border-glass-border rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[500px]"
+                            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] md:w-[600px] md:static md:translate-x-0 md:translate-y-0 md:absolute md:top-full md:left-0 md:mt-2 bg-[#1a1d21] border border-glass-border rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[500px]"
                         >
                             {/* Search Bar */}
                             <div className="p-3 border-b border-glass-border">
@@ -114,7 +114,7 @@ export function FormatSelector({ label, value, onChange, isOpen, onToggle, onClo
 
                                 {/* Formats Grid */}
                                 <div className="w-2/3 p-4 overflow-y-auto bg-[#1a1d21]">
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                         {activeCategory && groupedFormats[activeCategory] && groupedFormats[activeCategory].map(fmt => (
                                             <button
                                                 key={fmt}

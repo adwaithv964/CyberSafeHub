@@ -82,11 +82,11 @@ const WiFiRadar = ({ onNavigate }) => {
                 <header className="mb-10 text-center relative">
                     <button
                         onClick={() => onNavigate && onNavigate('tools')}
-                        className="absolute left-0 top-1 text-cyan-500 hover:text-cyan-300 flex items-center gap-2 transition-colors font-bold z-20"
+                        className="block mb-4 md:absolute md:left-0 md:top-1 text-cyan-500 hover:text-cyan-300 flex items-center gap-2 transition-colors font-bold z-20 mx-auto md:mx-0 justify-center md:justify-start"
                     >
                         &larr; Back to Tools
                     </button>
-                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 mb-2 flex justify-center items-center gap-3">
+                    <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 mb-2 flex justify-center items-center gap-3">
                         <FaWifi className="text-cyan-400 animate-pulse" /> WiFi Radar
                     </h1>
                     <p className="text-cyan-200/70">Scan local network for devices & detect promiscuous nodes</p>

@@ -28,14 +28,15 @@ const tools = [
     { id: 'pdf-to-pdfa', name: 'PDF to PDF/A', icon: 'file', color: 'text-red-800', group: 'Convert From PDF' },
 
     { id: 'rotate-pdf', name: 'Rotate PDF', icon: 'refreshCw', color: 'text-purple-500', group: 'Edit' },
-    { id: 'add-page-numbers', name: 'Page Numbers', icon: 'hash', color: 'text-purple-500', group: 'Edit' },
-    { id: 'add-watermark', name: 'Add Watermark', icon: 'droplet', color: 'text-purple-500', group: 'Edit' },
+    { id: 'page-numbers-pdf', name: 'Page Numbers', icon: 'hash', color: 'text-purple-500', group: 'Edit' },
+    { id: 'watermark-pdf', name: 'Add Watermark', icon: 'droplet', color: 'text-purple-500', group: 'Edit' },
     { id: 'edit-pdf', name: 'Edit PDF', icon: 'edit', color: 'text-purple-500', group: 'Edit' },
 
     { id: 'unlock-pdf', name: 'Unlock PDF', icon: 'unlock', color: 'text-gray-400', group: 'Security' },
     { id: 'protect-pdf', name: 'Protect PDF', icon: 'lock', color: 'text-gray-400', group: 'Security' },
     { id: 'sign-pdf', name: 'Sign PDF', icon: 'penTool', color: 'text-gray-400', group: 'Security' },
     { id: 'redact-pdf', name: 'Redact PDF', icon: 'eyeOff', color: 'text-gray-400', group: 'Security' },
+    { id: 'flatten-pdf', name: 'Flatten PDF', icon: 'shield', color: 'text-gray-400', group: 'Security' },
     { id: 'compare-pdf', name: 'Compare PDF', icon: 'copy', color: 'text-gray-400', group: 'Security' },
 ];
 
@@ -73,12 +74,12 @@ export function ConversionDashboard({ onSelectTool, onBack }) {
                                     whileHover={{ scale: 1.05, translateY: -2 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => onSelectTool(tool.id)}
-                                    className="bg-glass-panel p-4 rounded-xl border border-glass-border hover:border-accent/50 cursor-pointer transition-all flex items-center gap-4 group"
+                                    className="bg-glass-panel p-3 sm:p-4 rounded-xl border border-glass-border hover:border-accent/50 cursor-pointer transition-all flex flex-col sm:flex-row items-center justify-center sm:justify-start text-center sm:text-left gap-2 sm:gap-4 group h-full"
                                 >
                                     <div className={`p-3 rounded-lg bg-glass-panel-dark group-hover:bg-accent/10 transition-colors ${tool.color}`}>
                                         <Icon name={tool.icon} className="w-6 h-6" />
                                     </div>
-                                    <span className="font-medium text-text-primary">{tool.name}</span>
+                                    <span className="font-medium text-text-primary text-sm sm:text-base leading-tight">{tool.name}</span>
                                 </motion.div>
                             ))}
                         </div>

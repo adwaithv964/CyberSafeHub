@@ -128,7 +128,7 @@ export default function UsernameDetective({ onNavigate }) {
 
     return (
         <div className="max-w-6xl mx-auto p-4 space-y-6">
-            <div className="flex items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
                 <button
                     onClick={() => onNavigate && onNavigate('tools')}
                     className="p-2 rounded-lg bg-glass-panel border border-glass-border hover:border-accent hover:text-accent transition-colors"
@@ -145,10 +145,10 @@ export default function UsernameDetective({ onNavigate }) {
             </div>
 
             {/* Search Input */}
-            <div className="glass-panel p-8 rounded-xl border border-glass-border relative overflow-hidden">
+            <div className="glass-panel p-4 md:p-8 rounded-xl border border-glass-border relative overflow-hidden">
                 <div className="absolute inset-0 bg-accent/5 pointer-events-none" />
                 <form onSubmit={handleSearch} className="relative z-10 max-w-2xl mx-auto">
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1 relative">
                             <Icon name="user" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
                             <input
@@ -162,7 +162,7 @@ export default function UsernameDetective({ onNavigate }) {
                         <button
                             type="submit"
                             disabled={isSearching || !username}
-                            className={`px-8 rounded-lg font-semibold flex items-center gap-2 transition-all ${isSearching || !username
+                            className={`px-8 w-full sm:w-auto justify-center rounded-lg font-semibold flex items-center gap-2 transition-all ${isSearching || !username
                                 ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
                                 : 'bg-accent text-black hover:bg-accent-hover hover:shadow-glow-accent'
                                 }`}

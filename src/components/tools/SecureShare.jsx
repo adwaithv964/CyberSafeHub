@@ -779,7 +779,7 @@ export default function SecureShare({ onNavigate }) {
 
     const renderMenu = () => (
         <div className="max-w-2xl mx-auto mt-8">
-            <div className="bg-glass-panel rounded-2xl p-2 flex mb-8">
+            <div className="bg-glass-panel rounded-2xl p-2 flex flex-col sm:flex-row mb-8">
                 <button
                     onClick={() => setShareType('global')}
                     className={`flex-1 py-3 rounded-xl font-medium transition-all ${shareType === 'global' ? 'bg-accent text-black shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
@@ -800,7 +800,7 @@ export default function SecureShare({ onNavigate }) {
                 </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <motion.button
                     whileHover={{ scale: 1.05 }}
                     onClick={() => {
@@ -845,7 +845,7 @@ export default function SecureShare({ onNavigate }) {
     );
 
     const renderSend = () => (
-        <div className="max-w-xl mx-auto mt-8 bg-glass-panel p-8 rounded-2xl border border-glass-border">
+        <div className="max-w-xl mx-auto mt-8 bg-glass-panel p-4 md:p-8 rounded-2xl border border-glass-border">
             <button onClick={() => setMode('menu')} className="mb-6 flex items-center gap-2 text-text-secondary hover:text-accent">
                 <Icon name="arrowLeft" className="w-4 h-4" /> Back
             </button>
@@ -854,7 +854,7 @@ export default function SecureShare({ onNavigate }) {
                 <>
                     <h2 className="text-2xl font-bold mb-6 text-center">Your Secure Code</h2>
                     <div className="flex justify-center mb-8">
-                        <div className="text-5xl font-mono font-bold tracking-widest text-accent bg-black/20 px-8 py-4 rounded-xl border border-accent/30">
+                        <div className="text-4xl md:text-5xl font-mono font-bold tracking-widest text-accent bg-black/20 px-8 py-4 rounded-xl border border-accent/30">
                             {generatedCode || '------'}
                         </div>
                     </div>
@@ -886,7 +886,7 @@ export default function SecureShare({ onNavigate }) {
             )}
 
             <div className="space-y-6">
-                <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${selectedFiles.length > 0 ? 'border-accent bg-accent/5' : 'border-glass-border hover:border-text-secondary'}`}>
+                <div className={`border-2 border-dashed rounded-xl p-4 md:p-8 text-center transition-colors ${selectedFiles.length > 0 ? 'border-accent bg-accent/5' : 'border-glass-border hover:border-text-secondary'}`}>
                     <input
                         type="file"
                         id="fileInput"
@@ -965,7 +965,7 @@ export default function SecureShare({ onNavigate }) {
     );
 
     const renderReceive = () => (
-        <div className="max-w-xl mx-auto mt-8 bg-glass-panel p-8 rounded-2xl border border-glass-border relative">
+        <div className="max-w-xl mx-auto mt-8 bg-glass-panel p-4 md:p-8 rounded-2xl border border-glass-border relative">
             <button onClick={() => setMode('menu')} className="mb-6 flex items-center gap-2 text-text-secondary hover:text-accent">
                 <Icon name="arrowLeft" className="w-4 h-4" /> Back
             </button>
@@ -973,7 +973,7 @@ export default function SecureShare({ onNavigate }) {
             {shareType === 'global' ? (
                 <>
                     <h2 className="text-2xl font-bold mb-6 text-center">Enter Code</h2>
-                    <div className="flex justify-center gap-2 mb-8">
+                    <div className="flex justify-center gap-1 md:gap-2 mb-8">
                         {inputCode.map((digit, idx) => (
                             <input
                                 key={idx}
@@ -988,7 +988,7 @@ export default function SecureShare({ onNavigate }) {
                                     setInputCode(newCode);
                                     if (val && idx < 5) document.getElementById(`code-${idx + 1}`).focus();
                                 }}
-                                className="w-12 h-16 text-center text-2xl font-mono bg-black/30 border border-glass-border rounded-lg focus:border-accent focus:outline-none"
+                                className="w-10 md:w-12 h-12 md:h-16 text-center text-xl md:text-2xl font-mono bg-black/30 border border-glass-border rounded-lg focus:border-accent focus:outline-none"
                             />
                         ))}
                     </div>

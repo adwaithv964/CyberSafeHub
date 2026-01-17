@@ -213,7 +213,7 @@ const PasswordVaultPage = () => {
     return (
         <>
             <header className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Password Tools & Vault</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">Password Tools & Vault</h2>
                 <p className="text-gray-500 dark:text-gray-400">Generate, analyze, and securely store your passwords.</p>
             </header>
 
@@ -287,7 +287,7 @@ const PasswordVaultPage = () => {
 
                 {/* Right Column: Vault Dashboard */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                             <Icon name="lock" className="w-6 h-6 text-accent" />
                             My Secure Vault
@@ -340,18 +340,18 @@ const PasswordVaultPage = () => {
 
                         {filteredItems.map(item => (
                             <div key={item._id} className="group relative p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-accent dark:hover:border-accent transition-all">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-white dark:bg-gray-600 rounded-full shadow-sm text-accent">
+                                <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
+                                    <div className="flex items-center gap-4 flex-1 min-w-0 pr-2 w-full">
+                                        <div className="p-3 bg-white dark:bg-gray-600 rounded-full shadow-sm text-accent shrink-0">
                                             <Icon name={getIconForType(item.type)} className="w-6 h-6" />
                                         </div>
-                                        <div>
-                                            <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.name}</h4>
+                                        <div className="min-w-0">
+                                            <h4 className="font-bold text-gray-800 dark:text-gray-100 truncate">{item.name}</h4>
                                             <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{item.type} • {new Date(item.createdAt).toLocaleDateString()}</p>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-2 w-full justify-end sm:w-auto opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0 mt-2 sm:mt-0">
                                         {/* Autofill / Copy Action */}
                                         <button
                                             onClick={() => copyToClipboard(getCopyValue(item))}

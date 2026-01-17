@@ -14,12 +14,12 @@ const SettingsSection = ({ title, subtitle, children }) => (
 );
 
 const Toggle = ({ label, description, isEnabled, onToggle }) => (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center gap-4">
         <div>
             <p className="font-medium text-gray-800 dark:text-gray-100">{label}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
         </div>
-        <button onClick={onToggle} className={`w-12 h-6 rounded-full p-1 transition-colors ${isEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+        <button onClick={onToggle} className={`w-12 h-6 rounded-full p-1 transition-colors flex-shrink-0 ${isEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
             <span className={`block w-4 h-4 rounded-full bg-white transform transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-0'}`}></span>
         </button>
     </div>
@@ -497,17 +497,7 @@ const SettingsPage = () => {
                         />
                     </SettingsSection>
                 );
-            case 'appearance':
-                return (
-                    <SettingsSection title="Appearance" subtitle="Customize the look and feel of the application.">
-                        <p className="font-medium text-gray-800 dark:text-gray-100">Theme</p>
-                        <div className="flex gap-4">
-                            <button className="px-4 py-2 border rounded-md text-sm font-medium border-blue-500 bg-blue-50 dark:bg-blue-900/50">Light</button>
-                            <button className="px-4 py-2 border rounded-md text-sm font-medium">Dark</button>
-                            <button className="px-4 py-2 border rounded-md text-sm font-medium">System</button>
-                        </div>
-                    </SettingsSection>
-                );
+
             case 'data':
                 return (
                     <SettingsSection title="Data & Account Management" subtitle="Manage your personal data and account status.">
@@ -558,7 +548,6 @@ const SettingsPage = () => {
                         <NavItem tab="profile" icon="user" activeTab={activeTab} setActiveTab={setActiveTab}>Profile & Account</NavItem>
                         <NavItem tab="security" icon="shield" activeTab={activeTab} setActiveTab={setActiveTab}>Security & Privacy</NavItem>
                         <NavItem tab="notifications" icon="bell" activeTab={activeTab} setActiveTab={setActiveTab}>Notifications</NavItem>
-                        <NavItem tab="appearance" icon="palette" activeTab={activeTab} setActiveTab={setActiveTab}>Appearance</NavItem>
                         <NavItem tab="data" icon="database" activeTab={activeTab} setActiveTab={setActiveTab}>Data & Accounts</NavItem>
                     </nav>
                 </aside>

@@ -151,8 +151,8 @@ export function UniversalConverter({ onBack }) {
                 />
 
                 {/* Header Section (Hero) */}
-                <div className="text-center mb-10">
-                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 mb-4">
+                <div className="text-center mb-6 md:mb-10">
+                    <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 mb-4">
                         Universal Converter
                     </h1>
                     <p className="text-text-secondary max-w-2xl mx-auto">
@@ -161,11 +161,11 @@ export function UniversalConverter({ onBack }) {
                 </div>
 
                 {/* Conversion Selector Bar */}
-                <div className="flex items-center gap-4 mb-12 relative z-20">
+                <div className="flex flex-col md:flex-row items-center gap-4 mb-8 md:mb-12 relative z-20">
                     <span className="text-2xl text-text-secondary font-light">convert</span>
 
                     {/* Input Format - Read Only mostly, but we use selector for consistent look or assume detected */}
-                    <div className="flex items-center gap-2 px-4 py-2 bg-glass-panel-dark border border-glass-border rounded-lg min-w-[120px] justify-center">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-glass-panel-dark border border-glass-border rounded-lg min-w-[100px] md:min-w-[120px] justify-center">
                         <span className="font-bold text-lg text-text-primary">{inputFormat}</span>
                     </div>
 
@@ -186,36 +186,36 @@ export function UniversalConverter({ onBack }) {
                 {/* File Uploader or Action Area */}
                 <div className="w-full max-w-3xl">
                     {!file ? (
-                        <div className="bg-[#1a1d21] border-2 border-dashed border-glass-border rounded-xl p-10 text-center hover:border-emerald-500 hover:bg-emerald-500/5 transition-all">
+                        <div className="bg-[#1a1d21] border-2 border-dashed border-glass-border rounded-xl p-4 md:p-10 text-center hover:border-emerald-500 hover:bg-emerald-500/5 transition-all">
                             <input
                                 type="file"
                                 id="file-upload"
                                 className="hidden"
                                 onChange={(e) => handleFileSelect(e.target.files)}
                             />
-                            <label htmlFor="file-upload" className="cursor-pointer inline-flex items-center gap-3 px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded font-bold text-lg shadow-xl shadow-red-900/20 transition-all">
+                            <label htmlFor="file-upload" className="cursor-pointer inline-flex items-center gap-3 px-6 py-3 md:px-8 md:py-4 bg-red-600 hover:bg-red-700 text-white rounded font-bold text-lg shadow-xl shadow-red-900/20 transition-all">
                                 <Icon name="plus" className="w-5 h-5" />
                                 Select File
                             </label>
                             <p className="mt-4 text-text-secondary">or drop files here</p>
                         </div>
                     ) : (
-                        <div className="bg-[#1a1d21] border border-glass-border rounded-xl p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-[#2b2f36] rounded flex items-center justify-center text-text-primary font-bold text-xs">
+                        <div className="bg-[#1a1d21] border border-glass-border rounded-xl p-4 md:p-6">
+                            <div className="flex flex-col md:flex-row items-center md:justify-between mb-6 relative">
+                                <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto overflow-hidden">
+                                    <div className="w-16 h-16 md:w-12 md:h-12 bg-[#2b2f36] rounded-xl md:rounded flex-shrink-0 flex items-center justify-center text-text-primary font-bold text-sm md:text-xs mb-2 md:mb-0">
                                         {inputFormat}
                                     </div>
-                                    <div>
-                                        <p className="font-medium text-text-primary text-lg">{file.name}</p>
-                                        <div className="flex items-center gap-2 text-sm text-text-secondary">
+                                    <div className="min-w-0 flex-1 w-full md:w-auto text-center md:text-left">
+                                        <p className="font-medium text-text-primary text-lg md:text-xl break-all leading-tight mb-1">{file.name}</p>
+                                        <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-text-secondary">
                                             <span>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
                                             <span>•</span>
                                             <span className="text-emerald-400">Ready</span>
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => setFile(null)} className="p-2 hover:bg-[#2b2f36] rounded text-text-secondary hover:text-white">
+                                <button onClick={() => setFile(null)} className="absolute top-0 right-0 md:static p-2 hover:bg-[#2b2f36] rounded-full md:rounded text-text-secondary hover:text-white">
                                     <Icon name="x" className="w-5 h-5" />
                                 </button>
                             </div>
@@ -250,11 +250,11 @@ export function UniversalConverter({ onBack }) {
                             )}
 
                             {!success && (
-                                <div className="flex justify-end">
+                                <div className="flex flex-col md:flex-row md:justify-end">
                                     <button
                                         onClick={() => runConversion(false)}
                                         disabled={isProcessing || !outputFormat || outputFormat === '...'}
-                                        className="px-8 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded font-bold text-lg shadow-lg transition-all flex items-center gap-2"
+                                        className="px-6 py-3 w-full md:w-auto justify-center bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded font-bold text-lg shadow-lg transition-all flex items-center gap-2"
                                     >
                                         {isProcessing ? 'Processing...' : 'Convert'}
                                         {!isProcessing && <Icon name="arrowRight" className="w-5 h-5" />}
@@ -266,7 +266,7 @@ export function UniversalConverter({ onBack }) {
                 </div>
 
                 {/* Footer Info */}
-                <div className="mt-20 w-full max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-8 text-text-secondary opacity-50 text-sm">
+                <div className="mt-12 md:mt-20 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-text-secondary opacity-50 text-sm">
                     <div className="text-center">
                         <h3 className="font-bold">Strict Validation</h3>
                         <p>Impossible conversions are blocked.</p>

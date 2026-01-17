@@ -3,12 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-text-primary font-mono antialiased;
     /* Cyber Theme: Dark Blue to Black with Cyan hints */
     background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #082f49 100%);
     min-height: 100vh;
     overflow-x: hidden;
+    overscroll-behavior-y: none; /* Prevents bounce effect on Mac/Mobile which differs from app feel */
   }
 
   /* Keep existing scrollbar styles */

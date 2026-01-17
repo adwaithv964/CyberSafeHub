@@ -37,9 +37,9 @@ const CyberAssistantPage = () => {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8rem)]">
+        <div className="flex flex-col h-[calc(100vh-4rem)]">
             <Header title="Cyber Assistant" subtitle="Your personal AI-powered security expert." />
-            <div className="glass-card flex-grow flex flex-col p-4 overflow-hidden w-full relative">
+            <div className="glass-card flex-grow flex flex-col p-2 md:p-4 overflow-hidden w-full relative">
                 <div className="flex-grow overflow-y-auto space-y-6 pr-2 scrollbar-thin scrollbar-thumb-accent scrollbar-track-transparent custom-scrollbar">
                     {messages.map((msg, index) => (
                         <div key={index} className={`flex items-start gap-3 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
@@ -101,9 +101,9 @@ const CyberAssistantPage = () => {
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Ask about phishing, passwords, or anything security..."
-                            className="flex-grow p-3 border border-border-color rounded-lg bg-secondary text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder-text-secondary transition-all"
+                            className="flex-grow min-w-0 p-2 md:p-3 border border-border-color rounded-lg bg-secondary text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder-text-secondary transition-all"
                         />
-                        <Button type="submit" disabled={isLoading} className="p-3 bg-accent hover:bg-accent-hover text-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <Button type="submit" disabled={isLoading} className="p-2 md:p-3 bg-accent hover:bg-accent-hover text-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             <Icon name="send" className="w-6 h-6" />
                         </Button>
                     </form>

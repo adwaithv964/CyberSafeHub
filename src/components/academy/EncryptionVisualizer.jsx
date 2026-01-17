@@ -54,7 +54,7 @@ const EncryptionVisualizer = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             {/* Algorithm Selector */}
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                 {[
                     { id: 'caesar', label: 'Caesar Cipher', icon: 'rotateCw' },
                     { id: 'aes', label: 'AES Encryption', icon: 'lock' },
@@ -63,7 +63,7 @@ const EncryptionVisualizer = () => {
                     <button
                         key={algo.id}
                         onClick={() => setAlgorithm(algo.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${algorithm === algo.id ? 'bg-accent text-white border-accent shadow-lg scale-105' : 'bg-background/50 border-white/10 text-text-secondary hover:bg-background/80'}`}
+                        className={`flex items-center justify-center w-full sm:w-auto gap-2 px-4 py-2 rounded-lg border transition-all ${algorithm === algo.id ? 'bg-accent text-white border-accent shadow-lg scale-105' : 'bg-background/50 border-white/10 text-text-secondary hover:bg-background/80'}`}
                     >
                         {algo.label}
                     </button>
@@ -87,15 +87,17 @@ const EncryptionVisualizer = () => {
 
                     {/* Controls based on Algo */}
                     {algorithm === 'caesar' && (
-                        <div className="flex items-center gap-4 bg-background/30 p-3 rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 bg-background/30 p-3 rounded-lg">
                             <span className="text-text-secondary text-sm">Shift Amount:</span>
-                            <input
-                                type="range" min="1" max="25"
-                                value={shift}
-                                onChange={(e) => setShift(e.target.value)}
-                                className="flex-1 accent-accent"
-                            />
-                            <span className="font-mono text-accent font-bold">{shift}</span>
+                            <div className="w-full sm:w-auto flex flex-1 items-center gap-4">
+                                <input
+                                    type="range" min="1" max="25"
+                                    value={shift}
+                                    onChange={(e) => setShift(e.target.value)}
+                                    className="flex-1 accent-accent cursor-pointer"
+                                />
+                                <span className="font-mono text-accent font-bold w-6 text-center">{shift}</span>
+                            </div>
                         </div>
                     )}
 

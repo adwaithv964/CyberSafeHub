@@ -44,6 +44,8 @@ function AppContent() {
         document.documentElement.classList.add('dark');
     }, []);
 
+
+
     // Framer Motion variants for page transitions
     const pageVariants = {
         initial: { opacity: 0, filter: 'blur(5px)', y: 20 },
@@ -131,10 +133,10 @@ function AppContent() {
     }
 
     return (
-        <div className="min-h-screen font-sans text-text-primary relative overflow-hidden">
+        <div className="h-screen w-full flex flex-col font-sans text-text-primary relative overflow-hidden">
             <BackgroundBlobs />
-            {/* Mobile Header */}
-            <div className="md:hidden flex items-center p-4 glass-panel m-2 sticky top-2 z-50 gap-3">
+            {/* Mobile Header - Flex-none ensures it takes only necessary space */}
+            <div className="md:hidden flex-none flex items-center p-4 glass-panel m-2 z-50 gap-3">
                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-text-primary p-1 hover:text-accent transition-colors">
                     <Icon name={isSidebarOpen ? "x" : "menu"} className="w-6 h-6" />
                 </button>
@@ -144,7 +146,8 @@ function AppContent() {
                 </div>
             </div>
 
-            <div className="flex relative items-start p-4 gap-4 h-screen overflow-hidden">
+            {/* Main Content Area - Flex-1 takes remaining space */}
+            <div className="flex-1 flex relative items-start p-4 gap-4 overflow-hidden">
                 {/* Mobile Sidebar Overlay */}
                 {isSidebarOpen && (
                     <div
@@ -183,7 +186,7 @@ function AppContent() {
                     </div>
                 </aside>
 
-                <main className="flex-1 glass-panel h-full overflow-y-auto p-8 relative">
+                <main className="flex-1 glass-panel h-full overflow-y-auto p-8 relative scroll-smooth">
                     <AnimatePresence mode="wait">
                         {renderPage()}
                     </AnimatePresence>

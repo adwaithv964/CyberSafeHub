@@ -41,7 +41,7 @@ const NetworkToolPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Main Scan Card */}
-                <Card className={`p-8 flex flex-col items-center justify-center text-center space-y-4 relative overflow-hidden transition-colors duration-500 ${isSafe ? 'border-success/50 shadow-glow-success' : 'border-danger/50 shadow-glow-danger'}`}>
+                <Card className={`p-6 md:p-8 flex flex-col items-center justify-center text-center space-y-4 relative overflow-hidden transition-colors duration-500 ${isSafe ? 'border-success/50 shadow-glow-success' : 'border-danger/50 shadow-glow-danger'}`}>
 
                     {/* Status Indicator Bar */}
                     <div className={`absolute top-0 inset-x-0 h-1 ${isSafe ? 'bg-success' : 'bg-danger'}`} />
@@ -66,12 +66,12 @@ const NetworkToolPage = () => {
                             <div className="w-full space-y-6 mt-4 relative z-10">
                                 <div className="bg-background/50 p-6 rounded-xl border border-border-color backdrop-blur-sm">
                                     <p className="text-sm text-text-secondary uppercase tracking-wider mb-1">Public IP Address</p>
-                                    <p className={`text-4xl font-mono font-bold drop-shadow-lg ${isSafe ? 'text-success' : 'text-danger'}`}>
+                                    <p className={`text-3xl md:text-4xl font-mono font-bold drop-shadow-lg ${isSafe ? 'text-success' : 'text-danger'}`}>
                                         {ipData.ip}
                                     </p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 text-left">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                                     <div className="p-4 bg-background/30 rounded-lg border border-white/5">
                                         <div className="flex items-center gap-2 mb-1">
                                             <Icon name="database" className="w-4 h-4 text-text-secondary" />
@@ -126,7 +126,7 @@ const NetworkToolPage = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-r from-primary/50 to-transparent p-4 rounded-lg flex items-center justify-between">
+                            <div className="bg-gradient-to-r from-primary/50 to-transparent p-4 rounded-lg flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p className="text-sm text-text-secondary">
                                         Accuracy 85% • Heuristic Analysis
@@ -134,7 +134,7 @@ const NetworkToolPage = () => {
                                 </div>
                                 <Button
                                     onClick={fetchIpData}
-                                    className="text-white hover:bg-white/10"
+                                    className="w-full sm:w-auto text-white hover:bg-white/10"
                                     variant="secondary"
                                 >
                                     <Icon name="refreshCw" className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
