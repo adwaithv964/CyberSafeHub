@@ -160,7 +160,7 @@ router.post('/', upload.single('file'), async (req, res) => {
         }
 
         // 2c. Image Conversion (Sharp)
-        const sharpFormats = ['jpeg', 'jpg', 'png', 'webp', 'gif', 'avif', 'tiff', 'tif', 'svg'];
+        const sharpFormats = ['jpeg', 'jpg', 'png', 'webp', 'gif', 'avif', 'tiff', 'tif', 'svg', 'heic'];
         if (sharpFormats.includes(targetFormat)) {
             const sharpInput = sharp(inputPath, { density: 300, animated: true });
 

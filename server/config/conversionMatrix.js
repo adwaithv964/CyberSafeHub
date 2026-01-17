@@ -23,6 +23,7 @@ const FORMATS = {
     'ai': { category: CATEGORIES.VECTOR, tier: TIERS.SOURCE, lossy: false, layered: true, label: 'Adobe Illustrator' },
     'raw': { category: CATEGORIES.IMAGE, tier: TIERS.SOURCE, lossy: false, layered: true, label: 'Camera RAW' },
     'tiff': { category: CATEGORIES.IMAGE, tier: TIERS.SOURCE, lossy: false, layered: true, label: 'TIFF (Layered)' },
+    'heic': { category: CATEGORIES.IMAGE, tier: TIERS.SOURCE, lossy: false, layered: false, label: 'High Efficiency Image' },
 
     'svg': { category: CATEGORIES.VECTOR, tier: TIERS.EDITABLE, lossy: false, layered: true, label: 'Scalable Vector Graphics' },
     'eps': { category: CATEGORIES.VECTOR, tier: TIERS.EDITABLE, lossy: false, layered: false, label: 'Encapsulated PostScript' },
