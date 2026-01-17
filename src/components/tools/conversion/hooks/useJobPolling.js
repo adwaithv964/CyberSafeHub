@@ -7,6 +7,12 @@ export const useJobPolling = () => {
     const [error, setError] = useState(null);
     const pollTimer = useRef(null);
 
+    const startPolling = (jobId) => {
+        setJob({ id: jobId, status: 'queued', progress: 0 });
+        setError(null);
+        poll(jobId);
+    };
+
     const poll = async (jobId) => {
         try {
             const res = await axios.get(`${API_BASE_URL}/api/convert/job/${jobId}`);
