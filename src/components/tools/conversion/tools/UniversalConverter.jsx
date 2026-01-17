@@ -31,20 +31,26 @@ export function UniversalConverter({ onBack }) {
     // Update Input Format and Targets when file changes
     useEffect(() => {
         if (file) {
-            const ext = file.name.split('.').pop(); // Keep case for now, selector handles normalising
-            setInputFormat(ext.toUpperCase());
+            const ext = file.name.split('.').pop();
+            const upperExt = ext.toUpperCase();
+            setInputFormat(upperExt);
             setOutputFormat('...');
-            setAvailableTargets(null);
+
+            // Fix: Calculate targets immediately. 
+            // This ensures that if the new file has the SAME extension as the previous one,
+            // we still update availableTargets (because inputFormat state won't "change" to trigger the other effect).
+            const valid = getValidTargets(upperExt);
+            setAvailableTargets(new Set(valid));
         }
     }, [file]);
 
-    // Update Valid Targets based on Input
+    // Update Valid Targets if Config Loads Late or Input Format Changes
     useEffect(() => {
         if (inputFormat && inputFormat !== '...') {
             const valid = getValidTargets(inputFormat);
             setAvailableTargets(new Set(valid));
         }
-    }, [inputFormat]);
+    }, [inputFormat, getValidTargets]);
 
     const handleFileSelect = (files) => {
         if (files.length > 0) {

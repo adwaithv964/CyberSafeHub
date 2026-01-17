@@ -7,6 +7,7 @@ const ffmpegPath = require('ffmpeg-static');
 const sharp = require('sharp');
 const libre = require('libreoffice-convert');
 libre.convertAsync = promisify(libre.convert);
+const heicConvert = require('heic-convert');
 const PDFDocument = require('pdfkit');
 
 // Configure FFmpeg
@@ -46,8 +47,12 @@ class ConversionWorker {
             const sourceExt = path.extname(job.sourceFile.path).replace('.', '').toLowerCase();
 
             // Special Case: Image -> PDF (Use PDFKit for pure JS stability)
-            if (target === 'pdf' && imageFormats.includes(sourceExt)) {
-                await this.runPdfKit(inputPath, outputPath);
+            if (target === 'pdf' && (imageFormats.includes(sourceExt) || sourceExt === 'heic')) {
+                await this.runPdfKit(inputPath, outputPath, sourceExt);
+            }
+            // HEIC -> Image (Use heic-convert)
+            else if (sourceExt === 'heic' && imageFormats.includes(target)) {
+                await this.runHeicConvert(inputPath, outputPath, target);
             }
             else if (videoFormats.includes(target) || audioFormats.includes(target)) {
                 await this.runFfmpeg(inputPath, outputPath, target, (p) => this.updateProgress(job, p));
@@ -94,24 +99,59 @@ class ConversionWorker {
 
     // --- ENGINES ---
 
-    async runPdfKit(input, output) {
-        return new Promise((resolve, reject) => {
+    async runHeicConvert(input, output, format) {
+        const inputBuffer = fs.readFileSync(input);
+        const outputBuffer = await heicConvert({
+            buffer: inputBuffer,
+            format: (format === 'png') ? 'PNG' : 'JPEG',
+            quality: 1
+        });
+        fs.writeFileSync(output, outputBuffer);
+    }
+
+    async runPdfKit(input, output, sourceExt) {
+        return new Promise(async (resolve, reject) => {
+            let imageToEmbed = input;
+            let tempFile = null;
+
             try {
+                // If HEIC, convert to JPG first using heic-convert
+                if (sourceExt === 'heic') {
+                    tempFile = path.join(path.dirname(output), `tmp-${Date.now()}.jpg`);
+
+                    const inputBuffer = fs.readFileSync(input);
+                    const outputBuffer = await heicConvert({
+                        buffer: inputBuffer,
+                        format: 'JPEG',
+                        quality: 0.9
+                    });
+                    fs.writeFileSync(tempFile, outputBuffer);
+
+                    imageToEmbed = tempFile;
+                }
+
                 const doc = new PDFDocument({ autoFirstPage: false });
                 const stream = fs.createWriteStream(output);
 
                 doc.pipe(stream);
 
                 // Load image to get dimensions
-                const img = doc.openImage(input);
+                const img = doc.openImage(imageToEmbed);
                 doc.addPage({ size: [img.width, img.height] });
                 doc.image(img, 0, 0);
 
                 doc.end();
 
-                stream.on('finish', resolve);
-                stream.on('error', reject);
+                stream.on('finish', () => {
+                    if (tempFile && fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+                    resolve();
+                });
+                stream.on('error', (err) => {
+                    if (tempFile && fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+                    reject(err);
+                });
             } catch (err) {
+                if (tempFile && fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
                 reject(err);
             }
         });

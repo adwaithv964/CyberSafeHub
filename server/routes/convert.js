@@ -1,6 +1,4 @@
-const express = require('express');
-const router = express.Router();
-const multer = require('multer');
+const multiline = require('multer'); // existing
 const sharp = require('sharp');
 const libre = require('libreoffice-convert');
 const path = require('path');
@@ -9,6 +7,7 @@ const { promisify } = require('util');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 const archiver = require('archiver');
+const PDFDocument = require('pdfkit');
 const { validateConversion, FORMATS, TIERS, CATEGORIES } = require('../config/conversionMatrix');
 
 // Set ffmpeg path
@@ -117,6 +116,65 @@ router.post('/', upload.single('file'), async (req, res) => {
 
         // --- 2. Conversion Execution ---
 
+        // 2a. SPECIAL: HEIC -> Image (FFmpeg)
+        // Sharp failed due to missing codecs, so we use FFmpeg for HEIC decoding.
+        if (sourceExt === 'heic' && ['jpg', 'jpeg', 'png', 'webp'].includes(targetFormat)) {
+            await new Promise((resolve, reject) => {
+                ffmpeg(inputPath)
+                    .toFormat(targetFormat === 'jpg' ? 'jpeg' : targetFormat) // ffmpeg uses 'jpeg' muxer
+                    .on('end', resolve)
+                    .on('error', (err) => reject(new Error('FFmpeg HEIC error: ' + err.message)))
+                    .save(outputPath);
+            });
+            return sendFile(res, outputPath, inputPath);
+        }
+
+        // 2b. SPECIAL: Image -> PDF (PDFKit)
+        // Avoids using LibreOffice for simple image embedding
+        if (targetFormat === 'pdf' && FORMATS[sourceExt]?.category === CATEGORIES.IMAGE) {
+            const doc = new PDFDocument({ autoFirstPage: false });
+            const writeStream = fs.createWriteStream(outputPath);
+            doc.pipe(writeStream);
+
+            let imagePathToEmbed = inputPath;
+            let tempJpgPath = null;
+
+            try {
+                // Pre-convert HEIC to JPG if needed
+                if (sourceExt === 'heic') {
+                    tempJpgPath = path.join(uploadDir, `temp-${Date.now()}.jpg`);
+                    await new Promise((resolve, reject) => {
+                        ffmpeg(inputPath)
+                            .toFormat('mjpeg') // Force MJPEG for simple image extraction
+                            .outputOptions('-vframes 1')
+                            .on('end', resolve)
+                            .on('error', (err) => reject(new Error('FFmpeg HEIC conversion error: ' + err.message)))
+                            .save(tempJpgPath);
+                    });
+                    imagePathToEmbed = tempJpgPath;
+                }
+
+                // Embed image
+                // doc.openImage is available in newer pdfkit versions (>=0.12)
+                const img = doc.openImage(imagePathToEmbed);
+                doc.addPage({ size: [img.width, img.height] });
+                doc.image(img, 0, 0);
+                doc.end();
+
+                await new Promise((resolve, reject) => {
+                    writeStream.on('finish', resolve);
+                    writeStream.on('error', reject);
+                });
+
+                if (tempJpgPath) cleanFile(tempJpgPath);
+                return sendFile(res, outputPath, inputPath);
+
+            } catch (e) {
+                if (tempJpgPath) cleanFile(tempJpgPath);
+                throw e;
+            }
+        }
+
         // 2a. Audio/Video (FFmpeg)
         const avFormats = ['mp3', 'mp4', 'wav', 'avi', 'mov', 'flv', 'webm', 'ogg', 'mkv', 'wmv', 'm4a', 'aac', 'wma', 'gif'];
         // Check if either source OR target is AV (e.g. Extract Audio from Video)
@@ -160,7 +218,8 @@ router.post('/', upload.single('file'), async (req, res) => {
         }
 
         // 2c. Image Conversion (Sharp)
-        const sharpFormats = ['jpeg', 'jpg', 'png', 'webp', 'gif', 'avif', 'tiff', 'tif', 'svg', 'heic'];
+        // Removed 'heic' from here as it is handled by FFmpeg above
+        const sharpFormats = ['jpeg', 'jpg', 'png', 'webp', 'gif', 'avif', 'tiff', 'tif', 'svg'];
         if (sharpFormats.includes(targetFormat)) {
             const sharpInput = sharp(inputPath, { density: 300, animated: true });
 
