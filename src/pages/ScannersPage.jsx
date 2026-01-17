@@ -6,6 +6,7 @@ import { callGeminiAPI } from '../utils/geminiApi';
 import ReactMarkdown from 'react-markdown';
 import { checkBreaches } from '../utils/securityScanners';
 import { logActivity } from '../utils/activityLogger';
+import { API_BASE_URL } from '../config';
 
 // --- Shared History Logic ---
 const useScannerHistory = (type) => {
@@ -127,7 +128,7 @@ const MalwareScanner = () => {
 
         try {
             // Connect to local backend
-            const response = await fetch('http://localhost:3001/scan', {
+            const response = await fetch(`${API_BASE_URL}/scan`, {
                 method: 'POST',
                 body: formData,
             });

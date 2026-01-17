@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../../config';
 
 // Cache the config to avoid refetching every time
 let configCache = null;
@@ -15,8 +16,7 @@ export const useConversionConfig = () => {
         const fetchConfig = async () => {
             try {
                 // Determine backend URL logic same as other components
-                const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-                const res = await axios.get(`${backendUrl}/api/convert/config`);
+                const res = await axios.get(`${API_BASE_URL}/api/convert/config`);
                 configCache = res.data;
                 setConfig(res.data);
             } catch (err) {

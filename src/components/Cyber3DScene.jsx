@@ -58,7 +58,7 @@ const Cyber3DScene = () => {
                     <ParticleNetwork />
                 </group>
                 <group position={[2, 1, 0]}>
-                    <CyberShield /> {/* Add decoration to side */}
+                    <CyberShield />
                 </group>
             </Canvas>
         </div>

@@ -6,6 +6,7 @@ import { FormatSelector } from './FormatSelector';
 import { useConversionConfig } from '../hooks/useConversionConfig';
 import { useJobPolling } from '../hooks/useJobPolling';
 import { WarningModal } from '../components/WarningModal';
+import { API_BASE_URL } from '../../../config';
 
 export function UniversalConverter({ onBack }) {
     const [file, setFile] = useState(null);
@@ -66,8 +67,8 @@ export function UniversalConverter({ onBack }) {
             setIsProcessing(false);
 
             // Trigger Download
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-            window.location.href = `${API_URL}/api/convert/download/${job.id}`;
+            // Trigger Download
+            window.location.href = `${API_BASE_URL}/api/convert/download/${job.id}`;
         }
         if (job && job.status === 'failed') {
             setIsProcessing(false);
@@ -97,10 +98,8 @@ export function UniversalConverter({ onBack }) {
             formData.append('format', outputFormat.toLowerCase());
             if (confirmed) formData.append('confirm', 'true');
 
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
             // 1. Create Job
-            const res = await axios.post(`${API_URL}/api/convert/job`, formData);
+            const res = await axios.post(`${API_BASE_URL}/api/convert/job`, formData);
 
             // 2. Start Polling
             startPolling(res.data.jobId);

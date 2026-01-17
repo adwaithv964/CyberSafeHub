@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '../Icon';
+import { API_BASE_URL } from '../../config';
 
 // Site definitions with logic for checking
 // Note: Client-side checking is limited by CORS. We use image loading where possible.
@@ -66,7 +67,7 @@ export default function UsernameDetective({ onNavigate }) {
 
     const checkSite = async (site, targetUser) => {
         try {
-            const response = await fetch('http://localhost:3001/api/osint/check', {
+            const response = await fetch(`${API_BASE_URL}/api/osint/check`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: targetUser, site })

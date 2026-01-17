@@ -7,7 +7,8 @@ import { checkPasswordStrength } from '../utils/securityScanners';
 import { logActivity } from '../utils/activityLogger';
 import { useAuth } from '../contexts/AuthContext'; // To get userId
 
-const API_BASE_URL = 'http://localhost:3001/api/vault';
+import { API_BASE_URL as BASE_URL } from '../config'; // To get userId
+const API_BASE_URL = `${BASE_URL}/api/vault`;
 
 const PasswordVaultPage = () => {
     // State for Password Generator
