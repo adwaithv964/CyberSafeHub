@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../../../../config';
 
@@ -30,12 +30,12 @@ export const useConversionConfig = () => {
         fetchConfig();
     }, []);
 
-    const getFormatInfo = (ext) => {
+    const getFormatInfo = useCallback((ext) => {
         if (!config || !config.formats || !ext) return null;
         return config.formats[ext.toLowerCase()];
-    };
+    }, [config]);
 
-    const getValidTargets = (sourceExt) => {
+    const getValidTargets = useCallback((sourceExt) => {
         if (!config || !sourceExt) return [];
         const source = getFormatInfo(sourceExt);
         if (!source) return [];
@@ -85,7 +85,7 @@ export const useConversionConfig = () => {
         });
 
         return validTargets;
-    };
+    }, [config, getFormatInfo]);
 
     return {
         config,

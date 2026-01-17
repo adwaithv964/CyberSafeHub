@@ -151,25 +151,25 @@ export function UniversalConverter({ onBack }) {
                 />
 
                 {/* Header Section (Hero) */}
-                <div className="text-center mb-6 md:mb-10">
-                    <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 mb-4">
+                <div className="text-center mb-6 md:mb-10 px-2">
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 mb-3 md:mb-4">
                         Universal Converter
                     </h1>
-                    <p className="text-text-secondary max-w-2xl mx-auto">
+                    <p className="text-text-secondary max-w-2xl mx-auto text-sm md:text-base">
                         Professional grade conversion engine. We prioritize quality and data integrity.
                     </p>
                 </div>
 
                 {/* Conversion Selector Bar */}
-                <div className="flex flex-col md:flex-row items-center gap-4 mb-8 md:mb-12 relative z-20">
-                    <span className="text-2xl text-text-secondary font-light">convert</span>
+                <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 md:mb-12 relative z-20 w-full justify-center">
+                    <span className="text-xl md:text-2xl text-text-secondary font-light">convert</span>
 
-                    {/* Input Format - Read Only mostly, but we use selector for consistent look or assume detected */}
+                    {/* Input Format */}
                     <div className="flex items-center gap-2 px-4 py-2 bg-glass-panel-dark border border-glass-border rounded-lg min-w-[100px] md:min-w-[120px] justify-center">
                         <span className="font-bold text-lg text-text-primary">{inputFormat}</span>
                     </div>
 
-                    <span className="text-2xl text-text-secondary font-light">to</span>
+                    <span className="text-xl md:text-2xl text-text-secondary font-light">to</span>
 
                     {/* Output Format */}
                     <FormatSelector
@@ -179,21 +179,21 @@ export function UniversalConverter({ onBack }) {
                         onToggle={() => setOpenDropdown(openDropdown === 'output' ? null : 'output')}
                         onClose={() => setOpenDropdown(null)}
                         onChange={(fmt) => setOutputFormat(fmt)}
-                        availableFormats={availableTargets} // Strict Filter
+                        availableFormats={availableTargets}
                     />
                 </div>
 
                 {/* File Uploader or Action Area */}
-                <div className="w-full max-w-3xl">
+                <div className="w-full max-w-3xl px-2 md:px-0">
                     {!file ? (
-                        <div className="bg-[#1a1d21] border-2 border-dashed border-glass-border rounded-xl p-4 md:p-10 text-center hover:border-emerald-500 hover:bg-emerald-500/5 transition-all">
+                        <div className="bg-[#1a1d21] border-2 border-dashed border-glass-border rounded-xl p-6 md:p-10 text-center hover:border-emerald-500 hover:bg-emerald-500/5 transition-all">
                             <input
                                 type="file"
                                 id="file-upload"
                                 className="hidden"
                                 onChange={(e) => handleFileSelect(e.target.files)}
                             />
-                            <label htmlFor="file-upload" className="cursor-pointer inline-flex items-center gap-3 px-6 py-3 md:px-8 md:py-4 bg-red-600 hover:bg-red-700 text-white rounded font-bold text-lg shadow-xl shadow-red-900/20 transition-all">
+                            <label htmlFor="file-upload" className="cursor-pointer inline-flex w-full md:w-auto justify-center items-center gap-3 px-6 py-3 md:px-8 md:py-4 bg-red-600 hover:bg-red-700 text-white rounded font-bold text-lg shadow-xl shadow-red-900/20 transition-all">
                                 <Icon name="plus" className="w-5 h-5" />
                                 Select File
                             </label>
