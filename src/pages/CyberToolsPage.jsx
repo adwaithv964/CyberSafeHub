@@ -1,16 +1,13 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 
-export default function CyberToolsPage({ onNavigate }) {
+export default function CyberToolsPage() {
+    const navigate = useNavigate();
 
     const handleToolSelect = (toolId) => {
-        // Update URL
-        window.history.pushState({}, '', `/tools/${toolId}`);
-        // Navigate via App.jsx
-        if (onNavigate) {
-            onNavigate(toolId);
-        }
+        navigate(`/tools/${toolId}`);
     }
 
     return (

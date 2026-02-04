@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConversionDashboard } from './ConversionDashboard';
 import { MergePDF } from './tools/MergePDF';
@@ -27,13 +28,14 @@ import { ComparePDF } from './tools/ComparePDF';
 import { HTMLToPDF } from './tools/HTMLToPDF';
 import { UniversalConverter } from './tools/UniversalConverter';
 
-export default function ConversionSystem({ onNavigate }) {
+export default function ConversionSystem() {
+    const navigate = useNavigate();
     const [activeTool, setActiveTool] = useState('dashboard');
 
     const renderTool = () => {
         switch (activeTool) {
             case 'dashboard':
-                return <ConversionDashboard onSelectTool={setActiveTool} onBack={() => onNavigate('tools')} />;
+                return <ConversionDashboard onSelectTool={setActiveTool} onBack={() => navigate('/tools')} />;
             case 'merge-pdf': return <MergePDF onBack={() => setActiveTool('dashboard')} />;
             case 'split-pdf': return <SplitPDF onBack={() => setActiveTool('dashboard')} />;
             case 'jpg-to-pdf': return <ImageToPDF onBack={() => setActiveTool('dashboard')} />;
@@ -60,7 +62,7 @@ export default function ConversionSystem({ onNavigate }) {
             case 'html-to-pdf': return <HTMLToPDF onBack={() => setActiveTool('dashboard')} />;
             case 'universal': return <UniversalConverter onBack={() => setActiveTool('dashboard')} />;
             default:
-                return <ConversionDashboard onSelectTool={setActiveTool} onBack={() => onNavigate('tools')} />;
+                return <ConversionDashboard onSelectTool={setActiveTool} onBack={() => navigate('/tools')} />;
         }
     };
 

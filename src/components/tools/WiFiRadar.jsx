@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { FaWifi, FaNetworkWired, FaServer, FaMobileAlt, FaLaptop, FaQuestion, FaExclamationTriangle, FaShieldAlt, FaSearch } from 'react-icons/fa';
 import axios from 'axios';
 
 import API_BASE_URL from '../../config';
 
-const WiFiRadar = ({ onNavigate }) => {
+const WiFiRadar = () => {
+    const navigate = useNavigate();
     const [scanning, setScanning] = useState(false);
     const [devices, setDevices] = useState([]);
     const [analyzingIds, setAnalyzingIds] = useState([]);
@@ -81,7 +83,7 @@ const WiFiRadar = ({ onNavigate }) => {
             <div className="relative z-10 max-w-6xl mx-auto">
                 <header className="mb-10 text-center relative">
                     <button
-                        onClick={() => onNavigate && onNavigate('tools')}
+                        onClick={() => navigate('/tools')}
                         className="block mb-4 md:absolute md:left-0 md:top-1 text-cyan-500 hover:text-cyan-300 flex items-center gap-2 transition-colors font-bold z-20 mx-auto md:mx-0 justify-center md:justify-start"
                     >
                         &larr; Back to Tools

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import Card from '../components/Card';
 import Icon from '../components/Icon';
@@ -6,7 +7,8 @@ import Button from '../components/Button';
 import { getRecentActivity, getActivityIcon } from '../utils/activityLogger';
 import Cyber3DScene from '../components/Cyber3DScene';
 
-const Dashboard = ({ onNavigate }) => {
+const Dashboard = () => {
+    const navigate = useNavigate();
     // State for Security Roadmap persistence
     const [roadmapItems, setRoadmapItems] = useState(() => {
         try {
@@ -134,7 +136,7 @@ const Dashboard = ({ onNavigate }) => {
                         <p className="text-center text-text-secondary mb-6 px-4 min-h-[48px]">
                             {securityScore === 0 ? "No scan data found. Run a scan to assess your security." : securityScore >= 80 ? "Excellent! Your system is well protected." : securityScore >= 60 ? "Good, but there is room for improvement." : "Critical! Immediate action is required."}
                         </p>
-                        <Button onClick={() => onNavigate('healthcheck')} variant="primary" className="w-full max-w-[200px] glass-button">
+                        <Button onClick={() => navigate('/healthcheck')} variant="primary" className="w-full max-w-[200px] glass-button">
                             {securityScore === 0 ? "Start First Scan" : "View Full Report"}
                         </Button>
                     </div>

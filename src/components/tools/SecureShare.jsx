@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import { io } from "socket.io-client";
 import QRCode from 'qrcode'; // Use default export
@@ -10,7 +11,8 @@ import API_BASE_URL from '../../config';
 // --- Configuration ---
 const SOCKET_URL = API_BASE_URL;
 
-export default function SecureShare({ onNavigate }) {
+export default function SecureShare() {
+    const navigate = useNavigate();
     const [mode, setMode] = useState('menu'); // 'menu', 'send', 'receive'
     const [shareType, setShareType] = useState('global'); // 'global', 'nearby', 'offline'
     const [socket, setSocket] = useState(null);
@@ -1156,7 +1158,7 @@ export default function SecureShare({ onNavigate }) {
     return (
         <div className="max-w-6xl mx-auto p-4">
             <button
-                onClick={() => onNavigate('tools')}
+                onClick={() => navigate('/tools')}
                 className="mb-6 flex items-center gap-2 text-text-secondary hover:text-accent transition-colors"
             >
                 <Icon name="arrowLeft" className="w-5 h-5" />

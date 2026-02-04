@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import EXIF from 'exif-js';
 
-export default function MetadataWasher({ onNavigate }) {
+export default function MetadataWasher() {
+    const navigate = useNavigate();
     const [file, setFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [metadata, setMetadata] = useState(null);
@@ -123,14 +125,7 @@ export default function MetadataWasher({ onNavigate }) {
     return (
         <div className="max-w-4xl mx-auto">
             <button
-                onClick={() => {
-                    if (onNavigate) {
-                        window.history.pushState({}, '', '/tools');
-                        onNavigate('tools');
-                    } else {
-                        window.location.href = '/tools';
-                    }
-                }}
+                onClick={() => navigate('/tools')}
                 className="flex items-center gap-2 text-text-secondary hover:text-accent transition-colors mb-6"
             >
                 <Icon name="arrowLeft" className="w-5 h-5" />

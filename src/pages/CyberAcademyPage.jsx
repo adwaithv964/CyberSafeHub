@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Card from '../components/Card';
 import Icon from '../components/Icon';
@@ -8,7 +9,11 @@ import EncryptionVisualizer from '../components/academy/EncryptionVisualizer';
 import SteganographyPage from './SteganographyPage';
 
 const CyberAcademyPage = () => {
-    const [activeModule, setActiveModule] = useState(null); // null = hub, 'phishing', 'cracker', 'crypto'
+    const { moduleId } = useParams();
+    const navigate = useNavigate();
+
+    // Map moduleId to activeModule logic or just use moduleId directly
+    const activeModule = moduleId;
 
     const modules = [
         {
@@ -66,7 +71,7 @@ const CyberAcademyPage = () => {
             {activeModule ? (
                 <div className="animate-fade-in">
                     <button
-                        onClick={() => setActiveModule(null)}
+                        onClick={() => navigate('/academy')}
                         className="mb-6 flex items-center text-text-secondary hover:text-accent transition-colors"
                     >
                         <Icon name="arrowLeft" className="w-4 h-4 mr-2" />
@@ -81,7 +86,7 @@ const CyberAcademyPage = () => {
                     {modules.map((mod) => (
                         <div
                             key={mod.id}
-                            onClick={() => setActiveModule(mod.id)}
+                            onClick={() => navigate(`/academy/${mod.id}`)}
                             className={`group cursor-pointer relative overflow-hidden bg-glass-gradient p-8 rounded-2xl border border-white/5 hover:border-accent/50 transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1`}
                         >
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">

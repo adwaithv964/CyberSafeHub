@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import { API_BASE_URL } from '../../config';
 
@@ -59,7 +60,8 @@ const SITES = [
     { name: 'Substack', url: 'https://USERNAME.substack.com', icon: 'book', checkType: 'link' }
 ];
 
-export default function UsernameDetective({ onNavigate }) {
+export default function UsernameDetective() {
+    const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [results, setResults] = useState({});
@@ -130,7 +132,7 @@ export default function UsernameDetective({ onNavigate }) {
         <div className="max-w-6xl mx-auto p-4 space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
                 <button
-                    onClick={() => onNavigate && onNavigate('tools')}
+                    onClick={() => navigate('/tools')}
                     className="p-2 rounded-lg bg-glass-panel border border-glass-border hover:border-accent hover:text-accent transition-colors"
                 >
                     <Icon name="arrowLeft" className="w-5 h-5" />
