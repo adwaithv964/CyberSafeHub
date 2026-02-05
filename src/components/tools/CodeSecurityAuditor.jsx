@@ -137,7 +137,7 @@ const CodeSecurityAuditor = () => {
                                                 h2: ({ node, ...props }) => <h2 className="text-xl font-bold text-accent mt-6 mb-3 border-b border-white/10 pb-2" {...props} />,
                                                 ul: ({ node, ...props }) => <ul className="space-y-3 my-4" {...props} />,
                                                 li: ({ node, ...props }) => <li className="ml-4 list-disc text-gray-300" {...props} />,
-                                                p: ({ node, ...props }) => <p className="mb-4 leading-relaxed" {...props} />,
+                                                p: ({ node, ...props }) => <div className="mb-4 leading-relaxed" {...props} />,
                                                 strong: ({ node, ...props }) => <strong className="text-white font-semibold" {...props} />,
                                                 blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-accent pl-4 py-2 my-4 bg-accent/5 italic text-gray-300 rounded-r" {...props} />,
                                                 code({ node, inline, className, children, ...props }) {

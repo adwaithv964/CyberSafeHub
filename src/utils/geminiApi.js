@@ -1,12 +1,12 @@
+// Helper function to pause execution (exponential backoff)
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const callGeminiAPI = async (messages, systemPrompt) => {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) return "API Key not found. Please create a .env file with your VITE_GEMINI_API_KEY.";
 
     const models = [
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite-001",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash-001"
+        "gemini-2.5-flash"
     ];
 
     // Format conversation history
@@ -28,7 +28,10 @@ export const callGeminiAPI = async (messages, systemPrompt) => {
         payload.systemInstruction = { parts: [{ text: systemPrompt }] };
     }
 
-    for (const model of models) {
+    let retryDelay = 2000; // Start with 2 seconds delay
+
+    for (let i = 0; i < models.length; i++) {
+        const model = models[i];
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         console.log(`Attempting to use model: ${model}`);
 
@@ -45,8 +48,20 @@ export const callGeminiAPI = async (messages, systemPrompt) => {
                 if (text) return text;
             }
 
-            // If 429 (Too Many Requests) or 404 (Not Found) or 503 (Service Unavailable), try next model
-            if (response.status === 429 || response.status === 404 || response.status === 503) {
+            // If 429 (Too Many Requests), wait before trying next model
+            if (response.status === 429) {
+                console.warn(`Model ${model} failed with status 429 (Rate Limit). Waiting ${retryDelay / 1000}s before trying next model...`);
+
+                // Only wait if there are more models to try
+                if (i < models.length - 1) {
+                    await delay(retryDelay);
+                    retryDelay *= 2; // Exponential backoff: 2s -> 4s -> 8s
+                }
+                continue;
+            }
+
+            // If 404 (Not Found) or 503 (Service Unavailable), try next model
+            if (response.status === 404 || response.status === 503) {
                 console.warn(`Model ${model} failed with status ${response.status}. Switching to next model...`);
                 continue;
             }

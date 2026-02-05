@@ -100,8 +100,9 @@ const CyberAssistantPage = () => {
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
+                            disabled={isLoading}
                             placeholder="Ask about phishing, passwords, or anything security..."
-                            className="flex-grow min-w-0 p-2 md:p-3 border border-border-color rounded-lg bg-secondary text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder-text-secondary transition-all"
+                            className="flex-grow min-w-0 p-2 md:p-3 border border-border-color rounded-lg bg-secondary text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder-text-secondary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         <Button type="submit" disabled={isLoading} className="p-2 md:p-3 bg-accent hover:bg-accent-hover text-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             <Icon name="send" className="w-6 h-6" />
