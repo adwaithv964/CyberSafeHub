@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import { checkBreaches } from '../utils/securityScanners';
 import { logActivity } from '../utils/activityLogger';
 import { API_BASE_URL } from '../config';
+import { auth } from '../config/firebase';
 
 // --- Shared History Logic ---
 const useScannerHistory = (type) => {
@@ -273,43 +274,36 @@ const PhishingScanner = () => {
 
     const { history, addHistoryItem, clearHistory } = useScannerHistory('phishing');
 
-    const API_KEY = import.meta.env.VITE_GOOGLE_SAFE_BROWSING_API_KEY;
-
     const checkUrlSafety = async (urlToCheck) => {
-        if (!API_KEY) {
-            setError('Google Safe Browsing API Key is missing. Please configure VITE_GOOGLE_SAFE_BROWSING_API_KEY.');
-            return null;
-        }
-
-        const apiEndpoint = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${API_KEY}`;
-        const requestBody = {
-            client: {
-                clientId: "cyber-safe-hub",
-                clientVersion: "1.0.0"
-            },
-            threatInfo: {
-                threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
-                platformTypes: ["ANY_PLATFORM"],
-                threatEntryTypes: ["URL"],
-                threatEntries: [
-                    { url: urlToCheck }
-                ]
-            }
-        };
-
         try {
-            const response = await fetch(apiEndpoint, {
+            const user = auth.currentUser;
+            if (!user) {
+                setError("Please sign in to use the Scanner.");
+                return null;
+            }
+            const token = await user.getIdToken();
+
+            const response = await fetch(`${API_BASE_URL}/api/security/safebrowsing`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({
+                    threatInfo: {
+                        threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
+                        platformTypes: ["ANY_PLATFORM"],
+                        threatEntryTypes: ["URL"],
+                        threatEntries: [
+                            { url: urlToCheck }
+                        ]
+                    }
+                })
             });
 
             if (!response.ok) {
-                if (response.status === 400) throw new Error('Invalid API Request (400)');
-                if (response.status === 403) throw new Error('Invalid API Key (403)');
-                throw new Error(`API Error: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Server Error: ${response.status}`);
             }
 
             const data = await response.json();

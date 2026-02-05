@@ -1014,12 +1014,12 @@ export default function SecureShare() {
                 >
                     Nearby Share (WiFi)
                 </button>
-                <button
+                {/* <button
                     onClick={() => setShareType('offline')}
                     className={`flex-1 py-3 rounded-xl font-medium transition-all ${shareType === 'offline' ? 'bg-accent text-black shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
                 >
                     Offline (QR)
-                </button>
+                </button> */}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
