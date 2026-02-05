@@ -303,7 +303,16 @@ const PhishingScanner = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || `Server Error: ${response.status}`);
+                let msg = errorData.error || `Server Error: ${response.status}`;
+                if (errorData.details) {
+                    // Try to extract specific message from Google API error format
+                    if (errorData.details.error && errorData.details.error.message) {
+                        msg += `: ${errorData.details.error.message}`;
+                    } else {
+                        msg += `: ${JSON.stringify(errorData.details)}`;
+                    }
+                }
+                throw new Error(msg);
             }
 
             const data = await response.json();
@@ -337,13 +346,19 @@ const PhishingScanner = () => {
         setScanResult(null);
         setIsScanning(true);
 
-        const result = await checkUrlSafety(url);
+        // Normalize URL
+        let urlToCheck = url.trim();
+        if (!/^https?:\/\//i.test(urlToCheck)) {
+            urlToCheck = 'https://' + urlToCheck;
+        }
+
+        const result = await checkUrlSafety(urlToCheck);
 
         if (result) {
             setScanResult(result);
             // Add to history
             addHistoryItem({
-                target: url,
+                target: urlToCheck,
                 status: result.verdict === 'Safe' ? 'safe' : 'unsafe',
                 resultText: result.verdict
             });
@@ -361,11 +376,7 @@ const PhishingScanner = () => {
                         <h3 className="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Google Safe Browsing Scanner</h3>
                         <p className="text-gray-500 dark:text-gray-400 mt-2">Check URLs against Google's massive blacklist.</p>
 
-                        {!API_KEY && (
-                            <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm rounded-lg border border-yellow-200 dark:border-yellow-800">
-                                Note: No API configuration found. Scanner will return configuration error.
-                            </div>
-                        )}
+
 
                         <div className="mt-6 flex flex-col md:flex-row gap-2">
                             <input

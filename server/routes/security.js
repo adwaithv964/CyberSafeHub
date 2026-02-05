@@ -71,6 +71,8 @@ router.post('/safebrowsing', async (req, res) => {
             threatInfo: threatInfo
         };
 
+        console.log("Safe Browsing Payload:", JSON.stringify(requestBody, null, 2));
+
         const response = await axios.post(apiUrl, requestBody, {
             headers: { 'Content-Type': 'application/json' }
         });
@@ -80,7 +82,11 @@ router.post('/safebrowsing', async (req, res) => {
     } catch (error) {
         console.error("Safe Browsing API Proxy Error:", error.response?.data || error.message);
         const status = error.response?.status || 500;
-        res.status(status).json({ error: error.message });
+        // Send more details to the client for debugging
+        res.status(status).json({
+            error: error.message,
+            details: error.response?.data
+        });
     }
 });
 
