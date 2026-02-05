@@ -25,6 +25,7 @@ import CyberToolsPage from './pages/CyberToolsPage';
 import CyberAcademyPage from './pages/CyberAcademyPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import BackgroundBlobs from './components/BackgroundBlobs';
+import SEO from './components/SEO';
 
 function AppContent() {
     const { currentUser, logout } = useAuth();
@@ -87,6 +88,7 @@ function AppContent() {
 
     return (
         <div className="h-screen w-full flex flex-col font-sans text-text-primary relative overflow-hidden">
+            <SEO />
             <BackgroundBlobs />
             {/* Mobile Header - Flex-none ensures it takes only necessary space */}
             <div className="md:hidden flex-none flex items-center p-4 glass-panel m-2 z-50 gap-3">
