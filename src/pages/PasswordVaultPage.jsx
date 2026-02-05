@@ -94,7 +94,7 @@ const PasswordVaultPage = () => {
         setIsGeneratingAdvice(true);
         const systemPrompt = "You are a password security expert. A user has entered a weak password. Explain in a friendly, non-judgmental tone *why* their password is weak. Focus on concepts like predictability, common patterns (like using 'password123'), and the importance of randomness and length. Then, provide 2-3 actionable tips for creating a much stronger password, without suggesting a specific one. Use bullet points.";
         const userPrompt = `My password is "${passwordToCheck}". Please analyze it and tell me how to improve my password creation strategy.`;
-        const advice = await callGeminiAPI(userPrompt, systemPrompt);
+        const advice = await callGeminiAPI([{ sender: 'user', text: userPrompt }], systemPrompt);
         setAiAdvice(advice);
         setIsGeneratingAdvice(false);
     };

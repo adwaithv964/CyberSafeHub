@@ -90,6 +90,34 @@ export default function CyberToolsPage() {
                     </p>
                 </motion.div>
 
+                <motion.div
+                    whileHover={{ scale: 1.02, translateY: -5 }}
+                    className="bg-glass-panel p-6 rounded-xl border border-glass-border cursor-pointer hover:border-emerald-400 hover:shadow-glow-emerald transition-all group"
+                    onClick={() => handleToolSelect('code-auditor')}
+                >
+                    <div className="w-12 h-12 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:bg-emerald-500/20 transition-colors">
+                        <Icon name="code" className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-text-primary mb-2">Code Security Auditor</h3>
+                    <p className="text-text-secondary text-sm">
+                        AI-powered static analysis to identify vulnerabilities in your code snippets instantly.
+                    </p>
+                </motion.div>
+
+                <motion.div
+                    whileHover={{ scale: 1.02, translateY: -5 }}
+                    className="bg-glass-panel p-6 rounded-xl border border-glass-border cursor-pointer hover:border-pink-400 hover:shadow-glow-pink transition-all group"
+                    onClick={() => handleToolSelect('privacy-decoder')}
+                >
+                    <div className="w-12 h-12 rounded-lg bg-pink-500/10 flex items-center justify-center mb-4 group-hover:bg-pink-500/20 transition-colors">
+                        <Icon name="book" className="w-6 h-6 text-pink-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-text-primary mb-2">Policy Decoder</h3>
+                    <p className="text-text-secondary text-sm">
+                        Paste legal jargon (Terms of Service, Privacy Policies) and get an instant AI summary of red flags.
+                    </p>
+                </motion.div>
+
 
             </div>
         </div>

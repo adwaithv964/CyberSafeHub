@@ -440,31 +440,43 @@ app.get('/api/wifi-radar/scan', async (req, res) => {
 
         // Custom ARP scan function
         const scanNetwork = () => new Promise((resolve) => {
+            console.log("Executing arp -a for network scan...");
             exec('arp -a', (error, stdout, stderr) => {
                 if (error) {
+                    console.error("ARP execution error:", error);
                     return resolve([]);
                 }
+
+                // console.log("ARP Output:\n", stdout); // Uncomment for deep debugging if needed
 
                 const lines = stdout.split('\n');
                 const devices = [];
 
                 lines.forEach(line => {
-                    // Stricter Regex for MAC: XX-XX-XX-XX-XX-XX
-                    const match = line.match(/\s+(\d+\.\d+\.\d+\.\d+)\s+([a-fA-F0-9]{2}(?:-[a-fA-F0-9]{2}){5})\s+/);
+                    // Improved Regex: Handle potential leading spaces, varying whitespace, and different MAC separators
+                    // Groups: 1=IP, 2=MAC
+                    const match = line.match(/(\d+\.\d+\.\d+\.\d+)\s+([a-fA-F0-9]{2}[:-][a-fA-F0-9]{2}[:-][a-fA-F0-9]{2}[:-][a-fA-F0-9]{2}[:-][a-fA-F0-9]{2}[:-][a-fA-F0-9]{2})/);
+
                     if (match) {
                         const ip = match[1];
                         const mac = match[2].replace(/-/g, ':').toUpperCase();
 
-                        if (ip.startsWith(subnetBase) && !ip.endsWith('.255')) {
-                            devices.push({
-                                ip,
-                                mac,
-                                name: 'Unknown Device',
-                                vendor: 'Unknown'
-                            });
+                        // Loosen the subnet check slightly to ensure we capture relevant devices even if subnet calculation is slightly off
+                        // But still avoid multicast/broadcast
+                        if (!ip.endsWith('.255') && !ip.startsWith('224.') && !ip.startsWith('239.') && !ip.startsWith('255.')) {
+                            // Optional: strict subnet filtering if we are sure about subnetBase
+                            if (ip.startsWith(subnetBase)) {
+                                devices.push({
+                                    ip,
+                                    mac,
+                                    name: 'Unknown Device',
+                                    vendor: 'Unknown'
+                                });
+                            }
                         }
                     }
                 });
+                console.log(`ARP Scan parsed ${devices.length} devices.`);
                 resolve(devices);
             });
         });
@@ -491,75 +503,233 @@ app.get('/api/wifi-radar/scan', async (req, res) => {
         const uniqueDevices = Array.from(new Map(devices.map(item => [item.ip, item])).values());
 
 
-        // Helper: Resolve Hostname (Reverse DNS)
+        // Helper: Resolve Hostname (Reverse DNS + NetBIOS + HTTP)
         const resolveHostname = (ip) => {
             const dns = require('dns').promises;
             return new Promise(async (resolve) => {
+                console.log(`[RESOLVE] Starting lookup for ${ip}...`);
+                let resolvedName = null;
+
+                // 1. Try Standard DNS Reverse Lookup
                 try {
                     const hostnames = await Promise.race([
                         dns.reverse(ip),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000))
                     ]);
                     if (hostnames && hostnames.length > 0) {
-                        resolve(hostnames[0]);
-                    } else {
-                        resolve(null);
+                        resolvedName = hostnames[0];
+                        console.log(`[DNS] Resolved ${ip} to ${resolvedName}`);
                     }
                 } catch (err) {
-                    resolve(null);
+                    // Ignore DNS error
                 }
+
+                if (resolvedName) return resolve(resolvedName);
+
+                // 2. Try 'ping -a' (Windows/Linux)
+                try {
+                    const isWin = process.platform === 'win32';
+                    const cmd = isWin ? `ping -a ${ip} -n 1` : `getent hosts ${ip}`;
+
+                    if (isWin) {
+                        const stdout = await new Promise((r) => exec(cmd, { timeout: 2000 }, (err, out) => r(out || '')));
+                        const match = stdout.match(/Pinging\s+([^\s]+)\s+\[/);
+                        if (match && match[1] !== ip) {
+                            resolvedName = match[1];
+                            console.log(`[PING] Resolved ${ip} to ${resolvedName}`);
+                        }
+                    }
+                } catch (e) { }
+
+                if (resolvedName) return resolve(resolvedName);
+
+                // 3. Try NetBIOS (nbtstat -A IP) - Windows Only
+                try {
+                    if (process.platform === 'win32') {
+                        const stdout = await new Promise((r) => exec(`nbtstat -A ${ip}`, { timeout: 2000 }, (err, out) => r(out || '')));
+                        const lines = stdout.split('\n');
+                        for (const line of lines) {
+                            if (line.includes('<00>') && line.includes('UNIQUE')) {
+                                const parts = line.trim().split(/\s+/);
+                                if (parts.length > 0) {
+                                    resolvedName = parts[0];
+                                    console.log(`[NBT] Resolved ${ip} to ${resolvedName}`);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (e) { }
+
+                if (resolvedName) return resolve(resolvedName);
+
+                // 4. Try HTTP Title Scraping
+                try {
+                    // console.log(`[HTTP] Checking ${ip}...`);
+                    const res = await axios.get(`http://${ip}`, { timeout: 2000 });
+                    const html = res.data ? res.data.toString() : '';
+                    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+                    if (titleMatch && titleMatch[1]) {
+                        resolvedName = titleMatch[1].trim();
+                        // Clean commonly long titles if needed
+                        if (resolvedName.length > 30) resolvedName = resolvedName.substring(0, 30) + '...';
+                        console.log(`[HTTP] Resolved ${ip} to ${resolvedName}`);
+                    }
+                } catch (e) { }
+
+                if (!resolvedName) console.log(`[RESOLVE] Failed to resolve name for ${ip}`);
+                resolve(resolvedName);
             });
         };
 
 
-        // Resolve Vendors and Hostnames (Async, parallel)
-        const enrichedDevices = await Promise.all(uniqueDevices.map(async device => {
-            let vendor = device.vendor;
-            let hostname = null;
+        // Helper: Check Port
+        const checkPort = (ip, port, timeout = 300) => {
+            const net = require('net');
+            return new Promise((resolve) => {
+                const socket = new net.Socket();
+                socket.setTimeout(timeout);
+                socket.on('connect', () => {
+                    socket.destroy();
+                    resolve(true);
+                });
+                socket.on('timeout', () => {
+                    socket.destroy();
+                    resolve(false);
+                });
+                socket.on('error', () => {
+                    socket.destroy();
+                    resolve(false);
+                });
+                socket.connect(port, ip);
+            });
+        };
 
-
-
-            // Parallel lookup for Vendor and Hostname
-            const [vendorResult, hostnameResult] = await Promise.all([
-                Promise.resolve(getVendorLocal(device.mac)),
-                resolveHostname(device.ip)
-            ]);
-
-
-
-            vendor = vendorResult;
-            hostname = hostnameResult;
-            let mdnsName = mdnsDevices[device.ip];
-
-            if (mdnsName) {
-
-                // Clean up mDNS name (remove .local)
-                if (mdnsName.endsWith('.local')) {
-                    mdnsName = mdnsName.replace('.local', '');
+        // SSDP Discovery (UPnP)
+        const dgram = require('dgram');
+        const ssdpMap = {};
+        const ssdpSocket = dgram.createSocket('udp4');
+        try {
+            ssdpSocket.on('message', (msg, rinfo) => {
+                const response = msg.toString();
+                const serverMatch = response.match(/SERVER: (.*)\r\n/i);
+                if (serverMatch) {
+                    ssdpMap[rinfo.address] = serverMatch[1];
+                    console.log(`[SSDP] ${rinfo.address} -> ${serverMatch[1]}`);
                 }
+            });
+            ssdpSocket.bind(() => {
+                const message = Buffer.from(
+                    'M-SEARCH * HTTP/1.1\r\n' +
+                    'HOST: 239.255.255.250:1900\r\n' +
+                    'MAN: "ssdp:discover"\r\n' +
+                    'MX: 1\r\n' +
+                    'ST: ssdp:all\r\n\r\n'
+                );
+                ssdpSocket.setBroadcast(true);
+                ssdpSocket.addMembership('239.255.255.250');
+                ssdpSocket.send(message, 0, message.length, 1900, '239.255.255.250');
+            });
+        } catch (e) { console.log("SSDP Error:", e.message); }
+
+
+        // mDNS Discovery Setup
+        // Check if module exists safely
+        let mDNS;
+        try { mDNS = require('multicast-dns')(); } catch (e) { console.log("mDNS module error or missing"); }
+
+        const mdnsMap = {};
+
+        if (mDNS) {
+            // Listen for mDNS responses
+            mDNS.on('response', (packet) => {
+                packet.answers.forEach((answer) => {
+                    if (answer.type === 'A' && answer.data && answer.name) {
+                        mdnsMap[answer.data] = answer.name;
+                    }
+                });
+            });
+
+            // Query for devices
+            console.log("[mDNS] Sending query...");
+            try {
+                mDNS.query({ questions: [{ name: '_services._dns-sd._udp.local', type: 'PTR' }] });
+                mDNS.query({ questions: [{ name: '_http._tcp.local', type: 'PTR' }] });
+            } catch (e) { }
+
+            // Wait a bit for mDNS
+            await new Promise(r => setTimeout(r, 2000));
+        }
+
+
+
+
+        // Wait for discovery (mDNS + SSDP)
+        await new Promise(r => setTimeout(r, 2500));
+
+        // Cleanup Listeners
+        if (mDNS) mDNS.destroy();
+        try { ssdpSocket.close(); } catch (e) { }
+
+
+        // Resolve Vendors and Hostnames (SERIALIZED)
+        const enrichedDevices = [];
+        for (const device of uniqueDevices) {
+            let vendor = await Promise.resolve(getVendorLocal(device.mac));
+            let hostname = null;
+            let deviceType = "Unknown";
+            let ports = [];
+
+            // 1. Check mDNS
+            if (mdnsMap[device.ip]) {
+                hostname = mdnsMap[device.ip];
+                if (hostname.endsWith('.local')) hostname = hostname.replace('.local', '');
+                console.log(`[mDNS] Match for ${device.ip}: ${hostname}`);
+            } else {
+                // 2. Active Resolution
+                hostname = await resolveHostname(device.ip);
+            }
+
+            // 3. Port Fingerprinting
+            const commonPorts = [80, 443, 8080, 53, 22, 5555, 62078];
+            for (const port of commonPorts) {
+                const isOpen = await checkPort(device.ip, port, 300);
+                if (isOpen) ports.push(port);
+            }
+
+            // Deduce Type
+            if (ports.includes(62078)) deviceType = "Apple Device (iOS/macOS)";
+            else if (ports.includes(5555)) deviceType = "Android Device";
+            else if (ports.includes(53)) deviceType = "DNS Server / Router";
+            else if (ports.includes(80) || ports.includes(443)) deviceType = "Web Server / IoT";
+
+            // Append SSDP info
+            if (ssdpMap[device.ip]) {
+                deviceType += ` [${ssdpMap[device.ip]}]`;
             }
 
             let displayName = device.name;
             if (displayName === 'Unknown Device') {
-                if (mdnsName) {
-                    displayName = mdnsName;
-                } else if (hostname) {
+                if (hostname) {
                     displayName = hostname;
+                } else if (deviceType !== "Unknown") {
+                    displayName = `Device (${deviceType})`;
                 } else {
                     displayName = `Device (${device.ip})`;
                 }
             }
 
-            return {
+            enrichedDevices.push({
                 ...device,
                 name: displayName,
                 hostname: hostname,
-                mdnsName: mdnsName,
+                mdnsName: mdnsMap[device.ip] ? mdnsMap[device.ip].replace('.local', '') : null,
                 vendor: vendor,
-                isSuspicious: false,
-                ports: []
-            };
-        }));
+                deviceType: deviceType,
+                ports: ports,
+                isSuspicious: false
+            });
+        }
 
         console.log(`Found ${enrichedDevices.length} devices.`);
         res.json(enrichedDevices);

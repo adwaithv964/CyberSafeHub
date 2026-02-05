@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Card from '../Card';
 import Button from '../Button';
 import Icon from '../Icon';
+import { callGeminiAPI } from '../../utils/geminiApi';
 
 const PhishingTrainer = () => {
     const [currentScenario, setCurrentScenario] = useState(0);
@@ -10,7 +11,8 @@ const PhishingTrainer = () => {
     const [feedback, setFeedback] = useState(null); // { isCorrect, message }
     const [completed, setCompleted] = useState(false);
 
-    const scenarios = [
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [scenarios, setScenarios] = useState([
         {
             id: 1,
             sender: "Security Team <security-alert@g0ogle-support.com>",
@@ -51,7 +53,7 @@ const PhishingTrainer = () => {
             isPhish: true,
             explanation: "CEO Fraud! The CEO is using a personal Gmail address and creating fake urgency to bypass procedures."
         }
-    ];
+    ]);
 
     const handleAnswer = (userSaysPhish) => {
         const scenario = scenarios[currentScenario];
@@ -76,6 +78,46 @@ const PhishingTrainer = () => {
         }
     };
 
+    const generateNewScenario = async () => {
+        setIsGenerating(true);
+        try {
+            const systemPrompt = `You are a cybersecurity expert creating training scenarios for a phishing simulation. 
+            Generate a JSON object representing a single email scenario. 
+            The JSON MUST strictly follow this format:
+            {
+                "sender": "The sender name and email (e.g., 'Amazon Support <support@amazn-verify.com>')",
+                "subject": "The email subject line",
+                "body": "The email body text. Use \\n for newlines.",
+                "isPhish": boolean (true for phishing, false for legitimate),
+                "explanation": "A clear explanation of why this is or isn't phishing, pointing out specific red flags or safety signs."
+            }
+            Do not include Markdown formatting or code blocks. Just the raw JSON string.`;
+
+            const userPrompt = "Generate a new, unique email scenario. Make it realistic and challenging. It can be a tricky phishing attempt or a safe but slightly confusing legitimate email.";
+
+            const responseText = await callGeminiAPI([{ sender: 'user', text: userPrompt }], systemPrompt);
+
+            // Cleanup response if needed (sometimes LLMs add markdown code blocks)
+            const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            const newScenario = JSON.parse(cleanJson);
+            newScenario.id = scenarios.length + 1;
+
+            setScenarios([...scenarios, newScenario]);
+            setCompleted(false);
+            setScore(score); // Keep score
+            setCurrentScenario(scenarios.length); // Move to new item
+            setShowResult(false);
+            setFeedback(null);
+
+        } catch (error) {
+            console.error("Failed to generate scenario:", error);
+            // Optionally set an error state here
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const reset = () => {
         setCurrentScenario(0);
         setScore(0);
@@ -92,7 +134,22 @@ const PhishingTrainer = () => {
                 </div>
                 <h2 className="text-2xl font-bold text-text-primary">Training Complete!</h2>
                 <p className="text-text-secondary">You identified {score} out of {scenarios.length} emails correctly.</p>
-                <Button onClick={reset} variant="primary">Run Simulation Again</Button>
+                <div className="flex gap-4 justify-center">
+                    <Button onClick={reset} variant="secondary">Reset Standard Set</Button>
+                    <Button onClick={generateNewScenario} variant="primary" disabled={isGenerating}>
+                        {isGenerating ? (
+                            <>
+                                <Icon name="refreshCw" className="w-5 h-5 animate-spin mr-2" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Icon name="sparkles" className="w-5 h-5 mr-2" />
+                                Generate New Scenario
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
         );
     }

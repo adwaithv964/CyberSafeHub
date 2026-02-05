@@ -1,0 +1,13 @@
+Debug Resolution for IP: 192.168.1.6
+
+--- TEST 1: ping -a ---
+
+--- TEST 2: nbtstat -A ---
+RAW STDOUT START
+"\r\nPinging ADWAITH_V [192.168.1.6] with 32 bytes of data:\r\nReply from 192.168.1.6: bytes=32 time<1ms TTL=128\r\n\r\nPing statistics for 192.168.1.6:\r\n    Packets: Sent = 1, Received = 1, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\r\n"
+RAW STDOUT END
+Regex Match Result: ADWAITH_V
+RAW STDOUT START
+"    \r\nEthernet 4:\r\nNode IpAddress: [169.254.155.245] Scope Id: []\r\n\r\n    Host not found.\r\n    \r\nLocal Area Connection:\r\nNode IpAddress: [0.0.0.0] Scope Id: []\r\n\r\n    Host not found.\r\n    \r\nMcAfee VPN:\r\nNode IpAddress: [0.0.0.0] Scope Id: []\r\n\r\n    Host not found.\r\n    \r\nEthernet:\r\nNode IpAddress: [0.0.0.0] Scope Id: []\r\n\r\n    Host not found.\r\n    \r\nLocal Area Connection* 8:\r\nNode IpAddress: [0.0.0.0] Scope Id: []\r\n\r\n    Host not found.\r\n    \r\nWi-Fi:\r\nNode IpAddress: [192.168.1.6] Scope Id: []\r\n\r\n    Host not found.\r\n    \r\nLocal Area Connection* 10:\r\nNode IpAddress: [0.0.0.0] Scope Id: []\r\n\r\n    Host not found.\r\n    \r\nBluetooth Network Connection:\r\nNode IpAddress: [0.0.0.0] Scope Id: []\r\n\r\n    Host not found.\r\n"
+RAW STDOUT END
+Logic Parse Result: NO MATCH

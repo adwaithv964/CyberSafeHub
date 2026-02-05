@@ -7,6 +7,7 @@ import PhishingTrainer from '../components/academy/PhishingTrainer';
 import PasswordCracker from '../components/academy/PasswordCracker';
 import EncryptionVisualizer from '../components/academy/EncryptionVisualizer';
 import SteganographyPage from './SteganographyPage';
+import IncidentSimulator from '../components/academy/IncidentSimulator';
 
 const CyberAcademyPage = () => {
     const { moduleId } = useParams();
@@ -47,6 +48,14 @@ const CyberAcademyPage = () => {
             icon: 'eyeOff',
             color: 'text-emerald-500',
             borderColor: 'border-emerald-500/50'
+        },
+        {
+            id: 'incident',
+            title: 'Incident Response RPG',
+            description: 'Simulate a live cyber attack. You are the Admin. Can you save the servers?',
+            icon: 'terminal',
+            color: 'text-purple-500',
+            borderColor: 'border-purple-500/50'
         }
     ];
 
@@ -56,6 +65,7 @@ const CyberAcademyPage = () => {
             case 'cracker': return <PasswordCracker />;
             case 'crypto': return <EncryptionVisualizer />;
             case 'stego': return <SteganographyPage />;
+            case 'incident': return <IncidentSimulator />;
             default: return null;
         }
     };

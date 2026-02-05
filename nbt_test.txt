@@ -1,0 +1,40 @@
+    
+Ethernet 4:
+Node IpAddress: [169.254.155.245] Scope Id: []
+
+    Host not found.
+    
+Local Area Connection:
+Node IpAddress: [0.0.0.0] Scope Id: []
+
+    Host not found.
+    
+McAfee VPN:
+Node IpAddress: [0.0.0.0] Scope Id: []
+
+    Host not found.
+    
+Ethernet:
+Node IpAddress: [0.0.0.0] Scope Id: []
+
+    Host not found.
+    
+Local Area Connection* 8:
+Node IpAddress: [0.0.0.0] Scope Id: []
+
+    Host not found.
+    
+Wi-Fi:
+Node IpAddress: [192.168.1.6] Scope Id: []
+
+    Host not found.
+    
+Local Area Connection* 10:
+Node IpAddress: [0.0.0.0] Scope Id: []
+
+    Host not found.
+    
+Bluetooth Network Connection:
+Node IpAddress: [0.0.0.0] Scope Id: []
+
+    Host not found.

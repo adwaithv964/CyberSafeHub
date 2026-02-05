@@ -12,6 +12,8 @@ import UsernameDetective from './components/tools/UsernameDetective';
 import WiFiRadar from './components/tools/WiFiRadar';
 import SecureShare from './components/tools/SecureShare';
 import ConversionSystem from './components/tools/conversion/ConversionSystem';
+import CodeSecurityAuditor from './components/tools/CodeSecurityAuditor';
+import PrivacyPolicyDecoder from './components/tools/PrivacyPolicyDecoder';
 import PasswordVaultPage from './pages/PasswordVaultPage';
 import DigitalPrivacyPage from './pages/DigitalPrivacyPage';
 import EmergencyGuidesPage from './pages/EmergencyGuidesPage';
@@ -223,6 +225,16 @@ function AppContent() {
                             <Route path="/tools/conversion-system" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
                                     <ConversionSystem />
+                                </motion.div>
+                            } />
+                            <Route path="/tools/code-auditor" element={
+                                <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+                                    <CodeSecurityAuditor />
+                                </motion.div>
+                            } />
+                            <Route path="/tools/privacy-decoder" element={
+                                <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+                                    <PrivacyPolicyDecoder />
                                 </motion.div>
                             } />
                             <Route path="/settings" element={

@@ -472,7 +472,7 @@ const BreachDetector = () => {
         const systemPrompt = "You are a cybersecurity incident response expert. A user has been found in data breaches. Based on the breach details provided, generate a clear, prioritized, step-by-step action plan for them to follow. Use headings and bullet points for clarity. Start with the most critical actions. The tone should be reassuring but firm.";
         const userPrompt = `I was found in the following data breaches:\n${breachDetails}\n\nPlease provide a step-by-step action plan.`;
 
-        const plan = await callGeminiAPI(userPrompt, systemPrompt);
+        const plan = await callGeminiAPI([{ sender: 'user', text: userPrompt }], systemPrompt);
         setActionPlan(plan);
         setIsGeneratingPlan(false);
     };

@@ -164,7 +164,7 @@ const HealthCheckPage = () => {
         const systemPrompt = "You are a friendly, encouraging cybersecurity coach. A user has just completed a security health check. Based on their results, provide a short, easy-to-understand summary. Congratulate them on what they're doing well, gently point out the key area for improvement, and motivate them to follow their new roadmap. Keep it under 100 words.";
         const userPrompt = `My security scan information:\nScore: ${scanResults.score}/100\n\nFindings:\n${findingsText}\n\nPlease give me a summary of my results.`;
 
-        const summary = await callGeminiAPI(userPrompt, systemPrompt);
+        const summary = await callGeminiAPI([{ sender: 'user', text: userPrompt }], systemPrompt);
         setAiSummary(summary);
         setIsGeneratingSummary(false);
     };
