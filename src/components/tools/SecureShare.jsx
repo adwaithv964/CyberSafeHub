@@ -6,6 +6,7 @@ import { io } from "socket.io-client";
 import QRCode from 'qrcode'; // Use default export
 import { Html5QrcodeScanner } from "html5-qrcode";
 import LZString from 'lz-string';
+import { generateQRChunks, parseQRChunk, reassembleFile } from '../../utils/qrStreamer';
 import API_BASE_URL from '../../config';
 
 // --- Configuration ---
@@ -51,7 +52,20 @@ export default function SecureShare() {
     const [offlineStep, setOfflineStep] = useState('init'); // init, generate-offer, scan-offer, generate-answer, scan-answer
     const [qrData, setQrData] = useState('');
     const [scannerRef, setScannerRef] = useState(null);
+    // Offline Streaming State
+    const [streamChunks, setStreamChunks] = useState([]);
     const isOfflineScanning = useRef(false);
+
+    const [currentStreamIndex, setCurrentStreamIndex] = useState(0);
+    const [streamSpeed, setStreamSpeed] = useState(200); // ms
+    const [isStreaming, setIsStreaming] = useState(false);
+    const streamIntervalRef = useRef(null);
+
+    // Receiver Reassembly State
+    const [receivedChunks, setReceivedChunks] = useState(new Set()); // Set of indices
+    const [receivedDataMap, setReceivedDataMap] = useState({}); // Index -> Data
+    const [streamMeta, setStreamMeta] = useState(null); // { id, total }
+    const [reassemblyProgress, setReassemblyProgress] = useState(0);
 
     // --- Socket Initialization ---
     useEffect(() => {
@@ -705,19 +719,146 @@ export default function SecureShare() {
         setTimeout(() => {
             const scanner = new Html5QrcodeScanner(
                 "reader",
-                { fps: 10, qrbox: { width: 250, height: 250 } },
+                { fps: 30, qrbox: { width: 250, height: 250 } }, // Increased FPS for streaming
                  /* verbose= */ false
             );
-            scanner.render((decodedText) => {
-                console.log("Scanned:", decodedText);
-                scanner.clear();
-                setScannerRef(null);
-                handleOfflineScan(decodedText);
+            scanner.render(async (decodedText) => {
+                // Check if it's a stream chunk first
+                const chunk = parseQRChunk(decodedText);
+                if (chunk) {
+                    handleStreamChunk(chunk);
+                } else {
+                    // Regular signaling QR
+                    console.log("Scanned Signal:", decodedText);
+                    scanner.clear();
+                    setScannerRef(null);
+                    handleOfflineScan(decodedText);
+                }
             }, (error) => {
                 // console.warn(error);
             });
             setScannerRef(scanner);
         }, 100);
+    };
+
+    // --- Streaming Logic ---
+    const prepareStream = async () => {
+        if (selectedFiles.length === 0) return;
+        const file = selectedFiles[0]; // Support 1 file for now
+
+        try {
+            setOfflineStep('preparing-stream');
+            const { chunks, totalChunks, fileId } = await generateQRChunks(file);
+            setStreamChunks(chunks);
+            setStreamMeta({ id: fileId, total: totalChunks, name: file.name });
+            setOfflineStep('streaming-send');
+            setCurrentStreamIndex(0);
+        } catch (e) {
+            console.error("Error preparing stream", e);
+        }
+    };
+
+    const toggleStreamPlay = () => {
+        if (isStreaming) {
+            clearInterval(streamIntervalRef.current);
+            setIsStreaming(false);
+        } else {
+            setIsStreaming(true);
+            streamIntervalRef.current = setInterval(() => {
+                setCurrentStreamIndex(prev => {
+                    const next = prev + 1;
+                    return next >= streamChunks.length ? 0 : next;
+                });
+            }, streamSpeed);
+        }
+    };
+
+    // Update canvas when index changes
+    useEffect(() => {
+        if (offlineStep === 'streaming-send' && streamChunks.length > 0) {
+            const canvas = document.getElementById('qr-stream-canvas');
+            if (canvas) {
+                QRCode.toCanvas(canvas, streamChunks[currentStreamIndex], { width: 300, margin: 1 }, (error) => {
+                    if (error) console.error(error);
+                });
+            }
+        }
+    }, [currentStreamIndex, offlineStep, streamChunks]);
+
+    // Speed update
+    useEffect(() => {
+        if (isStreaming) {
+            clearInterval(streamIntervalRef.current);
+            streamIntervalRef.current = setInterval(() => {
+                setCurrentStreamIndex(prev => {
+                    const next = prev + 1;
+                    return next >= streamChunks.length ? 0 : next;
+                });
+            }, streamSpeed);
+        }
+    }, [streamSpeed]);
+
+    // Cleanup stream
+    useEffect(() => {
+        return () => clearInterval(streamIntervalRef.current);
+    }, []);
+
+    const handleStreamChunk = (chunk) => {
+        // Assume we are in 'scanning' mode. 
+        // If we receive a chunk, we should switch UI to 'streaming-receive' if not already.
+
+        setOfflineStep(prev => {
+            if (prev !== 'streaming-receive') return 'streaming-receive';
+            return prev;
+        });
+
+        setStreamMeta(prev => {
+            if (!prev || prev.id !== chunk.id) {
+                // New file detected or first chunk
+                setReceivedChunks(new Set([chunk.index]));
+                setReceivedDataMap({ [chunk.index]: chunk.data });
+                return { id: chunk.id, total: chunk.total };
+            }
+            return prev;
+        });
+
+        setReceivedChunks(prev => {
+            const newSet = new Set(prev);
+            newSet.add(chunk.index);
+            return newSet;
+        });
+
+        setReceivedDataMap(prev => {
+            return { ...prev, [chunk.index]: chunk.data };
+        });
+    };
+
+    // Check for completion
+    useEffect(() => {
+        if (streamMeta && receivedChunks.size === streamMeta.total) {
+            // Complete!
+            finishReassembly();
+        }
+    }, [receivedChunks.size, streamMeta]);
+
+    const finishReassembly = async () => {
+        if (offlineStep === 'completed-stream') return; // Already done
+
+        const chunks = [];
+        for (let i = 0; i < streamMeta.total; i++) {
+            chunks.push(receivedDataMap[i]);
+        }
+
+        const dataUrl = reassembleFile(chunks);
+        if (dataUrl) {
+            setOfflineStep('completed-stream');
+            // Auto download
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = "received_file_offline"; // We don't have name in header yet to save space, but handleMetadata could send it.
+            // For now, let's just save.
+            a.click();
+        }
     };
 
 
@@ -733,13 +874,92 @@ export default function SecureShare() {
             {offlineStep === 'init' && (
                 <div className="space-y-4">
                     <button onClick={initiateOffline} className="w-full py-4 bg-accent text-black rounded-xl font-bold hover:shadow-glow-accent">
-                        I want to SEND (Generate QR)
+                        Connect & Send (Large Files, Signaling)
                     </button>
+                    <button onClick={prepareStream} disabled={selectedFiles.length === 0} className={`w-full py-4 rounded-xl font-bold ${selectedFiles.length > 0 ? 'bg-purple-500 text-white hover:bg-purple-600' : 'bg-glass-border text-text-secondary cursor-not-allowed'}`}>
+                        {selectedFiles.length > 0 ? 'Stream File as QR (Small Files)' : 'Select File to Stream'}
+                    </button>
+                    {/* File Input for Stream */}
+                    {selectedFiles.length === 0 && (
+                        <div className="text-center">
+                            <input type="file" id="offlineFile" onChange={handleFileSelect} className="hidden" />
+                            <label htmlFor="offlineFile" className="text-accent cursor-pointer text-sm hover:underline">Choose file first</label>
+                        </div>
+                    )}
+
+                    <div className="my-2 border-t border-glass-border"></div>
+
                     <button onClick={startScanner} className="w-full py-4 bg-glass-border text-white rounded-xl font-bold hover:bg-glass-panel-hover">
-                        I want to RECEIVE (Scan QR)
+                        Receive (Scan QR)
                     </button>
                 </div>
             )}
+
+            {/* SENDING STREAM UI */}
+            {offlineStep === 'streaming-send' && (
+                <div className="flex flex-col items-center">
+                    <h3 className="text-xl font-bold mb-2">Streaming File</h3>
+                    <p className="text-sm text-text-secondary mb-4">
+                        Chunk {currentStreamIndex + 1} / {streamChunks.length}
+                    </p>
+
+                    <canvas id="qr-stream-canvas" className="rounded-xl border border-white/20 mb-6 w-[300px] h-[300px] bg-white"></canvas>
+
+                    <div className="flex gap-4 mb-6 w-full max-w-xs">
+                        <button onClick={toggleStreamPlay} className={`flex-1 py-2 rounded-lg font-bold ${isStreaming ? 'bg-yellow-500 text-black' : 'bg-green-500 text-white'}`}>
+                            {isStreaming ? 'Pause' : 'Play Loop'}
+                        </button>
+                    </div>
+
+                    <div className="w-full max-w-xs mb-6">
+                        <label className="text-xs text-text-secondary mb-1 block">Speed: {streamSpeed}ms</label>
+                        <input
+                            type="range"
+                            min="50"
+                            max="500"
+                            step="10"
+                            value={streamSpeed}
+                            onChange={(e) => setStreamSpeed(Number(e.target.value))}
+                            className="w-full accent-accent"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* RECEIVING STREAM UI */}
+            {offlineStep === 'streaming-receive' && (
+                <div className="flex flex-col items-center w-full">
+                    <h3 className="text-xl font-bold mb-2 text-purple-400">Receiving Stream...</h3>
+                    <p className="text-sm text-text-secondary mb-4">
+                        {receivedChunks.size} / {streamMeta?.total || '?'} chunks received
+                    </p>
+
+                    {/* Progress Grid */}
+                    <div className="w-full max-w-md flex flex-wrap gap-1 justify-center mb-6 max-h-40 overflow-y-auto">
+                        {streamMeta && Array.from({ length: streamMeta.total }).map((_, i) => (
+                            <div
+                                key={i}
+                                className={`w-3 h-3 rounded-sm ${receivedChunks.has(i) ? 'bg-green-500' : 'bg-white/10'}`}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Keeps scanner visible but smaller */}
+                    <div id="reader" className="w-full max-w-[200px] overflow-hidden rounded-xl border border-white/20 opacity-50 hover:opacity-100 transition-opacity"></div>
+                </div>
+            )}
+
+            {offlineStep === 'completed-stream' && (
+                <div className="text-center">
+                    <Icon name="checkCircle" className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                    <p className="text-xl font-bold text-green-500 mb-2">File Reassembled!</p>
+                    <p className="text-text-secondary mb-6">The file has been downloaded.</p>
+                    <button onClick={() => { setOfflineStep('init'); setReceivedChunks(new Set()); setStreamMeta(null); }} className="px-6 py-2 bg-glass-border rounded-lg hover:bg-white/10">
+                        Done
+                    </button>
+                </div>
+            )}
+
 
             {(offlineStep === 'generate-offer' || offlineStep === 'generate-answer') && (
                 <div className="flex flex-col items-center">
@@ -756,8 +976,8 @@ export default function SecureShare() {
             )}
 
             {offlineStep === 'scanning' && (
-                <div className="flex flex-col items-center">
-                    <p className="mb-4 text-text-secondary">Scan the QR code on the other device.</p>
+                <div className="flex flex-col items-center w-full">
+                    <p className="mb-4 text-text-secondary">Scan a QR code to connect or receive file.</p>
                     <div id="reader" className="w-full max-w-sm overflow-hidden rounded-xl border border-white/20"></div>
                 </div>
             )}
@@ -765,7 +985,7 @@ export default function SecureShare() {
             {offlineStep === 'connected' && (
                 <div className="text-center">
                     <Icon name="checkCircle" className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                    <p className="text-xl font-bold text-green-500 mb-6">Connected!</p>
+                    <p className="text-xl font-bold text-green-500 mb-6">Connected via Signaling!</p>
                     <div className="flex gap-4">
                         <button onClick={() => setMode('send')} className="flex-1 py-3 bg-accent text-black rounded-xl font-bold">
                             Send File
