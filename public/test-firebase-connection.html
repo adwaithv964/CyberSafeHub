@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connectivity Diagnostic</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #111827;
+            color: #f3f4f6;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #065f46;
+            color: #d1fae5;
+        }
+
+        .error {
+            background: #991b1b;
+            color: #fee2e2;
+        }
+
+        .pending {
+            background: #92400e;
+            color: #fef3c7;
+        }
+
+        code {
+            background: #374151;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Firebase Connectivity Diagnostic</h1>
+    <p>This page tests if your browser can connect to Google's Identity Toolkit API.</p>
+
+    <div id="api-test" class="status pending">Testing connection to Identity Toolkit...</div>
+    <div id="cdn-test" class="status pending">Testing connection to Firebase CDN...</div>
+
+    <h3>Details:</h3>
+    <pre id="logs" style="background: #000; padding: 10px; overflow: auto; height: 300px;"></pre>
+
+    <script>
+        const API_KEY = 'AIzaSyAc-hbcnfuk7jJ5nuCUb_-h0GNBWjLAZSI'; // Taken from your .env
+        const IDENTITY_URL = `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${API_KEY}`;
+        const CDN_URL = 'https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js';
+
+        function log(message, type) {
+            const logs = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            if (type === 'error') entry.style.color = '#fb7185';
+            else if (type === 'success') entry.style.color = '#34d399';
+            else entry.style.color = '#9ca3af';
+            logs.appendChild(entry);
+        }
+
+        async function testIdentityToolkit() {
+            log(`Attempting POST to ${IDENTITY_URL}...`);
+            try {
+                // intentionally empty body, we just want to see if the connection opens
+                const response = await fetch(IDENTITY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idToken: 'INVALID_TOKEN' })
+                });
+
+                log(`Response Status: ${response.status} ${response.statusText}`);
+
+                if (response.status === 400) {
+                    // 400 is GOOD here because it meant we reached the server and it rejected our bad token
+                    document.getElementById('api-test').className = 'status success';
+                    document.getElementById('api-test').textContent = 'Identity Toolkit Connection: SUCCESS (Reached Server)';
+                    log('SUCCESS: Server responded (400 Bad Request is expected with invalid token). Connection is working.', 'success');
+                } else if (response.ok) {
+                    document.getElementById('api-test').className = 'status success';
+                    document.getElementById('api-test').textContent = `Identity Toolkit Connection: SUCCESS (${response.status})`;
+                    log(`SUCCESS: Server responded with ${response.status}.`, 'success');
+                } else {
+                    document.getElementById('api-test').className = 'status error';
+                    document.getElementById('api-test').textContent = `Identity Toolkit Connection: FAILED (${response.status})`;
+                    log(`FAILED: Server responded with ${response.status}.`, 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('api-test').className = 'status error';
+                document.getElementById('api-test').textContent = `Identity Toolkit Connection: FAILED (${error.message})`;
+                log(`ERROR: ${error.message}`, 'error');
+                log('Full error object logged to console.', 'error');
+            }
+        }
+
+        async function testCDN() {
+            log(`Attempting GET to ${CDN_URL}...`);
+            try {
+                const response = await fetch(CDN_URL, { method: 'HEAD' });
+                if (response.ok) {
+                    document.getElementById('cdn-test').className = 'status success';
+                    document.getElementById('cdn-test').textContent = 'Firebase CDN Connection: SUCCESS';
+                    log('SUCCESS: CDN reachable.', 'success');
+                } else {
+                    log(`Failed CDN Status: ${response.status}`, 'error');
+                    throw new Error(`Status ${response.status}`);
+                }
+            } catch (error) {
+                document.getElementById('cdn-test').className = 'status error';
+                document.getElementById('cdn-test').textContent = `Firebase CDN Connection: FAILED (${error.message})`;
+                log(`ERROR: CDN unreachable. ${error.message}`, 'error');
+            }
+        }
+
+        // Run tests
+        setTimeout(() => {
+            testIdentityToolkit();
+            testCDN();
+        }, 500);
+    </script>
+</body>
+
+</html>
