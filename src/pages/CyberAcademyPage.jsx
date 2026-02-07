@@ -19,7 +19,7 @@ const CyberAcademyPage = () => {
     const modules = [
         {
             id: 'phishing',
-            title: 'Phishing Detector',
+            title: 'Phishing Simulation',
             description: 'Train your eyes to spot fake emails, sketchy links, and CEO fraud.',
             icon: 'shieldAlert',
             color: 'text-orange-500',

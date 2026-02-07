@@ -17,15 +17,15 @@ const tools = [
 
     { id: 'jpg-to-pdf', name: 'JPG to PDF', icon: 'image', color: 'text-yellow-500', group: 'Convert To PDF' },
     { id: 'word-to-pdf', name: 'WORD to PDF', icon: 'fileText', color: 'text-blue-500', group: 'Convert To PDF' },
-    { id: 'powerpoint-to-pdf', name: 'PPT to PDF', icon: 'monitor', color: 'text-orange-500', group: 'Convert To PDF' },
-    { id: 'excel-to-pdf', name: 'EXCEL to PDF', icon: 'grid', color: 'text-green-600', group: 'Convert To PDF' },
+    // { id: 'powerpoint-to-pdf', name: 'PPT to PDF', icon: 'monitor', color: 'text-orange-500', group: 'Convert To PDF' },
+    // { id: 'excel-to-pdf', name: 'EXCEL to PDF', icon: 'grid', color: 'text-green-600', group: 'Convert To PDF' },
     { id: 'html-to-pdf', name: 'HTML to PDF', icon: 'code', color: 'text-gray-500', group: 'Convert To PDF' },
 
     { id: 'pdf-to-jpg', name: 'PDF to JPG', icon: 'image', color: 'text-yellow-500', group: 'Convert From PDF' },
-    { id: 'pdf-to-word', name: 'PDF to WORD', icon: 'fileText', color: 'text-blue-500', group: 'Convert From PDF' },
-    { id: 'pdf-to-powerpoint', name: 'PDF to PPT', icon: 'monitor', color: 'text-orange-500', group: 'Convert From PDF' },
-    { id: 'pdf-to-excel', name: 'PDF to EXCEL', icon: 'grid', color: 'text-green-600', group: 'Convert From PDF' },
-    { id: 'pdf-to-pdfa', name: 'PDF to PDF/A', icon: 'file', color: 'text-red-800', group: 'Convert From PDF' },
+    // { id: 'pdf-to-word', name: 'PDF to WORD', icon: 'fileText', color: 'text-blue-500', group: 'Convert From PDF' },
+    // { id: 'pdf-to-powerpoint', name: 'PDF to PPT', icon: 'monitor', color: 'text-orange-500', group: 'Convert From PDF' },
+    // { id: 'pdf-to-excel', name: 'PDF to EXCEL', icon: 'grid', color: 'text-green-600', group: 'Convert From PDF' },
+    // { id: 'pdf-to-pdfa', name: 'PDF to PDF/A', icon: 'file', color: 'text-red-800', group: 'Convert From PDF' },
 
     { id: 'rotate-pdf', name: 'Rotate PDF', icon: 'refreshCw', color: 'text-purple-500', group: 'Edit' },
     { id: 'page-numbers-pdf', name: 'Page Numbers', icon: 'hash', color: 'text-purple-500', group: 'Edit' },

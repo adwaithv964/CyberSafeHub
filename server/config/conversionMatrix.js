@@ -45,6 +45,11 @@ const FORMATS = {
     'html': { category: CATEGORIES.DOCUMENT, tier: TIERS.EDITABLE, lossy: false, layered: true, label: 'HTML Document' },
     'md': { category: CATEGORIES.DOCUMENT, tier: TIERS.EDITABLE, lossy: false, layered: false, label: 'Markdown' },
 
+    'pptx': { category: CATEGORIES.DOCUMENT, tier: TIERS.EDITABLE, lossy: false, layered: true, label: 'PowerPoint Presentation' },
+    'ppt': { category: CATEGORIES.DOCUMENT, tier: TIERS.EDITABLE, lossy: false, layered: true, label: 'Legacy PowerPoint' },
+    'xlsx': { category: CATEGORIES.DOCUMENT, tier: TIERS.EDITABLE, lossy: false, layered: true, label: 'Excel Spreadsheet' },
+    'xls': { category: CATEGORIES.DOCUMENT, tier: TIERS.EDITABLE, lossy: false, layered: true, label: 'Legacy Excel' },
+
     'pdf': { category: CATEGORIES.DOCUMENT, tier: TIERS.DELIVERY, lossy: false, layered: false, label: 'Portable Document Format' },
 
     // --- AUDIO ---
@@ -144,6 +149,11 @@ const validateConversion = (sourceFormat, targetFormat) => {
         // 1 (Source) -> 3 (Delivery) = OK (Downgrade)
         // 3 (Delivery) -> 1 (Source) = BAD (Upgrade)
         // Therefore: If source.tier > target.tier (e.g. 4 > 1), it is an UPGRADE attempt. Block it.
+
+        // Exception: PDF (Tier 3) -> Editable (Tier 2) "OCR/Extraction"
+        if (s === 'pdf' && target.category === CATEGORIES.DOCUMENT) {
+            return { allowed: true, warning: "Converting PDF back to editable format may lose formatting and requires OCR/Extraction." };
+        }
 
         // Exception: Container (0) is special. We allow archiving anything (Any -> 0).
         if (target.tier === TIERS.CONTAINER) return { allowed: true };

@@ -158,8 +158,19 @@ router.get('/download/:id', async (req, res) => {
             return res.status(404).json({ error: 'File not available' });
         }
 
-        res.download(job.result.path, job.result.filename);
+        if (!fs.existsSync(job.result.path)) {
+            return res.status(404).json({ error: 'File deleted or missing on server' });
+        }
+
+        // Force download with headers
+        res.setHeader('Content-Type', job.result.mime || 'application/octet-stream');
+        res.setHeader('Content-Disposition', `attachment; filename="${job.result.filename}"`);
+
+        const fileStream = fs.createReadStream(job.result.path);
+        fileStream.pipe(res);
+
     } catch (err) {
+        console.error("Download Error:", err);
         res.status(500).json({ error: 'Download failed' });
     }
 });

@@ -2,40 +2,36 @@
 description: How to deploy the backend to Render using Docker (Blueprint)
 ---
 
-# Deploying to Render with Docker
+Since your app requires **LibreOffice** for PDF conversions, you **must** use Docker on Render. Standard Node.js servers cannot run LibreOffice.
 
-Since we have created a `render.yaml` and `Dockerfile`, the easiest way to deploy is using a **Blueprint**.
+Fortunately, your project is already set up for this!
 
-1.  **Push Changes**: Ensure all recent file changes (Dockerfile, render.yaml, server code) are committed and pushed to your GitHub repository.
+### Step 1: Ensure Code is Pushed
+Make sure all your latest changes (including `Dockerfile` and `render.yaml`) are pushed to GitHub.
 
-    ```bash
-    git add .
-    git commit -m "Prepare for Docker deployment"
-    git push origin main
-    ```
+### Step 2: Open Render Dashboard
+1. Go to [dashboard.render.com](https://dashboard.render.com).
+2. Click **New +** button in the top right.
+3. Select **Blueprint**.
 
-2.  **Open Render Dashboard**: Go to [dashboard.render.com](https://dashboard.render.com).
+### Step 3: Connect Repository
+1. Connect your `CyberSafeHub` repository.
+2. Render will automatically detect the `render.yaml` file in your project root.
 
-3.  **Create Blueprint**:
-    *   Click **New +** button.
-    *   Select **Blueprint**.
-    *   Connect your existing GitHub repository (`CyberSafeHub`).
+### Step 4: Apply Blueprint
+1. Give your service a name (e.g., `cybersafehub-backend-docker`).
+2. Click **Apply**.
+3. Render will verify the inputs and ask for approval.
 
-4.  **Configuration**:
-    *   Render will automatically detect the `render.yaml` file.
-    *   It will show the service `cybersafehub-backend` defined in the file.
-    *   Click **Apply**.
+### Step 5: Wait for Build
+1. Render will now build your **Docker Image**. This takes longer than usual (5-10 minutes) because it is installing LibreOffice and other tools.
+2. Once the deploy says "Live", your backend is ready!
 
-5.  **Environment Variables**:
-    *   The build might pause or fail if it needs the Database URL.
-    *   Go to the newly created service in the Dashboard.
-    *   Click **Environment**.
-    *   Add `MONGODB_URI` with your connection string.
-    *   (Optional) Update `CLAMAV_HOST` if you are running ClamAV separately, otherwise it defaults to localhost (which is fine inside the container if installed, but our Dockerfile currently only installs LibreOffice/FFmpeg. ClamAV might be missing from the Dockerfile. *Correction: Validated Dockerfile, ClamAV is not currently installed in the Dockerfile, so ClamAV scans might fail unless installed or disabled*).
+### Step 6: Update Frontend
+1. Copy the **new URL** of your Docker backend from the Render dashboard (e.g., `https://cybersafehub-backend-docker.onrender.com`).
+2. Go to Vercel (Frontend).
+3. Update the `VITE_API_BASE_URL` Environment Variable to this new URL.
+4. Redeploy Frontend.
 
-6.  **Verify**:
-    *   Watch the deployment logs.
-    *   It will pull the Docker base image, install LibreOffice, and start the app.
-    *   Once "Live", your specific LibreOffice conversions will work!
-
-> **Note**: This Docker build is heavier than a standard Node build. It may take 3-5 minutes to build the first time.
+### Troubleshooting
+- If the build fails, check the logs. It usually means a timeout on the Free tier. If so, try deploying again; sometimes the apt-get install takes too long.

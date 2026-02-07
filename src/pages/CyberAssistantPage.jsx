@@ -45,7 +45,7 @@ const CyberAssistantPage = () => {
                         <div key={index} className={`flex items-start gap-3 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
                             {msg.sender === 'ai' && (
                                 <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-background flex-shrink-0 mt-1">
-                                    <Icon name="shield" className="w-6 h-6" />
+                                    <Icon name="bot" className="w-6 h-6" />
                                 </div>
                             )}
                             <div className={`p-4 rounded-2xl max-w-lg shadow-md ${msg.sender === 'user'
@@ -80,7 +80,7 @@ const CyberAssistantPage = () => {
                     {isLoading && (
                         <div className="flex items-end gap-3">
                             <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-background flex-shrink-0">
-                                <Icon name="shield" className="w-6 h-6" />
+                                <Icon name="bot" className="w-6 h-6" />
                             </div>
                             <div className="p-4 rounded-2xl bg-secondary rounded-bl-none border border-border-color">
                                 <div className="flex items-center gap-2 text-text-secondary">

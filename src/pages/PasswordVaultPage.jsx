@@ -268,17 +268,82 @@ const PasswordVaultPage = () => {
 
                         {passwordToCheck && strength.score < 60 && (
                             <div className="text-center mt-6">
-                                <button onClick={getAIPasswordAdvice} disabled={isGeneratingAdvice} className="inline-flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:bg-indigo-400">
-                                    {isGeneratingAdvice ? 'Analyzing...' : <><Icon name="sparkles" className="w-5 h-5" /> Get AI Password Advice</>}
+                                <button
+                                    onClick={getAIPasswordAdvice}
+                                    disabled={isGeneratingAdvice}
+                                    className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg font-semibold transition-all shadow-lg
+                                        ${isGeneratingAdvice
+                                            ? 'bg-gray-400 cursor-not-allowed'
+                                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white transform hover:-translate-y-0.5'
+                                        }`}
+                                >
+                                    {isGeneratingAdvice ? (
+                                        <>
+                                            <Icon name="loader" className="w-5 h-5 animate-spin" />
+                                            Analyzing Password...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Icon name="sparkles" className="w-5 h-5" />
+                                            Get AI Security Advice
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         )}
 
                         {aiAdvice && (
-                            <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg">
-                                <h4 className="font-bold text-lg text-indigo-800 dark:text-indigo-200 mb-2 flex items-center gap-2"><Icon name="sparkles" className="w-5 h-5" /> AI Advisor</h4>
-                                <div className="prose prose-sm dark:prose-invert max-w-none text-indigo-700 dark:text-indigo-300">
-                                    <ReactMarkdown>{aiAdvice}</ReactMarkdown>
+                            <div className="mt-8 relative overflow-hidden rounded-2xl border border-indigo-100 dark:border-indigo-900 shadow-xl bg-white dark:bg-gray-800">
+                                {/* Decorative elements */}
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+                                <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl"></div>
+                                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
+
+                                <div className="relative p-6">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400">
+                                                <Icon name="shield" className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-lg text-gray-800 dark:text-gray-100">Security Analysis</h4>
+                                                <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium uppercase tracking-wider">AI Powered Insight</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setAiAdvice('')}
+                                            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                            title="Dismiss"
+                                        >
+                                            <Icon name="x" className="w-5 h-5" />
+                                        </button>
+                                    </div>
+
+                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                        <ReactMarkdown
+                                            components={{
+                                                ul: ({ node, ...props }) => <ul className="space-y-2 my-2 list-none p-0" {...props} />,
+                                                li: ({ node, ...props }) => (
+                                                    <li className="flex items-start gap-2 text-gray-700 dark:text-gray-300">
+                                                        <span className="mt-1.5 shrink-0 block w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                                        <span className="flex-1" {...props} />
+                                                    </li>
+                                                ),
+                                                strong: ({ node, ...props }) => <strong className="font-bold text-indigo-700 dark:text-indigo-300" {...props} />,
+                                                p: ({ node, ...props }) => <p className="mb-2 last:mb-0 leading-relaxed text-gray-600 dark:text-gray-400" {...props} />
+                                            }}
+                                        >
+                                            {aiAdvice}
+                                        </ReactMarkdown>
+                                    </div>
+
+                                    <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                        <span className="flex items-center gap-1">
+                                            <Icon name="check" className="w-3 h-3 text-green-500" />
+                                            Analysis Complete
+                                        </span>
+                                        <span className="font-mono opacity-70">Gemini Security Core</span>
+                                    </div>
                                 </div>
                             </div>
                         )}

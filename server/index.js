@@ -20,12 +20,15 @@ const io = new Server(server, {
     cors: {
         origin: [
             "http://localhost:5173",
+            "http://localhost:3000",
             "https://cyber-safe-hub.vercel.app",
             "https://cybersafehub.in",
             "https://www.cybersafehub.in",
+            "https://cybersafehub-backend.onrender.com",
             process.env.FRONTEND_URL
         ].filter(Boolean),
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 

@@ -3,42 +3,29 @@ import axios from 'axios';
 import { ToolLayout, FileUploader } from '../ToolLayout';
 import Icon from '../../../Icon';
 
-// Detect environment
 const getApiBaseUrl = () => {
-    // Check if we are in production logic or just fallback
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         return 'http://localhost:3001';
     }
-    // For Vercel/Render set up
     return 'https://cybersafehub-backend.onrender.com';
 };
 
 const API_BASE = getApiBaseUrl();
 
-export function PDFToOffice({ onBack }) {
+export function PDFToPDFA({ onBack }) {
     const [file, setFile] = useState(null);
-    const [targetFormat, setTargetFormat] = useState('docx'); // 'docx' | 'pptx' | 'xlsx' | 'txt'
     const [isProcessing, setIsProcessing] = useState(false);
-    const [status, setStatus] = useState(''); // 'uploading' | 'processing' | 'downloading'
+    const [status, setStatus] = useState('');
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState('');
-    const [jobId, setJobId] = useState(null);
     const [success, setSuccess] = useState(false);
     const [downloadUrl, setDownloadUrl] = useState(null);
-
-    // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            // URL.revokeObjectURL(downloadUrl); // If we used blob
-        };
-    }, []);
 
     const handleFileSelect = (files) => {
         if (files.length > 0) {
             setFile(files[0]);
             setError('');
             setSuccess(false);
-            setJobId(null);
             setProgress(0);
         }
     };
@@ -58,7 +45,6 @@ export function PDFToOffice({ onBack }) {
                 setIsProcessing(false);
                 setError(job.error?.message || 'Conversion failed on server.');
             } else {
-                // Still processing
                 // Map backend progress (0-100) to remaining UI progress (50-100)
                 const backendProgress = job.progress || 0;
                 const totalProgress = 50 + Math.round(backendProgress / 2);
@@ -66,7 +52,6 @@ export function PDFToOffice({ onBack }) {
                 setTimeout(() => pollJob(id), 2000);
             }
         } catch (err) {
-            console.error("Poll Error:", err);
             setIsProcessing(false);
             setError('Lost connection to server.');
         }
@@ -81,20 +66,19 @@ export function PDFToOffice({ onBack }) {
 
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('format', targetFormat);
-        formData.append('confirm', 'true'); // Auto-confirm warnings
+        formData.append('format', 'pdf'); // LibreOffice handles PDF/A via filter, currently mapped to 'pdf' generic for robustness.
+        formData.append('confirm', 'true');
 
         try {
             const res = await axios.post(`${API_BASE}/api/convert/job`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
                 onUploadProgress: (p) => {
                     const percent = Math.round((p.loaded * 100) / p.total);
-                    if (percent < 100) setProgress(percent / 2); // Upload is half the battle
+                    if (percent < 100) setProgress(percent / 2);
                 }
             });
 
             const { jobId } = res.data;
-            setJobId(jobId);
             setStatus('processing');
             pollJob(jobId);
 
@@ -103,11 +87,9 @@ export function PDFToOffice({ onBack }) {
             setIsProcessing(false);
             const serverError = err.response?.data?.error;
             const serverReason = err.response?.data?.reason;
-            const serverWarning = err.response?.data?.warning;
 
             let displayError = serverError || err.message || 'Failed to start conversion.';
             if (serverReason) displayError += ` (${serverReason})`;
-            if (serverWarning) displayError += ` Warning: ${serverWarning}`;
 
             setError(displayError);
         }
@@ -115,10 +97,10 @@ export function PDFToOffice({ onBack }) {
 
     return (
         <ToolLayout
-            title="PDF to Office"
-            description="Convert PDF documents to editable Word, Excel, or PowerPoint files."
-            icon="fileText"
-            color="text-blue-500"
+            title="PDF to PDF/A"
+            description="Convert PDF documents to PDF/A for long-term archiving."
+            icon="file"
+            color="text-red-800"
             onBack={onBack}
         >
             <div className="space-y-6">
@@ -133,7 +115,7 @@ export function PDFToOffice({ onBack }) {
                     <div className="space-y-6 max-w-xl mx-auto">
                         <div className="bg-glass-panel-dark p-4 rounded-lg border border-glass-border flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 font-bold">
+                                <div className="w-10 h-10 bg-red-800/10 rounded-lg flex items-center justify-center text-red-800 font-bold">
                                     PDF
                                 </div>
                                 <div>
@@ -147,32 +129,6 @@ export function PDFToOffice({ onBack }) {
                                 </button>
                             )}
                         </div>
-
-                        {!isProcessing && !success && (
-                            <div className="grid grid-cols-3 gap-4">
-                                <button
-                                    onClick={() => setTargetFormat('docx')}
-                                    className={`p-4 rounded-xl border text-center transition-all ${targetFormat === 'docx' ? 'bg-blue-500 text-white border-blue-500' : 'bg-glass-panel border-glass-border hover:border-blue-500/50'}`}
-                                >
-                                    <Icon name="fileText" className="w-6 h-6 mx-auto mb-2" />
-                                    <span className="block font-bold">Word</span>
-                                </button>
-                                <button
-                                    onClick={() => setTargetFormat('xlsx')}
-                                    className={`p-4 rounded-xl border text-center transition-all ${targetFormat === 'xlsx' ? 'bg-green-500 text-white border-green-500' : 'bg-glass-panel border-glass-border hover:border-green-500/50'}`}
-                                >
-                                    <Icon name="grid" className="w-6 h-6 mx-auto mb-2" />
-                                    <span className="block font-bold">Excel</span>
-                                </button>
-                                <button
-                                    onClick={() => setTargetFormat('pptx')}
-                                    className={`p-4 rounded-xl border text-center transition-all ${targetFormat === 'pptx' ? 'bg-orange-500 text-white border-orange-500' : 'bg-glass-panel border-glass-border hover:border-orange-500/50'}`}
-                                >
-                                    <Icon name="monitor" className="w-6 h-6 mx-auto mb-2" />
-                                    <span className="block font-bold">PPT</span>
-                                </button>
-                            </div>
-                        )}
 
                         {error && (
                             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm flex items-center gap-2">
@@ -189,13 +145,10 @@ export function PDFToOffice({ onBack }) {
                                 </div>
                                 <div className="h-2 bg-glass-panel rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-blue-500 transition-all duration-300"
+                                        className="h-full bg-red-800 transition-all duration-300"
                                         style={{ width: `${progress}%` }}
                                     />
                                 </div>
-                                <p className="text-xs text-center text-text-secondary animate-pulse">
-                                    Depending on file size, this may take a moment.
-                                </p>
                             </div>
                         )}
 
@@ -207,12 +160,12 @@ export function PDFToOffice({ onBack }) {
                                 </div>
                                 <a
                                     href={downloadUrl}
-                                    download // Attribute usually ignored for cross-origin but good practice
+                                    download
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="block w-full py-3 bg-green-500 hover:bg-green-600 text-white text-center rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all"
+                                    className="block w-full py-3 bg-green-600 hover:bg-green-700 text-white text-center rounded-xl font-bold shadow-lg shadow-green-600/20 transition-all"
                                 >
-                                    Download Converted File
+                                    Download PDF/A
                                 </a>
                                 <button
                                     onClick={() => setFile(null)}
@@ -227,10 +180,10 @@ export function PDFToOffice({ onBack }) {
                             <div className="flex justify-center pt-4">
                                 <button
                                     onClick={handleConvert}
-                                    className="px-8 py-3 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-3"
+                                    className="px-8 py-3 bg-red-800 hover:bg-red-900 active:bg-red-950 text-white rounded-xl font-semibold shadow-lg shadow-red-800/20 transition-all flex items-center gap-3"
                                 >
-                                    <Icon name="fileText" className="w-5 h-5" />
-                                    Convert Now
+                                    <Icon name="file" className="w-5 h-5" />
+                                    Convert to PDF/A
                                 </button>
                             </div>
                         )}

@@ -1,86 +1,62 @@
-import React, { useState } from 'react';
-import mammoth from 'mammoth';
-import * as XLSX from 'xlsx';
-import { jsPDF } from 'jspdf';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { ToolLayout, FileUploader } from '../ToolLayout';
 import Icon from '../../../Icon';
+
+// Detect environment
+const getApiBaseUrl = () => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:3001';
+    }
+    return 'https://cybersafehub-backend.onrender.com';
+};
+
+const API_BASE = getApiBaseUrl();
 
 export function OfficeToPDF({ onBack }) {
     const [file, setFile] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [status, setStatus] = useState('');
+    const [progress, setProgress] = useState(0);
     const [error, setError] = useState('');
+    const [jobId, setJobId] = useState(null);
     const [success, setSuccess] = useState(false);
+    const [downloadUrl, setDownloadUrl] = useState(null);
 
     const handleFileSelect = (files) => {
         if (files.length > 0) {
             setFile(files[0]);
             setError('');
             setSuccess(false);
+            setJobId(null);
+            setProgress(0);
         }
     };
 
-    const convertWordToPDF = async (arrayBuffer) => {
+    const pollJob = async (id) => {
         try {
-            // Convert docx to html
-            const result = await mammoth.convertToHtml({ arrayBuffer });
-            const html = result.value;
+            const res = await axios.get(`${API_BASE}/api/convert/job/${id}`);
+            const job = res.data;
 
-            // Basic HTML to PDF using jsPDF
-            const doc = new jsPDF();
-
-            // Note: jsPDF .html() is asynchronous and requires the element to be in the DOM or a string.
-            // Using a simpler approach for stability: Strip tags and print text?
-            // Or try to use the .html() method with a virtual container.
-            // For a robust "Word to PDF", we really need server-side.
-            // Here we will do a "Text Dump" style conversion for reliability in this demo.
-
-            const textResult = await mammoth.extractRawText({ arrayBuffer });
-            const text = textResult.value;
-
-            const lines = doc.splitTextToSize(text, 180);
-            let y = 10;
-            lines.forEach(line => {
-                if (y > 280) {
-                    doc.addPage();
-                    y = 10;
-                }
-                doc.text(line, 10, y);
-                y += 7;
-            });
-
-            return doc.output('blob');
-        } catch (e) {
-            throw new Error('Word conversion failed: ' + e.message);
-        }
-    };
-
-    const convertExcelToPDF = async (arrayBuffer) => {
-        try {
-            const data = new Uint8Array(arrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-
-            // Convert sheet to JSON/CSV text representation
-            const text = XLSX.utils.sheet_to_csv(firstSheet);
-
-            const doc = new jsPDF();
-            doc.setFont("courier"); // Monospace for alignment
-            doc.setFontSize(8);
-
-            const lines = doc.splitTextToSize(text, 180);
-            let y = 10;
-            lines.forEach(line => {
-                if (y > 280) {
-                    doc.addPage();
-                    y = 10;
-                }
-                doc.text(line, 10, y);
-                y += 4;
-            });
-
-            return doc.output('blob');
-        } catch (e) {
-            throw new Error('Excel conversion failed: ' + e.message);
+            if (job.status === 'completed') {
+                setIsProcessing(false);
+                setSuccess(true);
+                setStatus('completed');
+                setProgress(100);
+                setDownloadUrl(`${API_BASE}/api/convert/download/${id}`);
+            } else if (job.status === 'failed') {
+                setIsProcessing(false);
+                setError(job.error?.message || 'Conversion failed on server.');
+            } else {
+                // Map backend progress (0-100) to remaining UI progress (50-100)
+                const backendProgress = job.progress || 0;
+                const totalProgress = 50 + Math.round(backendProgress / 2);
+                setProgress(prev => Math.max(prev, totalProgress)); // Never go backwards
+                setTimeout(() => pollJob(id), 2000);
+            }
+        } catch (err) {
+            setIsProcessing(false);
+            setError('Lost connection to server.');
         }
     };
 
@@ -88,41 +64,47 @@ export function OfficeToPDF({ onBack }) {
         if (!file) return;
         setIsProcessing(true);
         setError('');
+        setStatus('uploading');
+        setProgress(10);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('format', 'pdf');
+        formData.append('confirm', 'true');
 
         try {
-            const arrayBuffer = await file.arrayBuffer();
-            let pdfBlob = null;
+            const res = await axios.post(`${API_BASE}/api/convert/job`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (p) => {
+                    const percent = Math.round((p.loaded * 100) / p.total);
+                    if (percent < 100) setProgress(percent / 2);
+                }
+            });
 
-            if (file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
-                pdfBlob = await convertWordToPDF(arrayBuffer);
-            } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
-                pdfBlob = await convertExcelToPDF(arrayBuffer);
-            } else {
-                throw new Error('Unsupported file type. Improved support coming soon!');
-            }
-
-            const url = URL.createObjectURL(pdfBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `converted_${file.name}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            setSuccess(true);
+            const { jobId } = res.data;
+            setJobId(jobId);
+            setStatus('processing');
+            pollJob(jobId);
 
         } catch (err) {
             console.error(err);
-            setError(err.message || 'Conversion failed.');
-        } finally {
             setIsProcessing(false);
+            const serverError = err.response?.data?.error;
+            const serverReason = err.response?.data?.reason; // From blocked conversion
+            const serverWarning = err.response?.data?.warning;
+
+            let displayError = serverError || err.message || 'Failed to start conversion.';
+            if (serverReason) displayError += ` (${serverReason})`;
+            if (serverWarning) displayError += ` Warning: ${serverWarning}`;
+
+            setError(displayError);
         }
     };
 
     return (
         <ToolLayout
             title="Office to PDF"
-            description="Convert Word and Excel documents to PDF (Client-Side Preview Mode)."
+            description="Convert Word, Excel, and PowerPoint documents to high-quality PDF."
             icon="fileText"
             color="text-blue-600"
             onBack={onBack}
@@ -132,8 +114,8 @@ export function OfficeToPDF({ onBack }) {
                     <FileUploader
                         onFileSelect={handleFileSelect}
                         multiple={false}
-                        label="Select .docx, .xlsx file"
-                        accept=".docx,.doc,.xlsx,.xls,.csv"
+                        label="Select .docx, .xlsx, .pptx file"
+                        accept=".docx,.doc,.xlsx,.xls,.csv,.pptx,.ppt"
                     />
                 ) : (
                     <div className="space-y-6 max-w-xl mx-auto">
@@ -147,14 +129,11 @@ export function OfficeToPDF({ onBack }) {
                                     <p className="text-xs text-text-secondary">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                                 </div>
                             </div>
-                            <button onClick={() => setFile(null)} className="p-2 hover:bg-glass-panel rounded-full transition-colors text-text-secondary hover:text-danger">
-                                <Icon name="x" className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-500 text-sm">
-                            <h4 className="font-bold mb-1">Client-Side Limitations</h4>
-                            <p>This tool runs entirely in your browser for privacy. Complex formatting (images, layouts) may be lost. For perfect quality, use official desktop software.</p>
+                            {!isProcessing && !success && (
+                                <button onClick={() => setFile(null)} className="p-2 hover:bg-glass-panel rounded-full transition-colors text-text-secondary hover:text-danger">
+                                    <Icon name="x" className="w-5 h-5" />
+                                </button>
+                            )}
                         </div>
 
                         {error && (
@@ -164,32 +143,56 @@ export function OfficeToPDF({ onBack }) {
                             </div>
                         )}
 
-                        {success && !error && (
-                            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm flex items-center gap-2">
-                                <Icon name="checkCircle" className="w-4 h-4" />
-                                Converted Successfully!
+                        {isProcessing && (
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm text-text-secondary">
+                                    <span>{status === 'uploading' ? 'Uploading...' : 'Converting...'}</span>
+                                    <span>{progress}%</span>
+                                </div>
+                                <div className="h-2 bg-glass-panel rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-600 transition-all duration-300"
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
                             </div>
                         )}
 
-                        <div className="flex justify-center pt-4">
-                            <button
-                                onClick={handleConvert}
-                                disabled={isProcessing}
-                                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isProcessing ? (
-                                    <>
-                                        <Icon name="loader" className="w-5 h-5 animate-spin" />
-                                        Converting...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Icon name="fileText" className="w-5 h-5" />
-                                        Convert to PDF
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                        {success && (
+                            <div className="space-y-4">
+                                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 text-sm flex items-center gap-2">
+                                    <Icon name="checkCircle" className="w-4 h-4" />
+                                    Converted Successfully!
+                                </div>
+                                <a
+                                    href={downloadUrl}
+                                    download
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="block w-full py-3 bg-green-600 hover:bg-green-700 text-white text-center rounded-xl font-bold shadow-lg shadow-green-600/20 transition-all"
+                                >
+                                    Download PDF
+                                </a>
+                                <button
+                                    onClick={() => setFile(null)}
+                                    className="block w-full py-3 bg-glass-panel hover:bg-glass-panel-hover text-text-primary text-center rounded-xl font-semibold border border-glass-border transition-all"
+                                >
+                                    Convert Another
+                                </button>
+                            </div>
+                        )}
+
+                        {!isProcessing && !success && (
+                            <div className="flex justify-center pt-4">
+                                <button
+                                    onClick={handleConvert}
+                                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-3"
+                                >
+                                    <Icon name="fileText" className="w-5 h-5" />
+                                    Convert to PDF
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

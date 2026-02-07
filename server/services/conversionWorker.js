@@ -2,6 +2,7 @@ const Job = require('../models/Job');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
+const { spawn } = require('child_process');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 const sharp = require('sharp');
@@ -13,9 +14,23 @@ const PDFDocument = require('pdfkit');
 // Configure FFmpeg
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-// Result Directory
+// Output Directory
 const outputDir = path.join(__dirname, '../uploads/converted');
 if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+// --- Windows LibreOffice Path Fix ---
+if (process.platform === 'win32') {
+    const commonPaths = [
+        'C:\\Program Files\\LibreOffice\\program',
+        'C:\\Program Files (x86)\\LibreOffice\\program'
+    ];
+    const currentPath = process.env.PATH || '';
+    const additionalPaths = commonPaths.filter(p => fs.existsSync(p) && !currentPath.includes(p));
+    if (additionalPaths.length > 0) {
+        process.env.PATH = `${currentPath};${additionalPaths.join(';')}`;
+        console.log('Augmented PATH with LibreOffice:', additionalPaths);
+    }
+}
 
 class ConversionWorker {
 
@@ -41,7 +56,7 @@ class ConversionWorker {
             const videoFormats = ['mp4', 'mkv', 'mov', 'webm', 'avi', 'flv', 'wmv'];
             const audioFormats = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'aiff'];
             const imageFormats = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff'];
-            const docFormats = ['pdf', 'docx', 'doc', 'odt', 'rtf', 'txt', 'html', 'md'];
+            const docFormats = ['pdf', 'docx', 'doc', 'odt', 'rtf', 'txt', 'html', 'md', 'pptx', 'ppt', 'xlsx', 'xls', 'csv'];
 
             const target = job.targetFormat.toLowerCase();
             const sourceExt = path.extname(job.sourceFile.path).replace('.', '').toLowerCase();
@@ -190,16 +205,110 @@ class ConversionWorker {
     }
 
     async runLibreOffice(input, output, format) {
-        // LibreOffice Convert
-        // Note: This requires 'libreoffice' installed on the system (e.g. apt-get install libreoffice)
-        // It will fail on standard Render instances without Docker.
-        const inputBuffer = fs.readFileSync(input);
-        // format needs to be 'pdf', 'docx' etc.
-        // libreoffice-convert expects .ext
+        // Special Handling for PDF to Office
+        if (path.extname(input).toLowerCase() === '.pdf') {
+            // PDF -> Word (Use specific import filter to open in Writer)
+            if (['docx', 'doc', 'odt'].includes(format)) {
+                return this.runLibreOfficeDirect(input, output, format, 'writer_pdf_import');
+            }
 
-        // Map common extensions if needed, but usually works directly
-        const outputBuffer = await libre.convertAsync(inputBuffer, `.${format}`, undefined);
-        fs.writeFileSync(output, outputBuffer);
+            // PDF -> PPT/PPTX (Direct with specific filter)
+            // We force LibreOffice to open PDF in Impress (Presentation mode) instead of Draw
+            if (['pptx', 'ppt'].includes(format)) {
+                return this.runLibreOfficeDirect(input, output, format, 'impress_pdf_import');
+            }
+
+            // PDF -> Excel (Chain via HTML: PDF -> HTML -> Excel)
+            if (['xlsx', 'xls', 'csv'].includes(format)) {
+                const tempHtml = path.join(path.dirname(output), `intermediate-${Date.now()}.html`);
+                try {
+                    console.log(`[Worker] Chaining Conversion: PDF -> HTML -> ${format}`);
+                    // Step 1: PDF -> HTML (using Writer import)
+                    await this.runLibreOfficeDirect(input, tempHtml, 'html', 'writer_pdf_import');
+
+                    // Step 2: HTML -> Excel (Force Calc)
+                    await this.runLibreOfficeDirect(tempHtml, output, format, 'HTML (StarCalc)');
+
+                    // Cleanup
+                    if (fs.existsSync(tempHtml)) fs.unlinkSync(tempHtml);
+                    return;
+                } catch (err) {
+                    if (fs.existsSync(tempHtml)) fs.unlinkSync(tempHtml);
+                    throw err;
+                }
+            }
+        }
+
+        // Standard LibreOffice Convert via Library (or fallback)
+        try {
+            const inputBuffer = fs.readFileSync(input);
+            const outputBuffer = await libre.convertAsync(inputBuffer, `.${format}`, undefined);
+            fs.writeFileSync(output, outputBuffer);
+        } catch (err) {
+            console.error("LibreOffice Lib Error:", err.message);
+            console.log("Falling back to direct soffice spawn...");
+            return this.runLibreOfficeDirect(input, output, format);
+        }
+    }
+
+    async runLibreOfficeDirect(input, output, format, inFilter) {
+        return new Promise((resolve, reject) => {
+            const outDir = path.dirname(output);
+            const args = ['--headless', '--convert-to', format];
+            if (inFilter) args.push(`--infilter=${inFilter}`);
+            args.push('--outdir', outDir);
+            args.push(input);
+
+            console.log(`[Worker] Spawning: soffice ${args.join(' ')}`);
+
+            const proc = spawn('soffice', args);
+
+            let stdout = '';
+            let stderr = '';
+
+            proc.stdout.on('data', (d) => stdout += d.toString());
+            proc.stderr.on('data', (d) => stderr += d.toString());
+
+            proc.on('close', (code) => {
+                if (code !== 0) {
+                    // Check for common errors
+                    if (stderr.toLowerCase().includes('not found') || stdout.toLowerCase().includes('not found')) {
+                        return reject(new Error("LibreOffice binary not found. Please install it."));
+                    }
+                    return reject(new Error(`LibreOffice exited with code ${code}: ${stderr || stdout}`));
+                }
+
+                // Rename the result to expected output filename
+                // LibreOffice saves as <source_basename>.<format>
+                const sourceName = path.basename(input, path.extname(input));
+                const expectedName = `${sourceName}.${format}`;
+                const generatedPath = path.join(outDir, expectedName);
+
+                if (fs.existsSync(generatedPath)) {
+                    // Rename to request output path
+                    try {
+                        // If output paths are different, rename. 
+                        // In our logic: 
+                        // input: source-123.pdf -> generated: source-123.docx
+                        // target: converted-timestamp.docx
+                        fs.renameSync(generatedPath, output);
+                        resolve();
+                    } catch (e) {
+                        reject(e);
+                    }
+                } else {
+                    reject(new Error("Conversion reportedly succeeded but output file is missing."));
+                }
+            });
+
+            proc.on('error', (err) => {
+                if (err.code === 'ENOENT') {
+                    reject(new Error("LibreOffice binary ('soffice') not found in PATH."));
+                } else {
+                    reject(err);
+                }
+            });
+        });
     }
 
     getMimeType(ext) {

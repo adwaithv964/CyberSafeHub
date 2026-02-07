@@ -27,6 +27,7 @@ import { FlattenPDF } from './tools/FlattenPDF';
 import { ComparePDF } from './tools/ComparePDF';
 import { HTMLToPDF } from './tools/HTMLToPDF';
 import { UniversalConverter } from './tools/UniversalConverter';
+import { PDFToPDFA } from './tools/PDFToPDFA';
 
 export default function ConversionSystem() {
     const navigate = useNavigate();
@@ -61,6 +62,20 @@ export default function ConversionSystem() {
             case 'compare-pdf': return <ComparePDF onBack={() => setActiveTool('dashboard')} />;
             case 'html-to-pdf': return <HTMLToPDF onBack={() => setActiveTool('dashboard')} />;
             case 'universal': return <UniversalConverter onBack={() => setActiveTool('dashboard')} />;
+
+            // Fixed Valid Mappings
+            case 'word-to-pdf':
+            case 'powerpoint-to-pdf':
+            case 'excel-to-pdf':
+                return <OfficeToPDF onBack={() => setActiveTool('dashboard')} />;
+
+            case 'pdf-to-word':
+            case 'pdf-to-powerpoint':
+            case 'pdf-to-excel':
+                return <PDFToOffice onBack={() => setActiveTool('dashboard')} />;
+
+            case 'pdf-to-pdfa': return <PDFToPDFA onBack={() => setActiveTool('dashboard')} />;
+
             default:
                 return <ConversionDashboard onSelectTool={setActiveTool} onBack={() => navigate('/tools')} />;
         }

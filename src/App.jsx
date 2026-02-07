@@ -121,7 +121,7 @@ function AppContent() {
                         <NavLink to="/network" icon="globe">IP & DNS Checker</NavLink>
                         <NavLink to="/scanners" icon="scan">Scanners</NavLink>
                         <NavLink to="/vault" icon="lock">Password Vault</NavLink>
-                        <NavLink to="/assistant" icon="messageCircle">Cyber Assistant</NavLink>
+                        <NavLink to="/assistant" icon="bot">Cyber Assistant</NavLink>
                         <NavLink to="/healthcheck" icon="checkCircle">Health Check</NavLink>
                         <NavLink to="/tools" icon="terminal">Cyber Tools</NavLink>
                         <NavLink to="/academy" icon="academicCap">Cyber Academy</NavLink>

@@ -24,6 +24,26 @@ const IncidentSimulator = () => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    const GAME_MASTER_PROMPT = `You are the Game Master (GM) for a high-stakes Cybersecurity Incident Response RPG. 
+The user is the Lead Incident Responder / SysAdmin. 
+Your goal is to run an immersive, realistic simulation of a cyber attack.
+
+**Game Rules:**
+1. **Scenario Start:** When the game begins, generate a random, realistic critical incident (e.g., Ransomware detected on HR server, DDoS causing 504 errors, abnormal data egress, SQL injection alerts). Describe the initial symptoms clearly.
+2. **Turn-Based:** After the user responds, describe the result of their action and the next development in the crisis.
+3. **Realism:** 
+   - Good technical decisions (e.g., "isolate host", "check auth logs", "capture memory dump") should yield clues or mitigate threats.
+   - bad decisions (e.g., "reboot server" causing evidence loss, "ignore alert") should escalate the crisis.
+   - Use technical jargon appropriate for a SOC analyst (IOCs, IPs, logs, ports).
+4. **Tone:** Urgent, professional, immersive. Use Markdown for styling (bold key terms, code blocks for logs).
+5. **Winning/Losing:**
+   - If the user saves the day, declare "**MISSION ACCOMPLISHED**" and give a brief score/feedback.
+   - If the user fails catastrophically, declare "**SYSTEM FAILURE**" and explain why.
+
+**Format:**
+Keep responses under 150 words. Be punchy. 
+Always end with "What do you do?" or a specific prompt for action.`;
+
     const handleSend = async (e) => {
         e.preventDefault();
         if (!input.trim() || isThinking) return;
@@ -37,63 +57,38 @@ const IncidentSimulator = () => {
         setIsThinking(true);
 
         try {
-            let systemPrompt = "";
+            let activeGame = gameActive;
 
-            if (!gameActive) {
-                // Initial game start logic
+            // Check for start command if game not active
+            if (!activeGame) {
                 if (userText.toLowerCase().includes('start')) {
                     setGameActive(true);
-                    systemPrompt = `You are a Game Master for a Cybersecurity Incident Response RPG. 
-                    Start a new random scenario (e.g., Ransomware outbreak, DDoS attack, Insider Threat, SQL Injection breach).
-                    Describe the initial alert or symptoms clearly.
-                    Ask the user what they want to do next.
-                    Keep responses concise (under 100 words) but immersive. 
-                    Use Markdown.`;
+                    activeGame = true;
                 } else {
-                    // Not starting yet
                     setIsThinking(false);
-                    setMessages(prev => [...prev, { sender: 'ai', text: "Type 'Start' to begin the simulation." }]);
+                    setMessages(prev => [...prev, { sender: 'ai', text: "Type '**Start**' to launch the simulation." }]);
                     return;
                 }
-            } else {
-                // Ongoing game logic
-                systemPrompt = `You are a Game Master for a Cybersecurity Incident Response RPG.
-                The user is the System Administrator.
-                Continue the scenario based on the user's last action.
-                
-                Rules:
-                1. If the user's action is good standard practice (e.g., "isolate infected host", "check firewall logs"), advance the story positively.
-                2. If the user's action is bad or dangerous (e.g., "ignore alert", "delete everything"), introduce complications or failure.
-                3. If the user asks for help/hint, give a subtle clue.
-                4. Maintain a 'Crisis Level' (Low, Medium, Critical) and mention it if it changes.
-                5. If the incident is resolved, declare "VICTORY" and summarize performance.
-                6. If the simulation ends in disaster, declare "GAME OVER".
-                
-                Keep responses immersive, concise, and use Markdown.`;
             }
 
-            // Call API with history context
-            // Convert message history to format expected by logic if needed, 
-            // but here we simply pass the last user prompt + system instruction effectively 
-            // treating it as a new turn with history context from the 'messages' state if we were sending full history.
-            // For simplicity/token limits, we might just send the last few turns or a summarized context.
-            // But 'callGeminiAPI' helper in this project usually takes (userPrompt, systemPrompt). 
-            // We can construct a "chat history" string for the user prompt to keep context.
+            // Filter history for API: Exclude internal system messages like the static intro
+            const apiHistory = newHistory.filter(m => m.sender !== 'system');
 
-            const conversationContext = newHistory.slice(-6).map(m => `${m.sender.toUpperCase()}: ${m.text}`).join('\n');
-            const fullPrompt = `${conversationContext}\n\n(Respond to the User's last action as the Game Master)`;
+            const responseText = await callGeminiAPI(apiHistory, GAME_MASTER_PROMPT);
 
-            const aiResponse = await callGeminiAPI([{ sender: 'user', text: fullPrompt }], systemPrompt);
+            if (responseText) {
+                setMessages(prev => [...prev, { sender: 'ai', text: responseText }]);
 
-            setMessages(prev => [...prev, { sender: 'ai', text: aiResponse }]);
-
-            if (aiResponse.includes("VICTORY") || aiResponse.includes("GAME OVER")) {
-                setGameActive(false);
+                if (responseText.includes("MISSION ACCOMPLISHED") || responseText.includes("SYSTEM FAILURE")) {
+                    setGameActive(false);
+                }
+            } else {
+                throw new Error("No response from AI");
             }
 
         } catch (err) {
             console.error(err);
-            setMessages(prev => [...prev, { sender: 'system', text: "Error connecting to simulation server. Please try again." }]);
+            setMessages(prev => [...prev, { sender: 'system', text: "⚠️ **Connection Error**: Unable to reach the Simulation Core. Please try again." }]);
         } finally {
             setIsThinking(false);
         }
