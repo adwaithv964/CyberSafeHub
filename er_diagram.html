@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CyberSafeHub – Complete ER Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: #0a0f1e;
+            font-family: 'Segoe UI', sans-serif;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden
+        }
+
+        header {
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-bottom: 1px solid #334155;
+            flex-shrink: 0
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            color: #38bdf8;
+            letter-spacing: 2px
+        }
+
+        header p {
+            color: #64748b;
+            font-size: .78rem
+        }
+
+        #ctrl {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            padding: 6px;
+            background: #1e293b;
+            flex-shrink: 0;
+            flex-wrap: wrap
+        }
+
+        .btn {
+            padding: 4px 12px;
+            border-radius: 5px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: .75rem
+        }
+
+        .btn:hover {
+            border-color: #38bdf8;
+            color: #38bdf8
+        }
+
+        #wrap {
+            flex: 1;
+            overflow: hidden;
+            position: relative
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            cursor: grab
+        }
+
+        svg:active {
+            cursor: grabbing
+        }
+
+        #leg {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #1e293bcc;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: .72rem;
+            backdrop-filter: blur(4px)
+        }
+
+        #leg h3 {
+            color: #38bdf8;
+            margin-bottom: 5px;
+            font-size: .75rem
+        }
+
+        #leg div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 2px 0
+        }
+
+        .lbox {
+            width: 14px;
+            height: 9px;
+            border-radius: 2px
+        }
+
+        .loval {
+            width: 14px;
+            height: 9px;
+            border-radius: 50%
+        }
+
+        .ldiam {
+            width: 10px;
+            height: 10px;
+            transform: rotate(45deg)
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>🛡 CyberSafeHub — Complete Entity Relationship Diagram</h1>
+        <p>Firebase Auth · MongoDB Atlas · localStorage · Socket.IO · Gemini AI · All Entities</p>
+    </header>
+    <div id="ctrl">
+        <button class="btn" onclick="resetView()">⟳ Reset</button>
+        <button class="btn" onclick="zoom(0.75)">＋ Zoom In</button>
+        <button class="btn" onclick="zoom(1.33)">－ Zoom Out</button>
+        <button class="btn" onclick="window.print()">🖨 Print</button>
+    </div>
+    <div id="wrap">
+        <svg id="svg" viewBox="0 0 2600 2200">
+            <defs>
+                <marker id="arr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
+                    <path d="M0,0 L0,7 L7,3.5 z" fill="#475569" />
+                </marker>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                    <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+            <g id="g"></g>
+        </svg>
+        <div id="leg">
+            <h3>Legend</h3>
+            <div>
+                <div class="lbox" style="background:#1d4ed8;border:1px solid #3b82f6"></div> Entity (MongoDB)
+            </div>
+            <div>
+                <div class="lbox" style="background:#1e3a5f;border:1px solid #60a5fa"></div> Entity (Firebase)
+            </div>
+            <div>
+                <div class="lbox" style="background:#14532d;border:1px solid #22c55e"></div> Entity (Runtime/LS)
+            </div>
+            <div>
+                <div class="loval" style="background:#064e3b;border:1px solid #10b981"></div> Attribute
+            </div>
+            <div>
+                <div class="ldiam" style="background:#78350f;border:1px solid #f59e0b"></div> Relationship
+            </div>
+            <div>
+                <div class="loval" style="background:#3b0764;border:1px solid #a855f7"></div> Key Attribute
+            </div>
+        </div>
+    </div>
+    <script>
+        const svg = document.getElementById('svg'), g = document.getElementById('g');
+        let vb = { x: 0, y: 0, w: 2600, h: 2200 }, dr = null, sp = null;
+        const svgP = e => { const r = svg.getBoundingClientRect(); return { x: (e.clientX - r.left) * vb.w / r.width + vb.x, y: (e.clientY - r.top) * vb.h / r.height + vb.y } };
+        svg.addEventListener('mousedown', e => { dr = svgP(e); sp = { ...vb } });
+        svg.addEventListener('mousemove', e => { if (!dr) return; const c = svgP(e); vb.x = sp.x - (c.x - dr.x + vb.x - sp.x); vb.y = sp.y - (c.y - dr.y + vb.y - sp.y); sv() });
+        svg.addEventListener('mouseup', () => dr = null);
+        svg.addEventListener('wheel', e => { e.preventDefault(); const f = e.deltaY > 0 ? 1.1 : 0.9, c = svgP(e); vb.x = c.x - (c.x - vb.x) * f; vb.y = c.y - (c.y - vb.y) * f; vb.w *= f; vb.h *= f; sv() }, { passive: false });
+        function sv() { svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`) }
+        function resetView() { vb = { x: 0, y: 0, w: 2600, h: 2200 }; sv() }
+        function zoom(f) { vb.x += (f - 1) * vb.w * .5 * (f < 1 ? -1 : 1) * -1; vb.y += (f - 1) * vb.h * .5 * (f < 1 ? -1 : 1) * -1; vb.w *= f; vb.h *= f; sv() }
+
+        // ── Render helpers ──
+        const L = (x1, y1, x2, y2, dash = '') => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#334155" stroke-width="1.3" marker-end="url(#arr)"${dash ? ' stroke-dasharray="5,3"' : ''}/>`
+        const card = (x1, y1, x2, y2) => `${L(x1, y1, x2, y2)}`; // simple alias
+
+        function ent(x, y, w, h, lbl, fc = '#1d4ed8', bc = '#3b82f6') {
+            return `<rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="7" fill="${fc}" stroke="${bc}" stroke-width="2" filter="url(#glow)"/>
+<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="#f1f5f9" font-size="13" font-weight="bold">${lbl}</text>`;
+        }
+        function attrEl(x, y, lbl, isPK = false) {
+            const rx = Math.max(40, lbl.length * 5.5 + 10), ry = 12;
+            const fc = isPK ? '#3b0764' : '#064e3b', bc = isPK ? '#a855f7' : '#10b981';
+            const tl = isPK ? `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="#e9d5ff" font-size="9.5" text-decoration="underline">${lbl}</text>` :
+                `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="#a7f3d0" font-size="9.5">${lbl}</text>`;
+            return `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${fc}" stroke="${bc}" stroke-width="1.2"/>${tl}`;
+        }
+        function rel(x, y, lbl) {
+            const s = 30;
+            return `<polygon points="${x},${y - s} ${x + s},${y} ${x},${y + s} ${x - s},${y}" fill="#78350f" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="#fde68a" font-size="9.5" font-weight="bold">${lbl}</text>`;
+        }
+        function lbl(x, y, t) { return `<text x="${x}" y="${y}" text-anchor="middle" fill="#475569" font-size="8.5">${t}</text>` }
+
+        let h = '';
+
+        // ════════════════════════════════════════════
+        // ENTITIES
+        // ════════════════════════════════════════════
+
+        // 1 FirebaseUser (centre-top of diagram)
+        h += ent(1300, 380, 170, 46, 'FirebaseUser', '#1e3a5f', '#60a5fa');
+
+        // 2 Admin (MongoDB)
+        h += ent(200, 200, 150, 46, 'Admin', '#1d4ed8', '#60a5fa');
+
+        // 3 VaultItem (MongoDB)
+        h += ent(200, 700, 150, 46, 'VaultItem', '#1d4ed8', '#60a5fa');
+
+        // 4 ThreatLog (MongoDB)
+        h += ent(800, 160, 150, 46, 'ThreatLog', '#1d4ed8', '#60a5fa');
+
+        // 5 Job / ConversionJob (MongoDB)
+        h += ent(1800, 160, 160, 46, 'ConversionJob', '#1d4ed8', '#60a5fa');
+
+        // 6 PlatformStat (MongoDB)
+        h += ent(2200, 380, 150, 46, 'PlatformStat', '#1d4ed8', '#60a5fa');
+
+        // 7 HealthCheckResult (localStorage)
+        h += ent(1300, 750, 180, 46, 'HealthCheckResult', '#14532d', '#22c55e');
+
+        // 8 ScanFinding (embedded in HealthCheckResult)
+        h += ent(900, 950, 150, 46, 'ScanFinding', '#14532d', '#22c55e');
+
+        // 9 RoadmapItem (localStorage)
+        h += ent(1300, 1100, 160, 46, 'RoadmapItem', '#14532d', '#22c55e');
+
+        // 10 SecurityRoadmapTask (dashboard localStorage)
+        h += ent(700, 1250, 180, 46, 'SecurityTask', '#14532d', '#22c55e');
+
+        // 11 ActivityLog (localStorage)
+        h += ent(1800, 700, 160, 46, 'ActivityLog', '#14532d', '#22c55e');
+
+        // 12 NotificationPrefs (localStorage)
+        h += ent(2200, 700, 180, 46, 'NotificationPrefs', '#14532d', '#22c55e');
+
+        // 13 UserSettings (localStorage)
+        h += ent(2200, 1000, 170, 46, 'UserSettings', '#14532d', '#22c55e');
+
+        // 14 AcademyModule (static data)
+        h += ent(1300, 1450, 160, 46, 'AcademyModule', '#1e3a5f', '#818cf8');
+
+        // 15 WiFiDevice (runtime)
+        h += ent(200, 1250, 150, 46, 'WiFiDevice', '#1d4ed8', '#34d399');
+
+        // 16 OsintResult (runtime)
+        h += ent(200, 1500, 150, 46, 'OsintResult', '#1d4ed8', '#34d399');
+
+        // 17 NearbyUser (socket runtime)
+        h += ent(800, 1500, 160, 46, 'NearbyUser', '#1d4ed8', '#34d399');
+
+        // 18 NetworkDevice (wifi-radar scan result detail)
+        h += ent(500, 1750, 170, 46, 'NetworkScanResult', '#14532d', '#22c55e');
+
+        // ════════════════════════════════════════════
+        // RELATIONSHIPS
+        // ════════════════════════════════════════════
+        h += rel(650, 200, 'Manages');       // Admin -- FirebaseUser
+        h += rel(650, 700, 'Stores');        // FirebaseUser -- VaultItem
+        h += rel(1050, 265, 'Generates');    // FirebaseUser -- ThreatLog
+        h += rel(1550, 265, 'Creates');      // FirebaseUser -- ConversionJob
+        h += rel(1750, 380, 'Updates');      // ConversionJob -- PlatformStat
+        h += rel(1300, 570, 'Produces');     // FirebaseUser -- HealthCheckResult
+        h += rel(1100, 850, 'Contains');     // HealthCheckResult -- ScanFinding
+        h += rel(1300, 940, 'Has');          // HealthCheckResult -- RoadmapItem
+        h += rel(1000, 1250, 'Tracks');      // FirebaseUser -- SecurityTask
+        h += rel(1550, 700, 'Logs');         // FirebaseUser -- ActivityLog
+        h += rel(2050, 700, 'Configures');   // FirebaseUser -- NotificationPrefs
+        h += rel(2050, 1000, 'Has');         // FirebaseUser -- UserSettings
+        h += rel(1300, 1270, 'Accesses');    // FirebaseUser -- AcademyModule
+        h += rel(650, 1250, 'Scans');        // FirebaseUser -- WiFiDevice
+        h += rel(400, 1500, 'Performs');     // FirebaseUser -- OsintResult
+        h += rel(1050, 1500, 'Connects');    // FirebaseUser -- NearbyUser (Socket.IO)
+        h += rel(350, 1750, 'Discovers');    // WiFiDevice -- NetworkScanResult
+
+        // ════════════════════════════════════════════
+        // LINES: Entities ↔ Relationships
+        // ════════════════════════════════════════════
+        // Admin -- Manages
+        h += L(200, 223, 618, 200); h += L(682, 200, 1215, 368);
+        // FirebaseUser -- Stores -- VaultItem
+        h += L(1215, 390, 682, 700); h += L(618, 700, 200, 700);
+        // FirebaseUser -- Generates -- ThreatLog
+        h += L(1260, 358, 1082, 280); h += L(1018, 250, 800, 183);
+        // FirebaseUser -- Creates -- ConversionJob
+        h += L(1340, 358, 1568, 280); h += L(1532, 250, 1800, 183);
+        // ConversionJob -- Updates -- PlatformStat
+        h += L(1880, 160, 1770, 368); h += L(1730, 392, 2125, 392);
+        // FirebaseUser -- Produces -- HealthCheckResult
+        h += L(1300, 403, 1300, 547); h += L(1300, 593, 1300, 727);
+        // HealthCheckResult -- Contains -- ScanFinding
+        h += L(1215, 760, 1122, 838); h += L(1078, 862, 900, 927);
+        // HealthCheckResult -- Has -- RoadmapItem
+        h += L(1300, 773, 1300, 918); h += L(1300, 962, 1300, 1077);
+        // FirebaseUser -- Tracks -- SecurityTask
+        h += L(1215, 390, 1022, 1238); h += L(978, 1262, 700, 1250);
+        // FirebaseUser -- Logs -- ActivityLog
+        h += L(1385, 390, 1568, 688); h += L(1532, 712, 1800, 712);
+        // FirebaseUser -- Configures -- NotificationPrefs
+        h += L(1385, 380, 2068, 700); h += L(2032, 700, 2200, 700);
+        // FirebaseUser -- Has -- UserSettings
+        h += L(1385, 400, 2068, 1000); h += L(2032, 1000, 2200, 1000);
+        // FirebaseUser -- Accesses -- AcademyModule
+        h += L(1300, 403, 1300, 1258); h += L(1300, 1282, 1300, 1427);
+        // FirebaseUser -- Scans -- WiFiDevice
+        h += L(1215, 400, 662, 1238); h += L(618, 1262, 200, 1250);
+        // FirebaseUser -- Performs -- OsintResult
+        h += L(1215, 400, 418, 1488); h += L(382, 1512, 200, 1500);
+        // FirebaseUser -- Connects -- NearbyUser (Socket.IO)
+        h += L(1260, 400, 1068, 1488); h += L(1032, 1512, 800, 1500);
+        // WiFiDevice -- Discovers -- NetworkScanResult
+        h += L(200, 1273, 362, 1738); h += L(338, 1762, 500, 1750);
+
+        // ════════════════════════════════════════════
+        // ATTRIBUTES: FirebaseUser
+        // ════════════════════════════════════════════
+        const fbU = [
+            [1180, 295, 'uid', true], [1080, 310, 'email'], [1060, 360, 'displayName'],
+            [1070, 420, 'photoURL'], [1100, 465, 'emailVerified'],
+            [1420, 295, 'authProvider'], [1520, 330, 'mfaEnrolled'],
+            [1515, 385, 'createdAt'], [1520, 440, 'lastSignInTime']
+        ];
+        fbU.forEach(([x, y, l, pk]) => { h += L(1300, 380, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: Admin
+        const adm = [
+            [100, 180, '_id', true], [100, 220, 'email'], [100, 255, 'role'],
+            [200, 260, 'createdAt'], [300, 240, 'updatedAt']
+        ];
+        adm.forEach(([x, y, l, pk]) => { h += L(200, 200, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: VaultItem
+        const vi = [
+            [90, 660, '_id', true], [90, 700, 'userId'], [90, 740, 'type'],
+            [200, 755, 'name'], [310, 740, 'data(Mixed)'],
+            [310, 680, 'createdAt'], [310, 640, 'updatedAt']
+        ];
+        vi.forEach(([x, y, l, pk]) => { h += L(200, 700, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: VaultItem.data subtypes labels
+        h += `<text x="90" y="800" fill="#f59e0b" font-size="9" font-style="italic">data for 'login': username, password, url, note</text>`;
+        h += `<text x="90" y="815" fill="#f59e0b" font-size="9" font-style="italic">data for 'card': cardNumber, expiry, cvv, holder</text>`;
+        h += `<text x="90" y="830" fill="#f59e0b" font-size="9" font-style="italic">data for 'identity': firstName, lastName, idNumber, dob</text>`;
+        h += `<text x="90" y="845" fill="#f59e0b" font-size="9" font-style="italic">data for 'note': content</text>`;
+
+        // ATTRIBUTES: ThreatLog
+        const tl = [
+            [670, 130, '_id', true], [760, 110, 'type'], [850, 110, 'target'],
+            [940, 115, 'details[]'], [800, 200, 'timestamp']
+        ];
+        tl.forEach(([x, y, l, pk]) => { h += L(800, 160, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: ConversionJob
+        const cj = [
+            [1700, 115, '_id', true], [1800, 95, 'sourceFile.path'],
+            [1900, 100, 'sourceFile.name'], [1960, 130, 'targetFormat'],
+            [1960, 165, 'status'], [1800, 200, 'progress'],
+            [1680, 170, 'result.path'], [1680, 200, 'options.quality'],
+            [1700, 230, 'createdAt'], [1860, 220, 'startedAt'], [1980, 210, 'completedAt']
+        ];
+        cj.forEach(([x, y, l, pk]) => { h += L(1800, 160, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: PlatformStat
+        const ps = [
+            [2100, 330, '_id', true], [2200, 310, 'date'],
+            [2320, 340, 'filesCleaned'], [2340, 380, 'pdfsConverted'],
+            [2100, 430, 'updatedAt']
+        ];
+        ps.forEach(([x, y, l, pk]) => { h += L(2200, 380, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: HealthCheckResult
+        const hc = [
+            [1150, 700, 'id', true], [1130, 755, 'score'], [1130, 800, 'date'],
+            [1450, 700, 'findings[]'], [1460, 755, 'roadmap[]'], [1450, 800, 'aiSummary']
+        ];
+        hc.forEach(([x, y, l, pk]) => { h += L(1300, 750, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: ScanFinding
+        const sf = [
+            [770, 930, 'text'], [770, 970, 'severity']
+        ];
+        sf.forEach(([x, y, l, pk]) => { h += L(900, 950, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: RoadmapItem
+        const ri = [
+            [1160, 1090, 'text'], [1160, 1120, 'done'],
+            [1440, 1090, 'id'], [1440, 1120, 'addedAt']
+        ];
+        ri.forEach(([x, y, l, pk]) => { h += L(1300, 1100, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: SecurityTask (dashboard)
+        const st = [
+            [570, 1210, 'id', true], [570, 1250, 'text'],
+            [570, 1290, 'done'], [780, 1310, 'createdAt']
+        ];
+        st.forEach(([x, y, l, pk]) => { h += L(700, 1250, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: ActivityLog
+        const al = [
+            [1670, 670, 'id', true], [1670, 710, 'type'],
+            [1680, 750, 'description'], [1900, 760, 'details'],
+            [1920, 720, 'timestamp'], [1910, 680, 'dateFormatted']
+        ];
+        al.forEach(([x, y, l, pk]) => { h += L(1800, 700, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: NotificationPrefs
+        const np = [
+            [2070, 660, 'emailAlerts'], [2070, 700, 'inApp'],
+            [2070, 740, 'securityReminders'], [2330, 680, 'userId(key)']
+        ];
+        np.forEach(([x, y, l, pk]) => { h += L(2200, 700, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: UserSettings
+        const us = [
+            [2050, 960, 'userId(key)'], [2050, 1000, 'mfaEnabled'],
+            [2050, 1040, 'notificationPrefs'], [2350, 970, 'displayName'],
+            [2360, 1010, 'email'], [2350, 1050, 'lastExportDate']
+        ];
+        us.forEach(([x, y, l, pk]) => { h += L(2200, 1000, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: AcademyModule
+        const am = [
+            [1160, 1430, 'id', true], [1160, 1470, 'title'],
+            [1440, 1430, 'description'], [1440, 1470, 'icon'],
+            [1300, 1510, 'moduleType']
+        ];
+        am.forEach(([x, y, l, pk]) => { h += L(1300, 1450, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: WiFiDevice
+        const wd = [
+            [80, 1210, 'ip', true], [80, 1250, 'mac'], [80, 1290, 'name'],
+            [200, 1310, 'vendor'], [310, 1295, 'deviceType'],
+            [310, 1255, 'hostname'], [310, 1215, 'openPorts[]'],
+            [200, 1195, 'isSuspicious']
+        ];
+        wd.forEach(([x, y, l, pk]) => { h += L(200, 1250, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: OsintResult
+        const osr = [
+            [80, 1460, 'username'], [80, 1500, 'site'], [80, 1540, 'status'],
+            [310, 1460, 'url'], [310, 1500, 'checkedAt']
+        ];
+        osr.forEach(([x, y, l, pk]) => { h += L(200, 1500, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: NearbyUser (Socket.IO)
+        const nu = [
+            [670, 1460, 'socketId', true], [670, 1500, 'name'],
+            [670, 1540, 'ip'], [940, 1475, 'connectedAt']
+        ];
+        nu.forEach(([x, y, l, pk]) => { h += L(800, 1500, x, y); h += attrEl(x, y, l, pk) });
+
+        // ATTRIBUTES: NetworkScanResult
+        const ns = [
+            [360, 1720, 'ip'], [360, 1760, 'mac'], [360, 1800, 'hostname'],
+            [620, 1720, 'vendor'], [640, 1760, 'mdnsName'], [640, 1800, 'ssdpInfo'],
+            [500, 1850, 'ports[]']
+        ];
+        ns.forEach(([x, y, l, pk]) => { h += L(500, 1750, x, y); h += attrEl(x, y, l, pk) });
+
+        // ════════════════════════════════════════════
+        // CARDINALITY labels
+        // ════════════════════════════════════════════
+        const cards = [
+            [440, 198, '1'], [820, 325, 'N'],  // Admin manages FirebaseUser
+            [820, 690, '1'], [440, 700, 'N'],  // FirebaseUser owns VaultItem
+            [1155, 330, '1'], [855, 195, 'N'], // Generates ThreatLog
+            [1440, 330, '1'], [1745, 195, 'N'],// Creates Job
+            [1760, 295, '1'], [2120, 390, '1'],// Updates PlatformStat
+            [1300, 490, '1'], [1300, 720, 'N'],// Produces HealthCheckResult
+            [1160, 800, '1'], [940, 930, 'N'], // Contains ScanFinding
+            [1300, 870, '1'], [1300, 1070, 'N'],// Has RoadmapItem
+            [1100, 810, '1'], [760, 1250, 'N'], // Tracks SecurityTask
+            [1490, 550, '1'], [1760, 700, 'N'], // Logs Activity
+            [1870, 550, '1'], [2140, 700, 'N'],// Configures Notif
+            [1870, 690, '1'], [2140, 1000, 'N'],// Has UserSettings
+            [1300, 1225, '1'], [1300, 1420, 'N'],// Accesses Academy
+            [820, 900, '1'], [440, 1250, 'N'], // Scans WiFiDevice
+            [650, 950, '1'], [300, 1500, 'N'],  // Performs OSINT
+            [1100, 1050, '1'], [850, 1500, 'N'],// Connects NearbyUser
+            [285, 1610, '1'], [430, 1745, 'N'] // Discovers NetworkScan
+        ];
+        cards.forEach(([x, y, t]) => { h += lbl(x, y, t) });
+
+        // ════════════════════════════════════════════
+        // SECTION BANNERS
+        // ════════════════════════════════════════════
+        h += `<rect x="12" y="12" width="390" height="64" rx="8" fill="#0f172aee" stroke="#334155"/>
+<text x="24" y="34" fill="#38bdf8" font-size="13" font-weight="bold">CyberSafeHub — Full ER Diagram</text>
+<text x="24" y="52" fill="#64748b" font-size="9.5">Firebase Auth + MongoDB + localStorage + Socket.IO + Gemini AI</text>
+<text x="24" y="67" fill="#475569" font-size="9">Feb 2026 · 18 Entities · All Relationships Mapped</text>`;
+
+        // Section labels
+        h += `<rect x="50" y="90" width="420" height="24" rx="4" fill="#1e293b" stroke="#334155"/>
+<text x="260" y="107" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">── Core Admin & User Layer ──</text>`;
+        h += `<rect x="50" y="630" width="480" height="24" rx="4" fill="#1e293b" stroke="#334155"/>
+<text x="290" y="647" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="bold">── Password Vault (MongoDB) ──</text>`;
+        h += `<rect x="1040" y="630" width="520" height="24" rx="4" fill="#1e293b" stroke="#334155"/>
+<text x="1300" y="647" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="bold">── Health Check & Scan Results (localStorage) ──</text>`;
+        h += `<rect x="1600" y="630" width="520" height="24" rx="4" fill="#1e293b" stroke="#334155"/>
+<text x="1860" y="647" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="bold">── Activity & Settings (localStorage) ──</text>`;
+        h += `<rect x="50" y="1150" width="420" height="24" rx="4" fill="#1e293b" stroke="#334155"/>
+<text x="260" y="1167" text-anchor="middle" fill="#34d399" font-size="11" font-weight="bold">── Network & OSINT Tools (Runtime) ──</text>`;
+        h += `<rect x="1040" y="1380" width="520" height="24" rx="4" fill="#1e293b" stroke="#334155"/>
+<text x="1300" y="1397" text-anchor="middle" fill="#818cf8" font-size="11" font-weight="bold">── Cyber Academy Modules (Static) ──</text>`;
+        h += `<rect x="1600" y="90" width="900" height="24" rx="4" fill="#1e293b" stroke="#334155"/>
+<text x="2050" y="107" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">── File Conversion (MongoDB) ──</text>`;
+
+        g.innerHTML = h;
+    </script>
+</body>
+
+</html>

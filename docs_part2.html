@@ -1,0 +1,1362 @@
+<div class="page">
+
+    <!-- SECTION 3 -->
+    <h2><span class="section-num">3.</span> SYSTEM REQUIREMENT SPECIFICATION</h2>
+
+    <h3>3.1 Software Specification</h3>
+    <p>The following software components form the complete stack of CyberSafeHub:</p>
+
+    <h4>Frontend Software</h4>
+    <table>
+        <tr>
+            <th>Component</th>
+            <th>Technology / Library</th>
+            <th>Version</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td>UI Framework</td>
+            <td>React</td>
+            <td>18.2.0</td>
+            <td>Component-based SPA framework</td>
+        </tr>
+        <tr>
+            <td>Build Tool</td>
+            <td>Vite</td>
+            <td>7.3.0</td>
+            <td>Fast HMR dev server and bundler</td>
+        </tr>
+        <tr>
+            <td>Styling</td>
+            <td>Tailwind CSS</td>
+            <td>3.4.3</td>
+            <td>Utility-first CSS framework</td>
+        </tr>
+        <tr>
+            <td>Animations</td>
+            <td>Framer Motion</td>
+            <td>11.2.10</td>
+            <td>Declarative animations and transitions</td>
+        </tr>
+        <tr>
+            <td>Routing</td>
+            <td>React Router DOM</td>
+            <td>7.13.0</td>
+            <td>Client-side page routing</td>
+        </tr>
+        <tr>
+            <td>3D Graphics</td>
+            <td>Three.js / @react-three/fiber</td>
+            <td>0.182.0 / 8.16.8</td>
+            <td>3D scene rendering (dashboard)</td>
+        </tr>
+        <tr>
+            <td>Authentication</td>
+            <td>Firebase SDK</td>
+            <td>10.12.2</td>
+            <td>Auth state management, Google sign-in</td>
+        </tr>
+        <tr>
+            <td>HTTP Client</td>
+            <td>Axios</td>
+            <td>1.13.2</td>
+            <td>REST API requests to backend</td>
+        </tr>
+        <tr>
+            <td>Encryption</td>
+            <td>CryptoJS</td>
+            <td>4.2.0</td>
+            <td>Client-side AES encryption for vault</td>
+        </tr>
+        <tr>
+            <td>QR Code</td>
+            <td>html5-qrcode / qrcode</td>
+            <td>2.3.8 / 1.5.4</td>
+            <td>QR generation and scanning</td>
+        </tr>
+        <tr>
+            <td>OCR</td>
+            <td>Tesseract.js</td>
+            <td>7.0.0</td>
+            <td>Optical character recognition</td>
+        </tr>
+        <tr>
+            <td>PDF Generation</td>
+            <td>jsPDF / pdf-lib</td>
+            <td>4.0.0 / 1.17.1</td>
+            <td>Client-side PDF creation/manipulation</td>
+        </tr>
+        <tr>
+            <td>PDF Rendering</td>
+            <td>pdfjs-dist</td>
+            <td>5.4.530</td>
+            <td>PDF preview in browser</td>
+        </tr>
+        <tr>
+            <td>EXIF Reading</td>
+            <td>exif-js</td>
+            <td>2.3.0</td>
+            <td>Client-side metadata preview</td>
+        </tr>
+        <tr>
+            <td>Markdown Render</td>
+            <td>react-markdown</td>
+            <td>10.1.0</td>
+            <td>Render AI responses as markdown</td>
+        </tr>
+        <tr>
+            <td>Real-time</td>
+            <td>socket.io-client</td>
+            <td>4.8.3</td>
+            <td>Real-time scan progress updates</td>
+        </tr>
+        <tr>
+            <td>Spreadsheet</td>
+            <td>xlsx</td>
+            <td>0.18.5</td>
+            <td>Excel file reading/writing</td>
+        </tr>
+        <tr>
+            <td>DOCX Reading</td>
+            <td>mammoth</td>
+            <td>1.11.0</td>
+            <td>Word document parsing</td>
+        </tr>
+        <tr>
+            <td>Icons</td>
+            <td>react-icons</td>
+            <td>5.5.0</td>
+            <td>Icon library (Font Awesome, etc.)</td>
+        </tr>
+        <tr>
+            <td>SEO</td>
+            <td>react-helmet-async</td>
+            <td>2.0.5</td>
+            <td>Dynamic page title and meta tags</td>
+        </tr>
+        <tr>
+            <td>PWA</td>
+            <td>vite-plugin-pwa</td>
+            <td>1.2.0</td>
+            <td>Progressive Web App manifest/service worker</td>
+        </tr>
+    </table>
+
+    <h4>Backend Software</h4>
+    <table>
+        <tr>
+            <th>Component</th>
+            <th>Technology / Library</th>
+            <th>Version</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td>Runtime</td>
+            <td>Node.js</td>
+            <td>18+ LTS</td>
+            <td>Server-side JavaScript runtime</td>
+        </tr>
+        <tr>
+            <td>Framework</td>
+            <td>Express.js</td>
+            <td>4.18.2</td>
+            <td>HTTP server and API routing</td>
+        </tr>
+        <tr>
+            <td>Database ODM</td>
+            <td>Mongoose</td>
+            <td>8.2.0</td>
+            <td>MongoDB schema and query management</td>
+        </tr>
+        <tr>
+            <td>Auth Admin</td>
+            <td>Firebase Admin SDK</td>
+            <td>13.6.1</td>
+            <td>Server-side token verification</td>
+        </tr>
+        <tr>
+            <td>Virus Scanning</td>
+            <td>clamscan</td>
+            <td>2.1.2</td>
+            <td>Node.js interface for ClamAV</td>
+        </tr>
+        <tr>
+            <td>File Uploads</td>
+            <td>Multer</td>
+            <td>1.4.5-lts.1</td>
+            <td>Multipart form-data handling</td>
+        </tr>
+        <tr>
+            <td>CORS</td>
+            <td>cors</td>
+            <td>2.8.5</td>
+            <td>Cross-Origin Resource Sharing headers</td>
+        </tr>
+        <tr>
+            <td>Security Headers</td>
+            <td>Helmet</td>
+            <td>8.1.0</td>
+            <td>HTTP security headers middleware</td>
+        </tr>
+        <tr>
+            <td>Rate Limiting</td>
+            <td>express-rate-limit</td>
+            <td>8.2.1</td>
+            <td>API abuse prevention</td>
+        </tr>
+        <tr>
+            <td>XSS Protection</td>
+            <td>xss-clean</td>
+            <td>0.1.4</td>
+            <td>Sanitise user inputs against XSS</td>
+        </tr>
+        <tr>
+            <td>NoSQL Sanitiser</td>
+            <td>express-mongo-sanitize</td>
+            <td>2.2.0</td>
+            <td>Prevent NoSQL injection</td>
+        </tr>
+        <tr>
+            <td>Video/Audio</td>
+            <td>fluent-ffmpeg / ffmpeg-static</td>
+            <td>2.1.3</td>
+            <td>Media transcoding</td>
+        </tr>
+        <tr>
+            <td>Image Processing</td>
+            <td>Sharp</td>
+            <td>0.34.5</td>
+            <td>High-performance image conversion &amp; EXIF strip</td>
+        </tr>
+        <tr>
+            <td>HEIC Conversion</td>
+            <td>heic-convert</td>
+            <td>2.1.0</td>
+            <td>iPhone HEIC image format conversion</td>
+        </tr>
+        <tr>
+            <td>Document Convert</td>
+            <td>libreoffice-convert</td>
+            <td>1.7.0</td>
+            <td>Office document format conversion</td>
+        </tr>
+        <tr>
+            <td>PDF Creation</td>
+            <td>pdfkit</td>
+            <td>0.17.2</td>
+            <td>Server-side PDF generation</td>
+        </tr>
+        <tr>
+            <td>Network Scan</td>
+            <td>local-devices</td>
+            <td>3.0.0</td>
+            <td>ARP-based LAN device enumeration</td>
+        </tr>
+        <tr>
+            <td>mDNS Discovery</td>
+            <td>multicast-dns</td>
+            <td>7.2.5</td>
+            <td>Bonjour/Avahi hostname resolution</td>
+        </tr>
+        <tr>
+            <td>MAC Lookup</td>
+            <td>oui</td>
+            <td>13.1.1</td>
+            <td>MAC OUI to vendor name lookup</td>
+        </tr>
+        <tr>
+            <td>Real-time</td>
+            <td>socket.io</td>
+            <td>4.8.3</td>
+            <td>WebSocket server for live updates</td>
+        </tr>
+        <tr>
+            <td>Archiving</td>
+            <td>archiver</td>
+            <td>7.0.1</td>
+            <td>ZIP file creation for batch downloads</td>
+        </tr>
+        <tr>
+            <td>Containerisation</td>
+            <td>Docker</td>
+            <td>Latest</td>
+            <td>Backend deployment containerisation</td>
+        </tr>
+    </table>
+
+    <h3>3.2 Hardware Specification</h3>
+    <h4>Minimum Developer / Run Environment</h4>
+    <table>
+        <tr>
+            <th>Component</th>
+            <th>Minimum Requirement</th>
+            <th>Recommended</th>
+        </tr>
+        <tr>
+            <td>Processor</td>
+            <td>Intel Core i3 / AMD Ryzen 3 (2GHz+)</td>
+            <td>Core i5 / Ryzen 5 (3GHz+ / 4+ cores)</td>
+        </tr>
+        <tr>
+            <td>RAM</td>
+            <td>4 GB</td>
+            <td>8 GB or higher</td>
+        </tr>
+        <tr>
+            <td>Storage</td>
+            <td>10 GB free (SSD preferred)</td>
+            <td>50 GB SSD (for node_modules, media files)</td>
+        </tr>
+        <tr>
+            <td>Network</td>
+            <td>Broadband (5 Mbps)</td>
+            <td>25 Mbps+ (for media conversions, AI API)</td>
+        </tr>
+        <tr>
+            <td>OS</td>
+            <td>Windows 10, macOS 10.15, Ubuntu 20.04</td>
+            <td>Windows 11, macOS 13, Ubuntu 22.04 LTS</td>
+        </tr>
+        <tr>
+            <td>Browser</td>
+            <td>Chrome 90+, Firefox 88+, Edge 90+</td>
+            <td>Chrome 120+, Firefox 120+</td>
+        </tr>
+        <tr>
+            <td>Display</td>
+            <td>1280×720 resolution</td>
+            <td>1920×1080 Full HD</td>
+        </tr>
+    </table>
+
+    <h4>Cloud / Server Environment (Production)</h4>
+    <table>
+        <tr>
+            <th>Resource</th>
+            <th>Specification</th>
+            <th>Provider</th>
+        </tr>
+        <tr>
+            <td>Frontend CDN</td>
+            <td>Serverless edge network</td>
+            <td>Vercel Global CDN</td>
+        </tr>
+        <tr>
+            <td>Backend Server</td>
+            <td>512 MB RAM, 0.5 vCPU (free tier)</td>
+            <td>Render.com</td>
+        </tr>
+        <tr>
+            <td>Database</td>
+            <td>512 MB storage, shared cluster</td>
+            <td>MongoDB Atlas M0</td>
+        </tr>
+        <tr>
+            <td>Auth Service</td>
+            <td>Managed, unlimited users (Spark plan)</td>
+            <td>Firebase / Google Cloud</td>
+        </tr>
+        <tr>
+            <td>AI API</td>
+            <td>60 requests/min, 1M chars/min</td>
+            <td>Google AI Studio (Gemini)</td>
+        </tr>
+    </table>
+
+    <h3>3.3 Software Tools Used</h3>
+    <table>
+        <tr>
+            <th>Tool</th>
+            <th>Category</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td>Visual Studio Code</td>
+            <td>IDE</td>
+            <td>Primary code editor with ESLint and Prettier extensions</td>
+        </tr>
+        <tr>
+            <td>Git + GitHub</td>
+            <td>Version Control</td>
+            <td>Source code management, branching, CI/CD triggers</td>
+        </tr>
+        <tr>
+            <td>Postman</td>
+            <td>API Testing</td>
+            <td>Manual testing of all backend REST endpoints</td>
+        </tr>
+        <tr>
+            <td>MongoDB Compass</td>
+            <td>DB GUI</td>
+            <td>Visual inspection and management of MongoDB collections</td>
+        </tr>
+        <tr>
+            <td>Firebase Console</td>
+            <td>Auth Management</td>
+            <td>User management, rules, authentication provider config</td>
+        </tr>
+        <tr>
+            <td>Docker Desktop</td>
+            <td>Containerisation</td>
+            <td>Local Docker build and test before Render deployment</td>
+        </tr>
+        <tr>
+            <td>Render Dashboard</td>
+            <td>Deployment</td>
+            <td>Backend service management, environment variables, logs</td>
+        </tr>
+        <tr>
+            <td>Vercel Dashboard</td>
+            <td>Deployment</td>
+            <td>Frontend deployment, domain config, build logs</td>
+        </tr>
+        <tr>
+            <td>Google AI Studio</td>
+            <td>AI Development</td>
+            <td>Gemini API key management and prompt testing</td>
+        </tr>
+        <tr>
+            <td>ClamAV</td>
+            <td>Security</td>
+            <td>Open-source antivirus engine for file scanning</td>
+        </tr>
+        <tr>
+            <td>LibreOffice</td>
+            <td>Document Tools</td>
+            <td>Headless server-side Office document conversion</td>
+        </tr>
+        <tr>
+            <td>FFmpeg</td>
+            <td>Media Processing</td>
+            <td>Audio/video transcoding in file converter module</td>
+        </tr>
+        <tr>
+            <td>Chrome DevTools</td>
+            <td>Debugging</td>
+            <td>Frontend performance profiling, network inspection</td>
+        </tr>
+        <tr>
+            <td>ESLint</td>
+            <td>Code Quality</td>
+            <td>JavaScript linting and style enforcement</td>
+        </tr>
+        <tr>
+            <td>Vite Dev Server</td>
+            <td>Development</td>
+            <td>HMR dev server with fast rebuild</td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <!-- SECTION 4 -->
+    <h2><span class="section-num">4.</span> SYSTEM DESIGN</h2>
+
+    <h3>4.1 Data Flow Diagram</h3>
+    <p>Data Flow Diagrams (DFDs) are used to model the flow of data through the CyberSafeHub system. Level 0 shows the
+        system as a black box; Level 1 expands the major processes.</p>
+
+    <h4>Level 0 DFD — Context Diagram</h4>
+    <div class="diagram">
+        <pre>
+     ┌─────────┐         Login / Tool Request / Query         ┌──────────────────┐
+     │  USER   │ ──────────────────────────────────────────► │                  │
+     │ (Browser│                                              │   CYBERSAFEHUB   │
+     │  Client)│ ◄──────────────────────────────────────────  │     SYSTEM       │
+     └─────────┘    Results / Reports / Alerts / Content      │                  │
+                                                              └──────────────────┘
+                                                                       │ ▲
+                                                                Admin   │ │ Data
+                                                                Queries │ │ Stored
+                                                                       ▼ │
+                                                              ┌──────────────────┐
+                                                              │  ADMINISTRATOR   │
+                                                              │  (Admin Panel)   │
+                                                              └──────────────────┘
+</pre>
+    </div>
+
+    <h4>Level 1 DFD — Main Processes</h4>
+    <div class="diagram">
+        <pre>
+ USER ──► [1.0 AUTHENTICATE] ──► Firebase Auth ──► AuthContext ──► Dashboard
+
+ USER ──► [2.0 USE CYBER TOOL]
+           ├─► [2.1 Metadata Washer] ──► Backend /api/wash ──► Cleaned File ──► USER
+           ├─► [2.2 WiFi Radar]     ──► Backend /api/wifi-radar ──► Device List ──► USER
+           ├─► [2.3 Username Detective] ──► Backend /api/osint ──► Results ──► USER
+           ├─► [2.4 Code Auditor]   ──► Gemini API ──► Vulnerability Report ──► USER
+           └─► [2.5 Policy Decoder] ──► Gemini API ──► Privacy Summary ──► USER
+
+ USER ──► [3.0 SCAN FILE] ──► Backend /scan (Multer) ──► ClamAV ──► Verdict ──► USER
+
+ USER ──► [4.0 MANAGE VAULT]
+           ├─► Store: Encrypt (CryptoJS) ──► MongoDB VaultItem ──► Success ──► USER
+           └─► Retrieve: MongoDB ──► Decrypt ──► Credentials ──► USER
+
+ USER ──► [5.0 ACCESS ACADEMY]
+           └─► [5.1 Incident RPG] ──► Gemini API (Game Master) ──► Story Update ──► USER
+
+ USER ──► [6.0 CONVERT FILE] ──► Backend /convert ──► FFmpeg/LibreOffice ──► File ──► USER
+
+ ADMIN ──► [7.0 ADMIN PANEL] ──► Backend /api/admin ──► MongoDB ──► Dashboard Data ──► ADMIN
+</pre>
+    </div>
+
+    <h4>Level 2 DFD — Authentication Process (Detailed)</h4>
+    <div class="diagram">
+        <pre>
+ USER
+  │
+  ▼
+[Enter Credentials] ──► [Firebase Auth SDK]
+                              │
+                    ┌─────────┴──────────┐
+                    │                    │
+                [Email/Pass]      [Google OAuth]
+                    │                    │
+                    └─────────┬──────────┘
+                              │
+                    [ID Token Generated]
+                              │
+                    [AuthContext stores token]
+                              │
+               ┌──────────────┴───────────────┐
+               │                              │
+          [Frontend]                    [Backend API calls]
+      [Reads user state]         [Header: Bearer {idToken}]
+                                               │
+                                  [Firebase Admin verifyIdToken()]
+                                               │
+                                    [Proceed / 401 Reject]
+</pre>
+    </div>
+
+    <h3>4.2 Entity Relationship Diagram</h3>
+    <p>The following entities and their relationships form the CyberSafeHub data model. The primary database is MongoDB
+        Atlas (NoSQL), so relationships are represented as embedded documents or referenced ObjectIds.</p>
+
+    <div class="diagram">
+        <pre>
+┌──────────────────┐          ┌───────────────────┐          ┌──────────────────┐
+│    USER (Firebase)│          │   VaultItem        │          │   ThreatLog      │
+│──────────────────│  1  ───► │───────────────────│          │──────────────────│
+│ uid (PK)         │  to      │ _id (PK)           │          │ _id (PK)         │
+│ email            │  many    │ userId (FK→User.uid)│          │ userId (FK)      │
+│ displayName      │          │ website            │          │ fileName         │
+│ photoURL         │          │ username           │          │ threat           │
+│ createdAt        │          │ encryptedPassword  │          │ status           │
+│ lastLogin        │          │ notes              │          │ scannedAt        │
+└──────────────────┘          │ createdAt          │          └──────────────────┘
+         │                    └───────────────────┘
+         │ 1
+         │ to
+         │ 0..1
+         ▼
+┌──────────────────┐          ┌───────────────────┐          ┌──────────────────┐
+│ Admin (MongoDB)  │          │   Job (Conversion) │          │ PlatformStat     │
+│──────────────────│  1  ───► │───────────────────│          │──────────────────│
+│ _id (PK)         │  to      │ _id (PK)           │          │ _id (PK)         │
+│ uid (FK→Firebase)│  many    │ userId (FK)        │          │ date             │
+│ email            │          │ inputFile          │          │ totalScans       │
+│ role             │          │ outputFormat       │          │ totalUsers       │
+│ createdAt        │          │ status             │          │ totalConversions │
+└──────────────────┘          │ outputPath         │          └──────────────────┘
+                              │ createdAt          │
+                              └───────────────────┘
+</pre>
+    </div>
+
+    <h4>Relationship Summary</h4>
+    <table>
+        <tr>
+            <th>Entity A</th>
+            <th>Relationship</th>
+            <th>Entity B</th>
+            <th>Cardinality</th>
+        </tr>
+        <tr>
+            <td>User</td>
+            <td>Owns / Creates</td>
+            <td>VaultItem</td>
+            <td>1 : Many</td>
+        </tr>
+        <tr>
+            <td>User</td>
+            <td>Triggers / Generates</td>
+            <td>ThreatLog</td>
+            <td>1 : Many</td>
+        </tr>
+        <tr>
+            <td>User</td>
+            <td>Submits / Queues</td>
+            <td>Job (Conversion)</td>
+            <td>1 : Many</td>
+        </tr>
+        <tr>
+            <td>Admin</td>
+            <td>Is elevated form of</td>
+            <td>User</td>
+            <td>1 : 1 (optional)</td>
+        </tr>
+        <tr>
+            <td>Admin</td>
+            <td>Monitors / Views</td>
+            <td>PlatformStat</td>
+            <td>1 : Many (read)</td>
+        </tr>
+    </table>
+
+    <h3>4.3 Sequence Diagram</h3>
+    <h4>Sequence 1 — User Login with MFA</h4>
+    <div class="diagram">
+        <pre>
+User        Browser (React)       Firebase Auth        Backend API        MongoDB
+ │               │                      │                   │                │
+ │─────login()──►│                      │                   │                │
+ │               │──signInWithEmail()──►│                   │                │
+ │               │                      │──validate creds──►│                │
+ │               │                      │◄── ID Token ──────│                │
+ │               │◄── ID Token ─────────│                   │                │
+ │               │──[if MFA enabled]    │                   │                │
+ │               │──verifyTOTP()───────►│                   │                │
+ │               │◄── MFA OK ──────────│                   │                │
+ │               │──GET /api/admin/verify (Bearer token)───►│                │
+ │               │                      │                   │──verifyToken()─►│
+ │               │                      │                   │◄── Admin doc ──│
+ │               │◄────── 200 OK / role: admin ────────────│                │
+ │◄─ Dashboard ──│                      │                   │                │
+</pre>
+    </div>
+
+    <h4>Sequence 2 — File Malware Scan</h4>
+    <div class="diagram">
+        <pre>
+User        React Frontend          Backend (Express)         ClamAV Engine
+ │               │                        │                        │
+ │── Upload ────►│                        │                        │
+ │               │─ POST /scan (FormData)─►│                        │
+ │               │                        │──multer saves file ────►│
+ │               │                        │                        │──scan()─►
+ │               │                        │                        │◄─ result─
+ │               │                        │◄── { status, threat } ─│
+ │               │◄──── JSON result ───── │                        │
+ │◄── Toast/UI──│                        │──log to MongoDB ───────►│
+</pre>
+    </div>
+
+    <h4>Sequence 3 — AI Code Security Audit</h4>
+    <div class="diagram">
+        <pre>
+User        React (CodeAuditor.jsx)       Gemini REST API
+ │                  │                           │
+ │─ Paste code ────►│                           │
+ │─ Click Audit ───►│                           │
+ │                  │── POST (code + prompt) ──►│
+ │                  │                           │──LLM analysis──►
+ │                  │                           │◄── Markdown response
+ │                  │◄── response.text() ───────│
+ │                  │──react-markdown render     │
+ │◄── Report UI ───│                           │
+</pre>
+    </div>
+
+    <h3>4.4 Use Case Diagram</h3>
+    <h4>Actors</h4>
+    <ul>
+        <li><strong>Guest User:</strong> Unauthenticated visitor. Can view landing page only.</li>
+        <li><strong>Authenticated User:</strong> Logged-in regular user. Access to all tools and academy.</li>
+        <li><strong>Administrator:</strong> Elevated user with access to admin panel features.</li>
+        <li><strong>AI System (Gemini API):</strong> External actor providing AI-powered responses.</li>
+        <li><strong>ClamAV Engine:</strong> External actor performing virus scanning.</li>
+    </ul>
+
+    <table>
+        <tr>
+            <th>Use Case</th>
+            <th>Actor</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>UC-01: Register Account</td>
+            <td>Guest User</td>
+            <td>Create a new account using email/password or Google</td>
+        </tr>
+        <tr>
+            <td>UC-02: Login</td>
+            <td>Guest User</td>
+            <td>Authenticate and receive session token</td>
+        </tr>
+        <tr>
+            <td>UC-03: Enable MFA</td>
+            <td>Auth User</td>
+            <td>Set up TOTP-based multi-factor authentication</td>
+        </tr>
+        <tr>
+            <td>UC-04: View Dashboard</td>
+            <td>Auth User</td>
+            <td>Access the main hub with navigation cards</td>
+        </tr>
+        <tr>
+            <td>UC-05: Wash Image Metadata</td>
+            <td>Auth User</td>
+            <td>Upload image, strip EXIF data, download clean file</td>
+        </tr>
+        <tr>
+            <td>UC-06: Scan WiFi Network</td>
+            <td>Auth User</td>
+            <td>Trigger ARP scan and view connected device list</td>
+        </tr>
+        <tr>
+            <td>UC-07: Check Username</td>
+            <td>Auth User</td>
+            <td>Look up username across 50+ social platforms</td>
+        </tr>
+        <tr>
+            <td>UC-08: Audit Code Security</td>
+            <td>Auth User, AI System</td>
+            <td>Submit code and receive AI vulnerability report</td>
+        </tr>
+        <tr>
+            <td>UC-09: Decode Privacy Policy</td>
+            <td>Auth User, AI System</td>
+            <td>Submit legal text and get plain-English summary</td>
+        </tr>
+        <tr>
+            <td>UC-10: Scan File for Malware</td>
+            <td>Auth User, ClamAV</td>
+            <td>Upload file for antivirus scanning</td>
+        </tr>
+        <tr>
+            <td>UC-11: Manage Password Vault</td>
+            <td>Auth User</td>
+            <td>Create, read, update, delete encrypted credentials</td>
+        </tr>
+        <tr>
+            <td>UC-12: Convert File</td>
+            <td>Auth User</td>
+            <td>Convert files between 30+ supported formats</td>
+        </tr>
+        <tr>
+            <td>UC-13: Use Cyber Assistant</td>
+            <td>Auth User, AI System</td>
+            <td>Chat with AI for security Q&amp;A</td>
+        </tr>
+        <tr>
+            <td>UC-14: Complete Academy Module</td>
+            <td>Auth User</td>
+            <td>Study structured cybersecurity learning content</td>
+        </tr>
+        <tr>
+            <td>UC-15: Play Phishing Trainer</td>
+            <td>Auth User</td>
+            <td>Identify phishing emails in simulated inbox</td>
+        </tr>
+        <tr>
+            <td>UC-16: Play Incident Response RPG</td>
+            <td>Auth User, AI System</td>
+            <td>Make decisions in AI-driven cyber attack scenario</td>
+        </tr>
+        <tr>
+            <td>UC-17: Check Device Health</td>
+            <td>Auth User</td>
+            <td>Complete security posture checklist</td>
+        </tr>
+        <tr>
+            <td>UC-18: View Emergency Guides</td>
+            <td>Auth User</td>
+            <td>Get step-by-step recovery instructions for crises</td>
+        </tr>
+        <tr>
+            <td>UC-19: Manage Users</td>
+            <td>Administrator</td>
+            <td>View, enable/disable, assign roles to users</td>
+        </tr>
+        <tr>
+            <td>UC-20: View Analytics Dashboard</td>
+            <td>Administrator</td>
+            <td>Monitor platform KPIs and threat logs</td>
+        </tr>
+        <tr>
+            <td>UC-21: Change Password / Profile</td>
+            <td>Auth User</td>
+            <td>Update display name, email, password, or delete account</td>
+        </tr>
+        <tr>
+            <td>UC-22: Steganography Encode/Decode</td>
+            <td>Auth User</td>
+            <td>Hide or reveal messages in images using LSB technique</td>
+        </tr>
+        <tr>
+            <td>UC-23: Read Cyber News</td>
+            <td>Auth User</td>
+            <td>Browse aggregated cybersecurity news feed</td>
+        </tr>
+        <tr>
+            <td>UC-24: Digital Privacy Check</td>
+            <td>Auth User</td>
+            <td>Review privacy best practices and checklists</td>
+        </tr>
+    </table>
+
+    <h3>4.5 Database Design</h3>
+    <p>CyberSafeHub uses <strong>MongoDB Atlas</strong> as its primary database, leveraging the NoSQL document model for
+        flexibility in handling varying data structures across tools. The database is named <code>cybersafehub</code>
+        and contains the following collections:</p>
+
+    <table>
+        <tr>
+            <th>Collection</th>
+            <th>Document Count (est.)</th>
+            <th>Purpose</th>
+            <th>Schema File</th>
+        </tr>
+        <tr>
+            <td>admins</td>
+            <td>Small (5–20)</td>
+            <td>Admin user records with roles</td>
+            <td>Admin.js</td>
+        </tr>
+        <tr>
+            <td>vaultitems</td>
+            <td>Medium (100–10,000)</td>
+            <td>Encrypted user credentials</td>
+            <td>VaultItem.js</td>
+        </tr>
+        <tr>
+            <td>threatlogs</td>
+            <td>Large (grows continuously)</td>
+            <td>Malware scan audit records</td>
+            <td>ThreatLog.js</td>
+        </tr>
+        <tr>
+            <td>jobs</td>
+            <td>Medium (rolling window)</td>
+            <td>File conversion job queue</td>
+            <td>Job.js</td>
+        </tr>
+        <tr>
+            <td>platformstats</td>
+            <td>Small (daily records)</td>
+            <td>Aggregated platform analytics</td>
+            <td>PlatformStat.js</td>
+        </tr>
+    </table>
+
+    <p><strong>Design Decisions:</strong></p>
+    <ul>
+        <li>User profile data is stored in Firebase (not MongoDB) to avoid storing authentication credentials in a
+            separate database.</li>
+        <li>Vault passwords are encrypted with CryptoJS AES before insertion — MongoDB stores only ciphertext, never
+            plaintext passwords.</li>
+        <li>Threat logs are append-only; no deletion is performed to maintain audit integrity.</li>
+        <li>The <code>jobs</code> collection uses a status field (pending/processing/done/error) to support asynchronous
+            file conversion via worker processes.</li>
+    </ul>
+
+    <h3>4.6 Table Design</h3>
+
+    <h4>Collection: admins</h4>
+    <table>
+        <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>_id</td>
+            <td>ObjectId</td>
+            <td>Auto</td>
+            <td>MongoDB document identifier</td>
+        </tr>
+        <tr>
+            <td>uid</td>
+            <td>String</td>
+            <td>Yes (Unique)</td>
+            <td>Firebase User UID</td>
+        </tr>
+        <tr>
+            <td>email</td>
+            <td>String</td>
+            <td>Yes (Unique)</td>
+            <td>Admin email address</td>
+        </tr>
+        <tr>
+            <td>role</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>'superadmin' or 'admin'</td>
+        </tr>
+        <tr>
+            <td>createdAt</td>
+            <td>Date</td>
+            <td>Auto</td>
+            <td>Timestamp of admin creation</td>
+        </tr>
+    </table>
+
+    <h4>Collection: vaultitems</h4>
+    <table>
+        <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>_id</td>
+            <td>ObjectId</td>
+            <td>Auto</td>
+            <td>MongoDB document identifier</td>
+        </tr>
+        <tr>
+            <td>userId</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>Firebase UID of vault owner</td>
+        </tr>
+        <tr>
+            <td>website</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>Service name or URL</td>
+        </tr>
+        <tr>
+            <td>username</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>Login username or email</td>
+        </tr>
+        <tr>
+            <td>encryptedPassword</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>AES-encrypted password ciphertext</td>
+        </tr>
+        <tr>
+            <td>notes</td>
+            <td>String</td>
+            <td>No</td>
+            <td>Additional encrypted notes</td>
+        </tr>
+        <tr>
+            <td>createdAt</td>
+            <td>Date</td>
+            <td>Auto</td>
+            <td>Record creation timestamp</td>
+        </tr>
+        <tr>
+            <td>updatedAt</td>
+            <td>Date</td>
+            <td>Auto</td>
+            <td>Last update timestamp</td>
+        </tr>
+    </table>
+
+    <h4>Collection: threatlogs</h4>
+    <table>
+        <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>_id</td>
+            <td>ObjectId</td>
+            <td>Auto</td>
+            <td>MongoDB document identifier</td>
+        </tr>
+        <tr>
+            <td>userId</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>Firebase UID of scanning user</td>
+        </tr>
+        <tr>
+            <td>fileName</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>Uploaded file name</td>
+        </tr>
+        <tr>
+            <td>fileSize</td>
+            <td>Number</td>
+            <td>Yes</td>
+            <td>File size in bytes</td>
+        </tr>
+        <tr>
+            <td>threat</td>
+            <td>String</td>
+            <td>No</td>
+            <td>Threat name if detected (null if clean)</td>
+        </tr>
+        <tr>
+            <td>status</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>'clean' or 'infected'</td>
+        </tr>
+        <tr>
+            <td>scannedAt</td>
+            <td>Date</td>
+            <td>Auto</td>
+            <td>Scan timestamp</td>
+        </tr>
+    </table>
+
+    <h4>Collection: jobs (File Conversion)</h4>
+    <table>
+        <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>_id</td>
+            <td>ObjectId</td>
+            <td>Auto</td>
+            <td>MongoDB document identifier</td>
+        </tr>
+        <tr>
+            <td>userId</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>Firebase UID of requesting user</td>
+        </tr>
+        <tr>
+            <td>inputFile</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>Uploaded file path on server</td>
+        </tr>
+        <tr>
+            <td>inputFormat</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>Source file format (e.g., 'docx')</td>
+        </tr>
+        <tr>
+            <td>outputFormat</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>Target format (e.g., 'pdf')</td>
+        </tr>
+        <tr>
+            <td>outputPath</td>
+            <td>String</td>
+            <td>No</td>
+            <td>Path to converted file (set after completion)</td>
+        </tr>
+        <tr>
+            <td>status</td>
+            <td>String</td>
+            <td>Yes</td>
+            <td>'pending' / 'processing' / 'done' / 'error'</td>
+        </tr>
+        <tr>
+            <td>error</td>
+            <td>String</td>
+            <td>No</td>
+            <td>Error message if conversion failed</td>
+        </tr>
+        <tr>
+            <td>createdAt</td>
+            <td>Date</td>
+            <td>Auto</td>
+            <td>Job submission timestamp</td>
+        </tr>
+    </table>
+
+    <h4>Collection: platformstats</h4>
+    <table>
+        <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>_id</td>
+            <td>ObjectId</td>
+            <td>Auto</td>
+            <td>MongoDB document identifier</td>
+        </tr>
+        <tr>
+            <td>date</td>
+            <td>Date</td>
+            <td>Yes (Unique)</td>
+            <td>Date of the stat record</td>
+        </tr>
+        <tr>
+            <td>totalScans</td>
+            <td>Number</td>
+            <td>Yes</td>
+            <td>Total malware scans performed</td>
+        </tr>
+        <tr>
+            <td>totalUsers</td>
+            <td>Number</td>
+            <td>Yes</td>
+            <td>Total registered users count</td>
+        </tr>
+        <tr>
+            <td>newUsers</td>
+            <td>Number</td>
+            <td>Yes</td>
+            <td>New registrations on this date</td>
+        </tr>
+        <tr>
+            <td>totalConversions</td>
+            <td>Number</td>
+            <td>Yes</td>
+            <td>Total file conversions completed</td>
+        </tr>
+        <tr>
+            <td>threatsDetected</td>
+            <td>Number</td>
+            <td>Yes</td>
+            <td>Total infected files flagged</td>
+        </tr>
+    </table>
+
+    <h3>4.7 User Interface Design</h3>
+    <p>CyberSafeHub's interface follows a <strong>dark-mode cyberpunk aesthetic</strong> with a professional, accessible
+        design system built on TailwindCSS. Key design decisions:</p>
+    <ul>
+        <li><strong>Colour Palette:</strong> Deep navy (#0f172a) backgrounds, electric cyan (#22d3ee) and purple
+            (#8b5cf6) accents, white (#f1f5f9) text on dark surfaces.</li>
+        <li><strong>Typography:</strong> System font stack with Inter-like fallbacks. Bold headings with tracking for
+            cyberpunk feel; regular weight for body text.</li>
+        <li><strong>Component Library:</strong> Custom React components — <code>Button.jsx</code>,
+            <code>Card.jsx</code>, <code>Input.jsx</code>, <code>ThemedModal.jsx</code> — ensure consistent styling
+            across the platform.</li>
+        <li><strong>Animations:</strong> Framer Motion powers page transitions, card hover effects, modal entry/exit,
+            and the animated blob backgrounds. All animations run at 60fps.</li>
+        <li><strong>Three.js Scene:</strong> The dashboard features a 3D animated cybersecurity scene (floating nodes
+            and connections) rendered via <code>@react-three/fiber</code>, creating an immersive first impression.</li>
+        <li><strong>Sidebar Navigation:</strong> A persistent, collapsible left sidebar provides access to all major
+            modules. On mobile, it collapses to a bottom tab bar via responsive breakpoints.</li>
+        <li><strong>Glassmorphism Cards:</strong> Tool cards use a frosted-glass effect (backdrop-blur, semi-transparent
+            backgrounds) for a modern, premium look.</li>
+        <li><strong>Responsive Layout:</strong> CSS Grid and Flexbox layouts adapt from 1-column (mobile) to 3-column
+            (desktop) grids. All tools are fully functional on 375px–2560px screen widths.</li>
+    </ul>
+
+    <h4>UI Layout Structure</h4>
+    <div class="diagram">
+        <pre>
+ ┌─────────────────────────────────────────────────────────────────┐
+ │  HEADER:  [Logo] CyberSafeHub            [User Avatar] [Alerts] │
+ ├──────────────┬──────────────────────────────────────────────────┤
+ │              │                                                   │
+ │  SIDEBAR     │              MAIN CONTENT AREA                    │
+ │  ─────────   │  ─────────────────────────────────────────────    │
+ │  🏠 Dashboard│                                                   │
+ │  🔧 Tools    │   [Page-specific content renders here]           │
+ │  🛡  Scanners│   Cards / Tables / Editors / Chat interfaces     │
+ │  🔐 Vault    │                                                   │
+ │  🎓 Academy  │                                                   │
+ │  🤖 AI Chat  │                                                   │
+ │  🚨 Emergency│                                                   │
+ │  📰 News     │                                                   │
+ │  ⚙  Settings│                                                   │
+ │  👑 Admin    │                                                   │
+ │              │                                                   │
+ └──────────────┴──────────────────────────────────────────────────┘
+</pre>
+    </div>
+
+    <h3>4.8 Input Design</h3>
+    <p>Input design in CyberSafeHub prioritises safety, clarity, and accessibility. All inputs include real-time
+        validation with visual feedback.</p>
+    <table>
+        <tr>
+            <th>Module</th>
+            <th>Input Type</th>
+            <th>Fields / Controls</th>
+            <th>Validation</th>
+        </tr>
+        <tr>
+            <td>Registration</td>
+            <td>Form</td>
+            <td>Name, Email, Password, Confirm Password</td>
+            <td>Email regex, min 8 char password, strength meter</td>
+        </tr>
+        <tr>
+            <td>Login</td>
+            <td>Form</td>
+            <td>Email, Password + TOTP code (if MFA)</td>
+            <td>Required fields, Firebase error mapping</td>
+        </tr>
+        <tr>
+            <td>Metadata Washer</td>
+            <td>File Upload</td>
+            <td>Image file (JPG/PNG/WebP/HEIC, max 10MB)</td>
+            <td>MIME type check, file size limit</td>
+        </tr>
+        <tr>
+            <td>Malware Scanner</td>
+            <td>File Upload</td>
+            <td>Any file (max 50MB)</td>
+            <td>File size limit, upload progress bar</td>
+        </tr>
+        <tr>
+            <td>WiFi Radar</td>
+            <td>Button Click</td>
+            <td>Scan trigger button, IP range input (optional)</td>
+            <td>No direct user data input; scan triggered server-side</td>
+        </tr>
+        <tr>
+            <td>Username Detective</td>
+            <td>Text Input</td>
+            <td>Username string</td>
+            <td>Required, alphanumeric, min 2 chars</td>
+        </tr>
+        <tr>
+            <td>Code Security Auditor</td>
+            <td>Textarea</td>
+            <td>Source code (any language)</td>
+            <td>Non-empty, character count display</td>
+        </tr>
+        <tr>
+            <td>Privacy Policy Decoder</td>
+            <td>Textarea</td>
+            <td>Legal text (max 15,000 chars)</td>
+            <td>Max character limit enforced with counter</td>
+        </tr>
+        <tr>
+            <td>Password Vault</td>
+            <td>Modal Form</td>
+            <td>Website, Username, Password, Notes</td>
+            <td>Required fields, password visibility toggle</td>
+        </tr>
+        <tr>
+            <td>File Converter</td>
+            <td>File Upload + Select</td>
+            <td>Input file, target format dropdown</td>
+            <td>Format compatibility matrix checked client-side</td>
+        </tr>
+        <tr>
+            <td>Steganography Encode</td>
+            <td>File + Textarea</td>
+            <td>PNG image + secret message text</td>
+            <td>Image must be PNG; message non-empty</td>
+        </tr>
+        <tr>
+            <td>AI Chat</td>
+            <td>Text Input</td>
+            <td>Chat message</td>
+            <td>Non-empty, max 2000 chars, shift+enter newline</td>
+        </tr>
+        <tr>
+            <td>Admin — User Search</td>
+            <td>Search Input</td>
+            <td>Email or UID search</td>
+            <td>Debounced search, min 3 characters</td>
+        </tr>
+    </table>
+
+    <p><strong>Common Input Design Principles Applied:</strong></p>
+    <ul>
+        <li>All password fields include a show/hide toggle button.</li>
+        <li>File upload inputs feature drag-and-drop zones with visual feedback.</li>
+        <li>Submit buttons are disabled while processing to prevent duplicate submissions.</li>
+        <li>Error messages appear inline below the relevant field in red text.</li>
+        <li>All text inputs use <code>autocomplete="off"</code> for sensitive fields (vault).</li>
+    </ul>
+
+    <h3>4.9 Output Design</h3>
+    <p>CyberSafeHub's output design ensures results are presented clearly, with appropriate visual hierarchy and
+        exportability where applicable.</p>
+
+    <table>
+        <tr>
+            <th>Module</th>
+            <th>Output Type</th>
+            <th>Format</th>
+            <th>User Actions</th>
+        </tr>
+        <tr>
+            <td>Metadata Washer</td>
+            <td>Cleaned image file + before/after EXIF table</td>
+            <td>File download + HTML table</td>
+            <td>Download cleaned image</td>
+        </tr>
+        <tr>
+            <td>WiFi Radar</td>
+            <td>Device list with IP, MAC, vendor, risk level</td>
+            <td>Animated card grid</td>
+            <td>Click device for details; export to CSV</td>
+        </tr>
+        <tr>
+            <td>Username Detective</td>
+            <td>Platform lookup table with status icons</td>
+            <td>Color-coded table (✅ Found / ❌ Not Found)</td>
+            <td>Click platform link to open profile</td>
+        </tr>
+        <tr>
+            <td>Code Auditor</td>
+            <td>Structured vulnerability report</td>
+            <td>Markdown-rendered HTML with severity badges</td>
+            <td>Copy report; scroll through findings</td>
+        </tr>
+        <tr>
+            <td>Policy Decoder</td>
+            <td>Privacy analysis report with score</td>
+            <td>Markdown-rendered with emoji and bold highlights</td>
+            <td>Read report; Privacy Score badge</td>
+        </tr>
+        <tr>
+            <td>Malware Scanner</td>
+            <td>Scan verdict (Clean / Infected)</td>
+            <td>Large status badge + threat name</td>
+            <td>Download scan certificate; view log</td>
+        </tr>
+        <tr>
+            <td>Password Vault</td>
+            <td>Credentials table</td>
+            <td>Masked password rows with copy buttons</td>
+            <td>Copy username/password; reveal/hide password; edit; delete</td>
+        </tr>
+        <tr>
+            <td>File Converter</td>
+            <td>Converted file</td>
+            <td>File download link (with progress indicator)</td>
+            <td>Download converted file; convert another</td>
+        </tr>
+        <tr>
+            <td>AI Cyber Assistant</td>
+            <td>AI response messages</td>
+            <td>Chat bubbles with markdown formatting</td>
+            <td>Copy message; continue conversation</td>
+        </tr>
+        <tr>
+            <td>Incident Response RPG</td>
+            <td>AI game master narration</td>
+            <td>Terminal-style text (green on black)</td>
+            <td>Type responses; receive story progression</td>
+        </tr>
+        <tr>
+            <td>Steganography Decode</td>
+            <td>Hidden message text</td>
+            <td>Alert/text box</td>
+            <td>Read or copy extracted message</td>
+        </tr>
+        <tr>
+            <td>Health Check</td>
+            <td>Security score (0–100)</td>
+            <td>Circular progress indicator + category breakdown</td>
+            <td>View recommendations; retake check</td>
+        </tr>
+        <tr>
+            <td>Admin Dashboard</td>
+            <td>Platform analytics</td>
+            <td>Stat cards + tables</td>
+            <td>Filter by date range; export report</td>
+        </tr>
+    </table>
+
+</div>

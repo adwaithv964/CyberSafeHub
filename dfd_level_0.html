@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberSafeHub - Level 0 DFD (Context Diagram)</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #e2e8f0;
+            --accent-color: #38bdf8;
+            --border-color: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            padding: 2rem;
+            width: 90%;
+            max-width: 1200px;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .diagram-wrapper {
+            background: #ffffff;
+            /* White background for diagram for high contrast similar to example */
+            padding: 2rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 3rem;
+        }
+
+        /* Adjust mermaid text for dark mode in light wrapper */
+        .diagram-wrapper .mermaid text {
+            fill: #333 !important;
+        }
+
+        h2 {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>CyberSafeHub</h1>
+        <p class="subtitle">Level 0 Data Flow Diagram (Context Diagram)</p>
+
+        <div class="diagram-wrapper">
+            <div class="mermaid">
+                flowchart LR
+                %% Entities (Rectangles)
+                classDef entity fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,color:#0f172a
+                classDef process fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
+                classDef datastore fill:#fdf4ff,stroke:#d946ef,stroke-width:2px,color:#0f172a
+                classDef external fill:#fefce8,stroke:#eab308,stroke-width:2px,color:#0f172a
+
+                User["User"]:::entity
+                Admin["Admin"]:::entity
+
+                subgraph System Boundary
+                System(("CyberSafeHub\nSystem\n(Process 0)")):::process
+                end
+
+                DB[("MongoDB Atlas\n(Database)")]:::datastore
+                Firebase["Firebase Auth\n(Identity Provider)"]:::external
+                Gemini["Gemini AI API\n(AI Services)"]:::external
+                OSINT["External Networks\n(OSINT/ClamAV DB)"]:::external
+
+                %% Flows
+                User <-->|"1. Auth Info, Tool Inputs (Files, Code, URLs)\n2. Tool Results, UI Views, Dashboards"| System
+                    Admin <-->|"1. System Configuration, User Management\n2. Admin Dashboard, Health Status"| System
+
+                        System <-->|"1. CRUD User Profiles, Encrypted Vaults\n2. Profile Data, Analytics"| DB
+                            System <-->|"1. Token Verification, Login Requests\n2. Auth Tokens, MFA Status"| Firebase
+                                System <-->|"1. Prompts, Source Code, Privacy Policies\n2. AI Analysis Reports,
+                                    Simulation Events"| Gemini
+                                    System <-->|"1. Target Queries, IP Scans, Updates\n2. Whois info, Port states, Virus
+                                        Definitions"| OSINT
+            </div>
+        </div>
+
+        <h2>Comprehensive System Analysis (Sections Included in Diagram)</h2>
+        <p>Based on the <code>PROJECT_DOCUMENTATION.md</code>, this Level 0 DFD accurately maps all major interactions
+            between external entities, external services, data stores, and the core CyberSafeHub application.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Component Name</th>
+                    <th>Type</th>
+                    <th>Description & Role in System</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>User</strong></td>
+                    <td>External Entity</td>
+                    <td>Standard end-user. Interacts with the frontend (React) to utilize Cyber Tools (WiFi Radar,
+                        Metadata Washer), Security Auditors (Code Security Auditor), and Educational Modules (Phishing
+                        Trainer, RPG Simulator).</td>
+                </tr>
+                <tr>
+                    <td><strong>Admin</strong></td>
+                    <td>External Entity</td>
+                    <td>Administrator accessing the Admin Dashboard. Manages user accounts, monitors system health
+                        (ClamAV status, API latency), and administers roles.</td>
+                </tr>
+                <tr>
+                    <td><strong>CyberSafeHub System</strong></td>
+                    <td>Central Process (0.0)</td>
+                    <td>The core system encompassing the Vite/React JS frontend and the Node.js/Express.js backend. It
+                        processes all logic, handles request routing, performs ClamAV scanning, and integrates all
+                        components.</td>
+                </tr>
+                <tr>
+                    <td><strong>MongoDB Atlas</strong></td>
+                    <td>Data Store</td>
+                    <td>Cloud-based document database storing User Profiles, Encrypted Password Vaults (AES-encrypted),
+                        User progress across Academy modules, and system logs.</td>
+                </tr>
+                <tr>
+                    <td><strong>Firebase Auth</strong></td>
+                    <td>External Service</td>
+                    <td>Provides secure Identity and Access Management (IAM), including handling Google Login,
+                        Email/Password authentication, and Multi-Factor Authentication (TOTP).</td>
+                </tr>
+                <tr>
+                    <td><strong>Gemini AI API</strong></td>
+                    <td>External API</td>
+                    <td>Provides the AI engine powering multiple features: Code Security Auditor, Privacy Policy
+                        Decoder, Interactive Incident Response Simulator, and the Cyber Chat Assistant.</td>
+                </tr>
+                <tr>
+                    <td><strong>External Networks</strong></td>
+                    <td>External Targets/Services</td>
+                    <td>Represents the various external OSINT resources for the Username Detective, DNS/IP checking
+                        structures, and definition updates for the ClamAV backend.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Summary of Data Workflows</h2>
+        <ul>
+            <li><strong>Authentication Flow:</strong> User inputs credentials -> System sends to Firebase Auth ->
+                Validates and returns Token -> System verifies Token and creates session -> System fetches User Profile
+                from MongoDB.</li>
+            <li><strong>AI Tool Flow (e.g., Code Auditor):</strong> User inputs code snippet -> System parses and
+                formats prompt -> Sent to Gemini API -> AI Returns Markdown Analysis -> System renders report to User.
+            </li>
+            <li><strong>Secure Storage Flow (Vault):</strong> User submits password -> App encrypts locally/server-side
+                -> System stores encrypted blob to MongoDB -> MongoDB returns success state.</li>
+        </ul>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberSafeHub - Project Documentation</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            color: #111;
+            background: #fff;
+            line-height: 1.6
+        }
+
+        .page {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 25mm 20mm
+        }
+
+        h1 {
+            font-size: 22pt;
+            font-weight: bold;
+            color: #1a237e;
+            margin-bottom: 10px
+        }
+
+        h2 {
+            font-size: 16pt;
+            color: #1a237e;
+            border-bottom: 2px solid #1a237e;
+            padding-bottom: 4px;
+            margin: 24px 0 10px
+        }
+
+        h3 {
+            font-size: 13pt;
+            color: #283593;
+            margin: 16px 0 8px
+        }
+
+        h4 {
+            font-size: 11pt;
+            color: #333;
+            margin: 12px 0 6px;
+            font-style: italic
+        }
+
+        p {
+            margin-bottom: 8px;
+            text-align: justify
+        }
+
+        ul,
+        ol {
+            margin-left: 24px;
+            margin-bottom: 8px
+        }
+
+        li {
+            margin-bottom: 4px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 11pt
+        }
+
+        th {
+            background: #1a237e;
+            color: #fff;
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #333
+        }
+
+        td {
+            padding: 7px 8px;
+            border: 1px solid #999
+        }
+
+        tr:nth-child(even)td {
+            background: #f0f4ff
+        }
+
+        .cover {
+            text-align: center;
+            padding: 60px 20px;
+            border: 3px solid #1a237e;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #f5f7ff, #e8ecff)
+        }
+
+        .cover h1 {
+            font-size: 30pt;
+            letter-spacing: 2px
+        }
+
+        .cover .sub {
+            font-size: 15pt;
+            color: #283593;
+            font-weight: bold
+        }
+
+        .cover .label {
+            font-size: 11pt;
+            color: #555
+        }
+
+        .cover .value {
+            font-size: 12pt;
+            color: #111;
+            font-weight: bold
+        }
+
+        .toc-table {
+            width: 100%
+        }
+
+        .toc-table td {
+            border: none;
+            padding: 3px 6px
+        }
+
+        .toc-table td:last-child {
+            text-align: right;
+            color: #555
+        }
+
+        .toc-table .toc-h2 {
+            font-weight: bold;
+            color: #1a237e;
+            padding-top: 6px
+        }
+
+        .toc-table .toc-h3 {
+            padding-left: 20px
+        }
+
+        .toc-table .toc-h4 {
+            padding-left: 36px;
+            font-style: italic;
+            color: #555
+        }
+
+        .badge {
+            display: inline-block;
+            background: #1a237e;
+            color: #fff;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 10pt;
+            margin-right: 6px
+        }
+
+        .note {
+            background: #e8f5e9;
+            border-left: 4px solid #388e3c;
+            padding: 8px 12px;
+            margin: 10px 0;
+            border-radius: 0 4px 4px 0;
+            font-size: 11pt
+        }
+
+        .warn {
+            background: #fff3e0;
+            border-left: 4px solid #f57c00;
+            padding: 8px 12px;
+            margin: 10px 0;
+            border-radius: 0 4px 4px 0;
+            font-size: 11pt
+        }
+
+        .section-num {
+            color: #1a237e;
+            font-weight: bold;
+            margin-right: 6px
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            background: #f4f4f4;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 10.5pt
+        }
+
+        pre {
+            background: #1a1a2e;
+            color: #a8d8ea;
+            padding: 14px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 10pt;
+            margin: 10px 0;
+            white-space: pre-wrap
+        }
+
+        .diagram {
+            background: #f8f9ff;
+            border: 1px solid #c5cae9;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 12px 0;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+            line-height: 1.8
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 20px 0
+        }
+
+        @media print {
+            .page {
+                padding: 15mm 15mm
+            }
+
+            h2 {
+                page-break-before: auto
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+
+        <!-- COVER PAGE -->
+        <div class="cover">
+            <div class="badge">FINAL PROJECT REPORT</div>
+            <h1>CYBERSAFEHUB</h1>
+            <div class="sub">A Comprehensive Cybersecurity Awareness &amp; Utility Platform</div>
+            <hr style="width:60%;border-top:2px solid #1a237e;margin:10px 0">
+            <div class="label">Submitted in partial fulfillment of the requirements for the award of</div>
+            <div class="value">Bachelor of Computer Applications / B.Tech (Computer Science)</div>
+            <div style="margin-top:20px">
+                <div class="label">Submitted By</div>
+                <div class="value">Adwaith V &nbsp;|&nbsp; Team CyberSafeHub</div>
+            </div>
+            <div>
+                <div class="label">Year</div>
+                <div class="value">2025 – 2026</div>
+            </div>
+            <div style="margin-top:10px">
+                <div class="label">Platform</div>
+                <div class="value">Web Application (React + Node.js + MongoDB + Firebase)</div>
+            </div>
+        </div>
+
+        <!-- TABLE OF CONTENTS -->
+        <h2>TABLE OF CONTENTS</h2>
+        <table class="toc-table">
+            <tr>
+                <td class="toc-h2">1. INTRODUCTION</td>
+                <td>01</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">1.1 Purpose</td>
+                <td>01</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">1.2 Scope</td>
+                <td>02</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">2. SYSTEM STUDY AND ANALYSIS</td>
+                <td>04</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">2.1 Preliminary Investigation</td>
+                <td>04</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">2.2 Existing System</td>
+                <td>05</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">2.3 Proposed System</td>
+                <td>05</td>
+            </tr>
+            <tr>
+                <td class="toc-h4">2.3.1 Advantages of Proposed System</td>
+                <td>06</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">2.4 Module Description</td>
+                <td>07</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">2.5 Feasibility Study</td>
+                <td>09</td>
+            </tr>
+            <tr>
+                <td class="toc-h4">2.5.1 Technical Feasibility</td>
+                <td>09</td>
+            </tr>
+            <tr>
+                <td class="toc-h4">2.5.2 Operational Feasibility</td>
+                <td>10</td>
+            </tr>
+            <tr>
+                <td class="toc-h4">2.5.3 Economic Feasibility</td>
+                <td>10</td>
+            </tr>
+            <tr>
+                <td class="toc-h4">2.5.4 Behavioural Feasibility</td>
+                <td>11</td>
+            </tr>
+            <tr>
+                <td class="toc-h4">2.5.5 Legal Feasibility</td>
+                <td>11</td>
+            </tr>
+            <tr>
+                <td class="toc-h4">2.5.6 Schedule Feasibility</td>
+                <td>12</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">3. SYSTEM REQUIREMENT SPECIFICATION</td>
+                <td>14</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">3.1 Software Specification</td>
+                <td>14</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">3.2 Hardware Specification</td>
+                <td>16</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">3.3 Software Tools Used</td>
+                <td>17</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">4. SYSTEM DESIGN</td>
+                <td>18</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">4.1 Data Flow Diagram</td>
+                <td>18</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">4.2 Entity Relationship Diagram</td>
+                <td>21</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">4.3 Sequence Diagram</td>
+                <td>24</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">4.4 Use Case Diagram</td>
+                <td>27</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">4.5 Database Design</td>
+                <td>30</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">4.6 Table Design</td>
+                <td>33</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">4.7 User Interface Design</td>
+                <td>38</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">4.8 Input Design</td>
+                <td>42</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">4.9 Output Design</td>
+                <td>44</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">5. SYSTEM DEVELOPMENT</td>
+                <td>47</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">5.1 Coding Environment</td>
+                <td>47</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">5.2 Development Approach</td>
+                <td>48</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">5.3 Database Servers</td>
+                <td>49</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">5.4 Programming Languages</td>
+                <td>50</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">6. SYSTEM TESTING</td>
+                <td>53</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">6.1 White-Box Testing</td>
+                <td>53</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">6.2 Black-Box Testing</td>
+                <td>54</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">6.3 Condition Testing</td>
+                <td>54</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">6.4 Loop Testing</td>
+                <td>55</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">6.5 Unit Testing</td>
+                <td>55</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">6.6 Integration Testing</td>
+                <td>56</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">6.7 Output Testing</td>
+                <td>57</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">6.8 User Acceptance Testing</td>
+                <td>57</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">7. SYSTEM IMPLEMENTATION</td>
+                <td>58</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">7.1 Implementation Plan</td>
+                <td>58</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">7.2 Education and Training</td>
+                <td>59</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">7.3 Training of Application Software</td>
+                <td>59</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">7.4 Post Implementation Review</td>
+                <td>60</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">7.5 Security</td>
+                <td>60</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">7.6 Maintenance</td>
+                <td>61</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">8. FUTURE ENHANCEMENT</td>
+                <td>62</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">9. CONCLUSION</td>
+                <td>64</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">10. APPENDIX A: SOURCE CODE</td>
+                <td>66</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">10.1 Web</td>
+                <td>66</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">11. APPENDIX B: SCREENSHOTS</td>
+                <td>75</td>
+            </tr>
+            <tr>
+                <td class="toc-h3">11.1 Web</td>
+                <td>75</td>
+            </tr>
+            <tr>
+                <td class="toc-h2">12. BIBLIOGRAPHY</td>
+                <td>82</td>
+            </tr>
+        </table>
+
+        <hr>
+
+        <!-- SECTION 1 -->
+        <h2><span class="section-num">1.</span> INTRODUCTION</h2>
+
+        <h3>1.1 Purpose</h3>
+        <p>The purpose of this document is to provide a comprehensive technical and functional overview of
+            <strong>CyberSafeHub</strong> — a full-stack web application designed to bridge the critical gap between
+            cybersecurity knowledge and everyday digital users. In an era where cyber threats such as phishing,
+            ransomware, identity theft, and data breaches have become alarmingly common, there exists an urgent need for
+            a centralised, accessible, and interactive platform that equips users with the tools, education, and
+            awareness necessary to protect themselves online.</p>
+        <p>CyberSafeHub serves as a one-stop digital security hub that combines:</p>
+        <ul>
+            <li><strong>Practical security utilities</strong> — tools to scan networks, wash metadata, detect malware,
+                manage passwords, and perform OSINT lookups.</li>
+            <li><strong>AI-powered intelligence</strong> — Gemini API integration for code auditing, privacy policy
+                decoding, and an interactive cyber assistant.</li>
+            <li><strong>Cybersecurity education</strong> — structured academy modules, phishing simulations, encryption
+                visualisers, and an RPG-style incident response simulator.</li>
+            <li><strong>Emergency response</strong> — guided step-by-step recovery plans for hacked accounts, stolen
+                devices, and ransomware attacks.</li>
+        </ul>
+        <p>This document follows a structured Software Development Life Cycle (SDLC) approach, covering system study,
+            requirements specification, design, development, testing, implementation, and future roadmap — providing a
+            thorough reference for developers, evaluators, and project stakeholders.</p>
+
+        <h3>1.2 Scope</h3>
+        <p>The scope of CyberSafeHub encompasses the design, development, and deployment of a responsive web application
+            accessible via modern browsers on desktop and mobile devices. The system is targeted at a broad audience —
+            from general internet users seeking basic digital safety knowledge, to IT students and professionals
+            requiring advanced security utilities.</p>
+        <p><strong>Within Scope:</strong></p>
+        <ul>
+            <li>User registration, login (email/password and Google OAuth), multi-factor authentication (TOTP), and
+                profile management via Firebase Authentication.</li>
+            <li>A centralised dashboard providing navigation to all modules with real-time status indicators.</li>
+            <li>Security tools: Metadata Washer, WiFi Radar (network scanner), Username Detective (OSINT), Code Security
+                Auditor (AI), Privacy Policy Decoder (AI), Steganography Studio, Password Vault, Password Cracker
+                (educational), Malware Scanner (ClamAV), and Network Tools.</li>
+            <li>Educational academy with structured modules, phishing trainer, encryption visualiser, and an AI-powered
+                incident response RPG game.</li>
+            <li>File conversion utility supporting 30+ format conversions (PDF, DOCX, images, audio/video) via FFmpeg
+                and LibreOffice.</li>
+            <li>Emergency guides panel for crisis response situations.</li>
+            <li>Digital Privacy checklist and best practices guide.</li>
+            <li>Admin panel with user management, analytics dashboard, and threat log monitoring.</li>
+            <li>REST API backend (Node.js/Express) with JWT-equivalent Firebase token authentication and MongoDB Atlas
+                data storage.</li>
+            <li>Real-time communication via Socket.IO for scan progress updates.</li>
+            <li>Deployment via Docker/Render (backend) and Vercel (frontend).</li>
+        </ul>
+        <p><strong>Out of Scope:</strong></p>
+        <ul>
+            <li>Native mobile applications (iOS/Android) — the platform is web-based only.</li>
+            <li>Real-time Nmap-based deep port scanning (simulated in current version).</li>
+            <li>Paid subscription tiers or payment gateway integration.</li>
+            <li>Offline-first Progressive Web App capabilities (future enhancement).</li>
+        </ul>
+
+        <hr>
+
+        <!-- SECTION 2 -->
+        <h2><span class="section-num">2.</span> SYSTEM STUDY AND ANALYSIS</h2>
+
+        <h3>2.1 Preliminary Investigation</h3>
+        <p>The preliminary investigation was initiated by analysing the growing landscape of cyber threats affecting
+            everyday users. According to global cybersecurity reports (IBM, Verizon DBIR 2024), over 68% of data
+            breaches involve a human element — phishing, weak passwords, or misconfigured systems — indicating that user
+            education and accessible security tools are the most impactful countermeasures.</p>
+        <p>An initial survey and market study revealed that:</p>
+        <ul>
+            <li>Most cybersecurity tools are siloed — password managers are separate from network scanners, which are
+                separate from educational platforms.</li>
+            <li>Enterprise-grade tools (Wireshark, Nmap, Burp Suite) have steep learning curves unsuitable for general
+                users.</li>
+            <li>Free educational platforms lack hands-on, interactive components like simulations and AI-driven
+                feedback.</li>
+            <li>No single platform combines OSINT lookup, file scanning, AI analysis, and educational modules under one
+                authenticated interface.</li>
+        </ul>
+        <p>The investigation concluded that building a unified, user-friendly cybersecurity hub with both educational
+            and practical tools — integrated with modern AI capabilities — would address a genuine and significant
+            market gap. The project was greenlit for development as a full-stack web application using React, Node.js,
+            MongoDB, and Firebase.</p>
+
+        <h3>2.2 Existing System</h3>
+        <p>Several competing and complementary systems currently exist in the cybersecurity space:</p>
+        <table>
+            <tr>
+                <th>System</th>
+                <th>Category</th>
+                <th>Limitations</th>
+            </tr>
+            <tr>
+                <td>Have I Been Pwned</td>
+                <td>Breach lookup</td>
+                <td>Only checks breaches; no tools or education</td>
+            </tr>
+            <tr>
+                <td>VirusTotal</td>
+                <td>File/URL scanner</td>
+                <td>No educational content; requires technical knowledge</td>
+            </tr>
+            <tr>
+                <td>1Password / Bitwarden</td>
+                <td>Password manager</td>
+                <td>No security tools or learning modules</td>
+            </tr>
+            <tr>
+                <td>Cybrary / TryHackMe</td>
+                <td>Education platforms</td>
+                <td>No practical security tools integrated</td>
+            </tr>
+            <tr>
+                <td>Shodan</td>
+                <td>OSINT / Network scan</td>
+                <td>Complex interface; no beginner guidance</td>
+            </tr>
+            <tr>
+                <td>ExifTool</td>
+                <td>Metadata removal</td>
+                <td>Command-line only; inaccessible to general users</td>
+            </tr>
+        </table>
+        <p><strong>Key shortcomings of existing systems:</strong> fragmentation, lack of integrated AI assistance, no
+            gamified learning, no emergency response guidance, and complex interfaces not suitable for non-technical
+            users.</p>
+
+        <h3>2.3 Proposed System</h3>
+        <p>CyberSafeHub is proposed as a <strong>unified, AI-augmented cybersecurity platform</strong> that consolidates
+            the functionalities of multiple tools into one authenticated, user-friendly environment. The system
+            leverages modern web technologies to deliver:</p>
+        <ul>
+            <li>A clean, dark-mode React UI with smooth Framer Motion animations and TailwindCSS styling.</li>
+            <li>A secure Node.js/Express backend exposing RESTful APIs protected by Firebase token verification.</li>
+            <li>MongoDB Atlas for scalable, cloud-hosted NoSQL data storage.</li>
+            <li>Google Gemini API for AI-powered analysis, chat, and simulation.</li>
+            <li>ClamAV integration for real malware detection on uploaded files.</li>
+            <li>An admin panel for platform management with user analytics and threat monitoring.</li>
+        </ul>
+
+        <h4>2.3.1 Advantages of the Proposed System</h4>
+        <ul>
+            <li><strong>All-in-One Platform:</strong> Eliminates the need for multiple separate tools by providing
+                scanning, education, AI assistance, and emergency response in one place.</li>
+            <li><strong>Beginner-Friendly Design:</strong> Clean visual interface with guided tooltips, plain-English AI
+                explanations, and step-by-step emergency guides lower the barrier to entry.</li>
+            <li><strong>AI-Powered Intelligence:</strong> Integration with Google Gemini API enables real-time code
+                auditing, legal document decoding, chat-based Q&amp;A, and dynamic game mastering — capabilities absent
+                from all existing tools.</li>
+            <li><strong>Gamified Education:</strong> The Incident Response Simulator and Phishing Trainer make security
+                learning engaging and memorable, significantly improving knowledge retention.</li>
+            <li><strong>Real Security Tools:</strong> ClamAV malware scanning, ARP network scanning, EXIF metadata
+                removal, and steganography are genuine working utilities — not simulations.</li>
+            <li><strong>Secure Authentication:</strong> Firebase Auth with TOTP MFA ensures strong identity verification
+                for all users.</li>
+            <li><strong>Scalability:</strong> MongoDB Atlas and cloud deployment (Render + Vercel) allow the platform to
+                scale horizontally without infrastructure changes.</li>
+            <li><strong>Privacy First:</strong> No permanent storage of scanned code or legal documents; vault items are
+                encrypted before storage.</li>
+            <li><strong>Cross-Platform Accessibility:</strong> Responsive design ensures full functionality on desktops,
+                tablets, and mobile browsers.</li>
+            <li><strong>Open and Extensible:</strong> Modular React component architecture and RESTful API design allow
+                easy addition of new tools and features.</li>
+        </ul>
+
+        <h3>2.4 Module Description</h3>
+        <p>CyberSafeHub is organised into the following primary modules:</p>
+
+        <h4>Module 1 — Authentication &amp; User Management</h4>
+        <p>Handles all identity operations including registration, login (email/password + Google OAuth), multi-factor
+            authentication with TOTP (Time-based One-Time Passwords), password reset, profile updates, and account
+            deletion. Implemented via Firebase Authentication with custom React context (<code>AuthContext</code>).
+            Admin roles are stored in MongoDB with Firebase Admin SDK for server-side verification.</p>
+
+        <h4>Module 2 — Dashboard</h4>
+        <p>The central landing page after login. Displays a personalised greeting, animated 3D cyberpunk scene
+            (Three.js), quick-access navigation cards for all major tools, and a security posture summary. Background
+            blobs (animated SVG shapes) provide an immersive visual environment.</p>
+
+        <h4>Module 3 — Cyber Tools</h4>
+        <p>A collection of practical security utilities:</p>
+        <ul>
+            <li><strong>Metadata Washer:</strong> Strips EXIF/GPS/camera metadata from JPG, PNG, WebP, HEIC images using
+                the Sharp library (backend) and ExifJS (client-side preview).</li>
+            <li><strong>WiFi Radar:</strong> Performs ARP table sweeps and ping scans on the local network to enumerate
+                connected devices, identify vendor by MAC address, and flag anomalies.</li>
+            <li><strong>Username Detective:</strong> Checks username availability across 50+ social media and online
+                platforms (GitHub, Instagram, Reddit, Twitter, etc.) by proxying HTTP requests through the backend.</li>
+            <li><strong>Code Security Auditor:</strong> Accepts source code in any language; sends it to the Gemini API
+                with a security-focused system prompt and returns a structured vulnerability report.</li>
+            <li><strong>Privacy Policy Decoder:</strong> Accepts legal text (up to 15,000 chars); AI returns a
+                plain-English summary with a Privacy Score (0–10) and identified red flags.</li>
+            <li><strong>Secure File Converter:</strong> Converts files between 30+ formats including PDF↔DOCX, image
+                format conversion, audio/video transcoding via FFmpeg and LibreOffice.</li>
+        </ul>
+
+        <h4>Module 4 — Security Scanners</h4>
+        <ul>
+            <li><strong>Malware Scanner:</strong> Accepts file uploads (up to 50MB), forwards to ClamAV via the
+                <code>clamscan</code> Node.js library, returns a clean/infected verdict with threat name.</li>
+            <li><strong>Network Tool:</strong> Retrieves the user's public IP, performs DNS leak tests, checks open
+                ports, and retrieves geolocation data for IP addresses.</li>
+            <li><strong>Health Check:</strong> An interactive checklist evaluating the user's current device/account
+                security posture with a final security score.</li>
+        </ul>
+
+        <h4>Module 5 — Password Management</h4>
+        <ul>
+            <li><strong>Password Vault:</strong> Stores encrypted credentials (website, username, password, notes) in
+                MongoDB. Uses AES encryption via <code>crypto-js</code> before persistence. Supports CRUD,
+                copy-to-clipboard, and password strength indicator.</li>
+            <li><strong>Password Cracker (educational):</strong> Visual brute-force simulator showing real-time
+                character permutations and estimated crack time for common/custom passwords.</li>
+        </ul>
+
+        <h4>Module 6 — Cyber Academy</h4>
+        <ul>
+            <li><strong>Learning Modules:</strong> Structured educational content covering network security,
+                cryptography, social engineering, safe browsing, and more.</li>
+            <li><strong>Phishing Trainer:</strong> Simulates a realistic email inbox with genuine-looking phishing
+                emails for the user to identify.</li>
+            <li><strong>Encryption Visualizer:</strong> Interactive step-by-step demonstration of Caesar cipher, AES,
+                and RSA encryption algorithms.</li>
+            <li><strong>Incident Response Simulator:</strong> AI-driven RPG game (Gemini API) where the player acts as a
+                sysadmin handling live cyber attacks — Ransomware, DDoS, SQL Injection, Insider Threats. Dynamic
+                scenarios with consequence-based progression.</li>
+        </ul>
+
+        <h4>Module 7 — AI Cyber Assistant</h4>
+        <p>A chat interface powered by the Gemini API providing context-aware answers to cybersecurity questions. The
+            assistant maintains conversation history within a session for coherent multi-turn dialogue.</p>
+
+        <h4>Module 8 — Emergency &amp; Privacy</h4>
+        <ul>
+            <li><strong>Emergency Guides:</strong> Guided recovery wizards for Stolen Device, Hacked Account, Ransomware
+                Attack, and Identity Theft scenarios.</li>
+            <li><strong>Emergency Contacts:</strong> Local-storage–based trusted contacts list for quick access during
+                crises.</li>
+            <li><strong>Digital Privacy:</strong> Comprehensive privacy checklist and best practice guides covering
+                browsers, apps, social media, and network settings.</li>
+        </ul>
+
+        <h4>Module 9 — Admin Panel</h4>
+        <p>Accessible only to verified administrators. Provides: user management (list, roles, disable accounts),
+            analytics dashboard (total users, scan counts, threat logs), platform statistics, and activity logs. Backend
+            routes are protected by the <code>adminAuth</code> middleware using Firebase Admin SDK token verification.
+        </p>
+
+        <h4>Module 10 — Steganography Studio</h4>
+        <p>Allows users to hide (encode) secret text messages inside PNG images and extract (decode) hidden messages
+            from images. Implemented using pixel-level LSB (Least Significant Bit) steganography in a client-side canvas
+            algorithm.</p>
+
+        <h4>Module 11 — Cyber News</h4>
+        <p>Aggregates the latest cybersecurity news from RSS feeds and external APIs, displaying formatted articles with
+            thumbnails, source attribution, and category tags.</p>
+
+        <h3>2.5 Feasibility Study</h3>
+
+        <h4>2.5.1 Technical Feasibility</h4>
+        <p>The technical feasibility of CyberSafeHub is highly positive. All core technologies used — React, Node.js,
+            Express, MongoDB, and Firebase — are mature, well-documented, open-source frameworks with large developer
+            communities and proven production-grade stability.</p>
+        <ul>
+            <li><strong>Frontend:</strong> React 18 with Vite delivers fast HMR (Hot Module Replacement) for development
+                and optimised production bundles. TailwindCSS and Framer Motion provide responsive, animated UIs without
+                heavy overhead.</li>
+            <li><strong>Backend:</strong> Node.js + Express is a lightweight, non-blocking runtime ideal for I/O-heavy
+                operations like file scanning and network probing. Socket.IO supports real-time bidirectional
+                communication for scan progress.</li>
+            <li><strong>Database:</strong> MongoDB Atlas is a fully managed cloud database that eliminates
+                infrastructure concerns. Mongoose ODM simplifies schema definition and validation.</li>
+            <li><strong>AI Integration:</strong> The Google Gemini API (REST) is straightforward to integrate via HTTP
+                requests; no complex ML infrastructure is required on the server side.</li>
+            <li><strong>Security Tools:</strong> ClamAV is a well-maintained open-source antivirus engine. The
+                <code>clamscan</code> npm package provides a clean Node.js interface. ARP/ping network scanning uses
+                OS-level system calls wrapped in <code>local-devices</code> library.</li>
+            <li><strong>Deployment:</strong> Docker containerisation ensures environment consistency. Render (backend)
+                and Vercel (frontend) provide zero-configuration CI/CD pipelines.</li>
+        </ul>
+        <div class="note">✅ <strong>Conclusion:</strong> All required technologies are proven, available, and within the
+            team's skill set. Technical feasibility is CONFIRMED.</div>
+
+        <h4>2.5.2 Operational Feasibility</h4>
+        <p>CyberSafeHub is designed with operational ease as a core principle. The platform requires minimal user
+            training due to its intuitive, icon-driven navigation and contextual help text throughout the interface. Key
+            operational considerations:</p>
+        <ul>
+            <li><strong>User Adoption:</strong> The clean, dark-mode UI with progressive disclosure (simple overview →
+                detailed results) reduces cognitive load. Users familiar with basic web apps will navigate without
+                training.</li>
+            <li><strong>Admin Operations:</strong> The admin dashboard provides all management functions (user control,
+                log viewing, statistics) via a visual interface, eliminating need for direct database access.</li>
+            <li><strong>Maintenance Overhead:</strong> Serverless Firebase Auth, managed MongoDB Atlas, and automated
+                deployments via Render/Vercel reduce operational burden to near zero for standard operations.</li>
+            <li><strong>Error Handling:</strong> The backend implements graceful error handling with user-friendly error
+                messages; the frontend displays toast notifications for all success/failure states.</li>
+        </ul>
+        <div class="note">✅ <strong>Conclusion:</strong> The system is operationally straightforward and requires
+            minimal support effort. Operational feasibility is CONFIRMED.</div>
+
+        <h4>2.5.3 Economic Feasibility</h4>
+        <p>CyberSafeHub is built entirely on open-source and free-tier cloud services, making it extremely
+            cost-efficient:</p>
+        <table>
+            <tr>
+                <th>Resource</th>
+                <th>Service</th>
+                <th>Cost</th>
+            </tr>
+            <tr>
+                <td>Frontend Hosting</td>
+                <td>Vercel (Free Tier)</td>
+                <td>₹0 / month</td>
+            </tr>
+            <tr>
+                <td>Backend Hosting</td>
+                <td>Render (Free/Starter)</td>
+                <td>~₹0–₹600/month</td>
+            </tr>
+            <tr>
+                <td>Database</td>
+                <td>MongoDB Atlas (M0 Free)</td>
+                <td>₹0 / month</td>
+            </tr>
+            <tr>
+                <td>Authentication</td>
+                <td>Firebase (Spark Plan)</td>
+                <td>₹0 / month</td>
+            </tr>
+            <tr>
+                <td>AI API</td>
+                <td>Google Gemini (Free Tier: 60 QPM)</td>
+                <td>₹0 / month</td>
+            </tr>
+            <tr>
+                <td>Domain Name</td>
+                <td>Namecheap / GoDaddy</td>
+                <td>~₹800–₹1200/year</td>
+            </tr>
+            <tr>
+                <td>Development Tools</td>
+                <td>VS Code, Git, GitHub (Free)</td>
+                <td>₹0</td>
+            </tr>
+            <tr>
+                <td><strong>Total Monthly</strong></td>
+                <td></td>
+                <td><strong>~₹0–₹600</strong></td>
+            </tr>
+        </table>
+        <p>Development costs are limited to developer time (student project). No proprietary software licences are
+            required. The economic impact is minimal while the educational and functional value delivered is high.</p>
+        <div class="note">✅ <strong>Conclusion:</strong> Extremely low cost with high value delivery. Economic
+            feasibility is CONFIRMED.</div>
+
+        <h4>2.5.4 Behavioural Feasibility</h4>
+        <p>User behavioural studies and UX design principles guided the interface design of CyberSafeHub:</p>
+        <ul>
+            <li><strong>Motivation:</strong> The growing awareness of online threats ensures users are motivated to
+                engage with security tools. High-profile breaches (Facebook, LinkedIn, Aadhaar) have increased public
+                interest in personal cybersecurity.</li>
+            <li><strong>Gamification:</strong> The Incident Response Simulator and Phishing Trainer leverage game
+                mechanics (decisions, consequences, win/lose states) to maintain engagement and improve retention of
+                security concepts.</li>
+            <li><strong>Psychological Safety:</strong> All analysis (code audit, policy decoding) is done on-demand with
+                no permanent data retention, addressing user privacy concerns about submitting sensitive data.</li>
+            <li><strong>Progressive Disclosure:</strong> The platform presents simple results first with option to drill
+                down into technical details, accommodating both novice and expert users.</li>
+            <li><strong>Habit Formation:</strong> The Health Check periodic questionnaire and Digital Privacy checklist
+                encourage regular security hygiene reviews.</li>
+        </ul>
+        <div class="note">✅ <strong>Conclusion:</strong> User behaviour aligns with the platform's offerings.
+            Behavioural feasibility is CONFIRMED.</div>
+
+        <h4>2.5.5 Legal Feasibility</h4>
+        <p>Legal compliance has been carefully considered throughout the design of CyberSafeHub:</p>
+        <ul>
+            <li><strong>Open Source Compliance:</strong> All libraries used (React, Express, MongoDB, Firebase) are
+                distributed under permissive licences (MIT, Apache 2.0). No GPL libraries are used in a manner that
+                would affect proprietary code.</li>
+            <li><strong>OSINT Ethics:</strong> The Username Detective checks publicly accessible URLs only and does not
+                scrape or store personal information beyond a transient session result. This is consistent with legal
+                OSINT practices.</li>
+            <li><strong>Data Privacy:</strong> Firebase Auth handles credential storage, ensuring compliance with
+                GDPR-equivalent standards (Firebase is GDPR compliant). User vault data is encrypted before storage.
+            </li>
+            <li><strong>ClamAV Usage:</strong> ClamAV is a GNU GPL-licensed open-source virus scanner. Its use for
+                scanning user-uploaded files is fully within its intended legal scope.</li>
+            <li><strong>AI API Terms:</strong> The Gemini API is used in compliance with Google's Terms of Service. No
+                personal PII is transmitted in AI prompts; analysis is limited to code and text.</li>
+            <li><strong>No Unauthorised Network Scanning:</strong> WiFi Radar only scans the local network of the server
+                host. Users are advised to scan only networks they own or have authorisation to test.</li>
+            <li><strong>Content Disclaimer:</strong> Educational hacking simulations (Phishing Trainer, Incident
+                Response) include disclaimers clarifying educational intent only.</li>
+        </ul>
+        <div class="note">✅ <strong>Conclusion:</strong> The system operates within all applicable legal frameworks.
+            Legal feasibility is CONFIRMED.</div>
+
+        <h4>2.5.6 Schedule Feasibility</h4>
+        <p>The project was developed over approximately 4 months with the following phase timeline:</p>
+        <table>
+            <tr>
+                <th>Phase</th>
+                <th>Activity</th>
+                <th>Duration</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>Phase 1</td>
+                <td>Requirements gathering, system design, tech stack selection</td>
+                <td>2 weeks</td>
+                <td>✅ Complete</td>
+            </tr>
+            <tr>
+                <td>Phase 2</td>
+                <td>Authentication, dashboard, UI framework setup</td>
+                <td>2 weeks</td>
+                <td>✅ Complete</td>
+            </tr>
+            <tr>
+                <td>Phase 3</td>
+                <td>Core tools (Metadata, WiFi Radar, OSINT, Scanner)</td>
+                <td>3 weeks</td>
+                <td>✅ Complete</td>
+            </tr>
+            <tr>
+                <td>Phase 4</td>
+                <td>AI integration (Code Auditor, Policy Decoder, Assistant)</td>
+                <td>2 weeks</td>
+                <td>✅ Complete</td>
+            </tr>
+            <tr>
+                <td>Phase 5</td>
+                <td>Academy, simulations, emergency guides</td>
+                <td>3 weeks</td>
+                <td>✅ Complete</td>
+            </tr>
+            <tr>
+                <td>Phase 6</td>
+                <td>Admin panel, File Converter, Password Vault</td>
+                <td>2 weeks</td>
+                <td>✅ Complete</td>
+            </tr>
+            <tr>
+                <td>Phase 7</td>
+                <td>Testing, bug fixes, optimisation</td>
+                <td>2 weeks</td>
+                <td>✅ Complete</td>
+            </tr>
+            <tr>
+                <td>Phase 8</td>
+                <td>Deployment, documentation</td>
+                <td>1 week</td>
+                <td>✅ Complete</td>
+            </tr>
+        </table>
+        <div class="note">✅ <strong>Conclusion:</strong> Project was completed within the planned 4-month schedule.
+            Schedule feasibility is CONFIRMED.</div>
+
+    </div>

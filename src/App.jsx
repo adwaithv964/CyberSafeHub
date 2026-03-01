@@ -27,6 +27,19 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import BackgroundBlobs from './components/BackgroundBlobs';
 import SEO from './components/SEO';
 
+// Admin Imports
+import { AdminAuthProvider } from './contexts/AdminAuthContext';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminLogin from './pages/admin/AdminLogin';
+import CommandCenter from './pages/admin/CommandCenter';
+import UserManager from './pages/admin/UserManager';
+import ThreatIntelligence from './pages/admin/ThreatIntelligence';
+import AcademyLMS from './pages/admin/AcademyLMS';
+import ContentManager from './pages/admin/ContentManager';
+import AIGovernance from './pages/admin/AIGovernance';
+import AuditLogs from './pages/admin/AuditLogs';
+import AdminManager from './pages/admin/AdminManager';
+
 function AppContent() {
     const { currentUser, logout } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -88,7 +101,6 @@ function AppContent() {
 
     return (
         <div className="h-screen w-full flex flex-col font-sans text-text-primary relative overflow-hidden">
-            <SEO />
             <BackgroundBlobs />
             {/* Mobile Header - Flex-none ensures it takes only necessary space */}
             <div className="md:hidden flex-none flex items-center p-4 glass-panel m-2 z-50 gap-3">
@@ -253,11 +265,33 @@ function AppContent() {
     );
 }
 
+function MainApp() {
+    return (
+        <Routes>
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<CommandCenter />} />
+                <Route path="users" element={<UserManager />} />
+                <Route path="threats" element={<ThreatIntelligence />} />
+                <Route path="academy" element={<AcademyLMS />} />
+                <Route path="content" element={<ContentManager />} />
+                <Route path="ai" element={<AIGovernance />} />
+                <Route path="logs" element={<AuditLogs />} />
+                <Route path="admin-manager" element={<AdminManager />} />
+            </Route>
+            <Route path="/*" element={<AppContent />} />
+        </Routes>
+    );
+}
+
 export default function App() {
     return (
         <BrowserRouter>
             <AuthProvider>
-                <AppContent />
+                <AdminAuthProvider>
+                    <SEO />
+                    <MainApp />
+                </AdminAuthProvider>
             </AuthProvider>
         </BrowserRouter>
     );

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import EXIF from 'exif-js';
+import { API_BASE_URL } from '../../config';
 
 export default function MetadataWasher() {
     const navigate = useNavigate();
@@ -96,10 +97,21 @@ export default function MetadataWasher() {
             // Using JPG 0.95 is usually the best balance. Let's stick to input format if possible, or default to JPG.
             const type = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
 
-            canvas.toBlob((blob) => {
+            canvas.toBlob(async (blob) => {
                 const newUrl = URL.createObjectURL(blob);
                 setCleanedUrl(newUrl);
                 setIsCleaning(false);
+
+                // Track usage stat on backend
+                try {
+                    await fetch(`${API_BASE_URL}/api/admin/stats/increment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type: 'filesCleaned' })
+                    });
+                } catch (err) {
+                    console.error('Failed to log stats:', err);
+                }
             }, type, 0.95);
 
         } catch (err) {

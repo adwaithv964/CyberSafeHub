@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CyberSafeHub – Use Case Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: #fff;
+            font-family: 'Segoe UI', Arial, sans-serif
+        }
+
+        #top {
+            background: #1e293b;
+            color: #fff;
+            text-align: center;
+            padding: 10px
+        }
+
+        #top h1 {
+            font-size: 1.3rem;
+            color: #38bdf8
+        }
+
+        #top p {
+            font-size: .78rem;
+            color: #94a3b8
+        }
+
+        #ctrl {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            padding: 6px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap
+        }
+
+        .btn {
+            padding: 4px 12px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            cursor: pointer;
+            font-size: .75rem;
+            color: #334155
+        }
+
+        .btn:hover {
+            background: #e2e8f0
+        }
+
+        #wrap {
+            overflow: auto;
+            background: #fff;
+            padding: 16px
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #e2e8f0
+        }
+    </style>
+</head>
+
+<body>
+    <div id="top">
+        <h1>🛡 CyberSafeHub — Use Case Diagram</h1>
+        <p>Admin Actor · User Actor · All System Use Cases</p>
+    </div>
+    <div id="ctrl">
+        <button class="btn" onclick="zoom(1.2)">＋ Zoom In</button>
+        <button class="btn" onclick="zoom(0.83)">－ Zoom Out</button>
+        <button class="btn" onclick="resetZ()">⟳ Reset</button>
+        <button class="btn" onclick="window.print()">🖨 Print / Save PDF</button>
+    </div>
+    <div id="wrap"><canvas id="c"></canvas></div>
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let sc = 1;
+
+        // ──────────────────────────────────────────────────────────
+        const ADMIN_CASES = [
+            'Login / Authenticate',
+            'Change Password',
+            'Update Profile',
+            'Enable 2FA (MFA)',
+            'View All Users',
+            'Manage Admin Roles',
+            'View Threat Intelligence',
+            'Monitor Platform Stats',
+            'View Conversion Jobs',
+            'Manage AI Governance',
+            'Manage Academy LMS',
+            'Manage Content',
+            'View Audit Logs',
+            'Configure System Settings',
+            'View Command Center\nDashboard',
+        ];
+
+        const USER_CASES = [
+            'Register / Sign Up',
+            'Login (Email / Google)',
+            'Change Password',
+            'Update Profile',
+            'Enable 2FA (MFA)',
+            'Add / Edit Vault Items',
+            'Generate Strong Password',
+            'Check Password Strength',
+            'Scan File for Malware',
+            'Check URL for Phishing',
+            'Run Security Health Check',
+            'View Scan History',
+            'Scan WiFi Network',
+            'OSINT Username Search',
+            'Chat with AI Assistant',
+            'Convert File Format',
+            'Share File Securely\n(WebRTC / Nearby)',
+            'Strip File Metadata',
+            'Decode Privacy Policy',
+            'Audit Code Security',
+            'Access Cyber Academy',
+            'Read Cyber News',
+            'View Emergency Guides',
+            'Manage Notifications',
+            'Delete Account',
+        ];
+
+        function draw() {
+            const ROW_H = 44;
+            const OVL_W = 195, OVL_H = 22;
+            const ACTOR_X_L = 80, PROC_X = 310;
+            const ACTOR_X_R_OFFSET = 500; // offset for right side (User)
+            const W_HALF = 580;
+            const W = W_HALF * 2 + 40;
+            const maxRows = Math.max(ADMIN_CASES.length, USER_CASES.length);
+            const H = 130 + maxRows * ROW_H + 80;
+
+            canvas.width = Math.round(W * sc);
+            canvas.height = Math.round(H * sc);
+            ctx.setTransform(sc, 0, 0, sc, 0, 0);
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+
+            // System boundary box overall title
+            ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1; ctx.setLineDash([6, 4]);
+            ctx.strokeRect(12, 12, W - 24, H - 24);
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#0f172a'; ctx.font = 'bold 15px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('CyberSafeHub — Use Case Diagram', W / 2, 32);
+            ctx.fillStyle = '#64748b'; ctx.font = '11px Segoe UI';
+            ctx.fillText('Admin Actor & User Actor · Complete System Use Cases', W / 2, 47);
+
+            // ── Draw divider line ──
+            ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.2; ctx.setLineDash([]);
+            ctx.beginPath(); ctx.moveTo(W / 2, 60); ctx.lineTo(W / 2, H - 20); ctx.stroke();
+
+            // ── Section headers ──
+            ctx.fillStyle = '#1e3a5f'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('ADMIN', W_HALF / 2, 65);
+            ctx.fillText('USER', W_HALF + W_HALF / 2, 65);
+
+            // ── Draw each section ──
+            drawSection(ADMIN_CASES, 'Admin', ACTOR_X_L, PROC_X, 80, '#1d4ed8', '#dbeafe', 0);
+            drawSection(USER_CASES, 'User\n(Browser)', W_HALF + ACTOR_X_L, W_HALF + PROC_X, 80, '#064e3b', '#dcfce7', W_HALF);
+
+            // Footer
+            ctx.fillStyle = '#94a3b8'; ctx.font = 'italic 9.5px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('CyberSafeHub Use Case Diagram  |  Firebase Auth · Express API · MongoDB · Gemini AI · Socket.IO · Google Safe Browsing', W / 2, H - 8);
+        }
+
+        function drawSection(cases, actorName, actorX, procX, topY, color, fillC, offsetX) {
+            const ROW_H = 44, OVL_W = 195, OVL_H = 20;
+            const n = cases.length;
+            const totalH = n * ROW_H;
+            const actorCY = topY + totalH / 2;
+
+            // ── Stick figure ──
+            stickFigure(ctx, actorX, actorCY, color);
+
+            // Actor label
+            ctx.fillStyle = color; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
+            actorName.split('\n').forEach((l, i) => ctx.fillText(l, actorX, actorCY + 52 + i * 13));
+
+            // ── Use case ovals + lines ──
+            cases.forEach((uc, i) => {
+                const oy = topY + i * ROW_H + ROW_H / 2;
+                const ox = procX + OVL_W / 2;
+                const lines = uc.split('\n');
+                const isDouble = lines.length > 1;
+                const eh = isDouble ? OVL_H + 8 : OVL_H;
+
+                // ── Fan line: actor → oval ──
+                ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.moveTo(actorX, actorCY);
+                ctx.lineTo(ox - OVL_W / 2, oy);
+                ctx.stroke();
+                // arrowhead at oval edge
+                arrowAt(ox - OVL_W / 2, oy, 'right', color);
+
+                // ── Oval ──
+                ctx.fillStyle = fillC; ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.ellipse(ox, oy, OVL_W / 2, eh, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Oval text
+                ctx.fillStyle = '#0f172a'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'center';
+                lines.forEach((l, li) => {
+                    ctx.fillText(l, ox, oy - ((lines.length - 1) * 7) + li * 13);
+                });
+            });
+        }
+
+        function stickFigure(ctx, cx, cy, color) {
+            ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.fillStyle = '#fff';
+            // Head
+            ctx.beginPath(); ctx.arc(cx, cy - 34, 12, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+            // Body
+            ctx.beginPath(); ctx.moveTo(cx, cy - 22); ctx.lineTo(cx, cy + 4); ctx.stroke();
+            // Arms
+            ctx.beginPath(); ctx.moveTo(cx - 16, cy - 10); ctx.lineTo(cx + 16, cy - 10); ctx.stroke();
+            // Legs
+            ctx.beginPath(); ctx.moveTo(cx, cy + 4); ctx.lineTo(cx - 14, cy + 28); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx, cy + 4); ctx.lineTo(cx + 14, cy + 28); ctx.stroke();
+        }
+
+        function arrowAt(x, y, dir, color) {
+            const s = 6; ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - s, y - 4); ctx.lineTo(x - s, y + 4);
+            ctx.closePath(); ctx.fill();
+        }
+
+        function zoom(f) { sc *= f; draw(); }
+        function resetZ() { sc = 1; draw(); }
+
+        // Polyfill roundRect
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+                this.beginPath(); this.moveTo(x + r, y); this.lineTo(x + w - r, y);
+                this.quadraticCurveTo(x + w, y, x + w, y + r); this.lineTo(x + w, y + h - r);
+                this.quadraticCurveTo(x + w, y + h, x + w - r, y + h); this.lineTo(x + r, y + h);
+                this.quadraticCurveTo(x, y + h, x, y + h - r); this.lineTo(x, y + r);
+                this.quadraticCurveTo(x, y, x + r, y); this.closePath();
+            };
+        }
+
+        draw();
+    </script>
+</body>
+
+</html>

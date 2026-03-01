@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>CyberSafeHub – Database Collections</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #111;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.6rem;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #555;
+            font-size: .9rem;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 40px 0 4px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: #333;
+            border-bottom: 2px solid #333;
+            padding-bottom: 4px;
+        }
+
+        .coll-name {
+            font-weight: bold;
+            font-size: 1.05rem;
+            margin: 20px 0 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+            background: #fff;
+        }
+
+        th,
+        td {
+            border: 1px solid #999;
+            padding: 8px 14px;
+            text-align: center;
+            font-size: .9rem;
+        }
+
+        th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+
+        td:first-child {
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+
+        td:nth-child(2) {
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+
+        td:last-child {
+            text-align: center;
+        }
+
+        .section-label {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: .78rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .lbl-mongo {
+            background: #d4f5e2;
+            color: #155724;
+        }
+
+        .lbl-fire {
+            background: #fde8d0;
+            color: #7c3307;
+        }
+
+        .lbl-auth {
+            background: #e8d5f9;
+            color: #4a1670;
+        }
+
+        .lbl-local {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .sub {
+            font-style: italic;
+            font-size: .82rem;
+            color: #555;
+            margin: -4px 0 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>CyberSafeHub — Database Collections</h1>
+    <p class="subtitle">Field Name &nbsp;·&nbsp; Data Type &nbsp;·&nbsp; Description</p>
+
+    <!-- ═══════════════════════════════ MONGODB ═══════════════════════════════ -->
+    <h2>MongoDB Collections (Backend / Mongoose)</h2>
+
+    <!-- admins -->
+    <p class="coll-name"><span class="section-label lbl-mongo">MongoDB</span>&nbsp; COLLECTION NAME: admins</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>_id</td>
+                <td>ObjectId</td>
+                <td>Unique identifier</td>
+            </tr>
+            <tr>
+                <td>email</td>
+                <td>String</td>
+                <td>Admin email address (unique)</td>
+            </tr>
+            <tr>
+                <td>role</td>
+                <td>String (Enum)</td>
+                <td>Admin role (super_admin / analyst / content_manager / support)</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>Date</td>
+                <td>Record creation timestamp</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>Date</td>
+                <td>Last update timestamp</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- jobs -->
+    <p class="coll-name"><span class="section-label lbl-mongo">MongoDB</span>&nbsp; COLLECTION NAME: jobs</p>
+    <p class="sub">File conversion jobs. Auto-deleted after 1 hour (TTL on createdAt).</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>_id</td>
+                <td>ObjectId</td>
+                <td>Unique identifier</td>
+            </tr>
+            <tr>
+                <td>sourceFile.path</td>
+                <td>String</td>
+                <td>Server path of uploaded file</td>
+            </tr>
+            <tr>
+                <td>sourceFile.originalName</td>
+                <td>String</td>
+                <td>Original filename from client</td>
+            </tr>
+            <tr>
+                <td>sourceFile.size</td>
+                <td>Number</td>
+                <td>File size in bytes</td>
+            </tr>
+            <tr>
+                <td>sourceFile.mime</td>
+                <td>String</td>
+                <td>MIME type of source file</td>
+            </tr>
+            <tr>
+                <td>targetFormat</td>
+                <td>String</td>
+                <td>Desired output format (e.g. pdf, mp4)</td>
+            </tr>
+            <tr>
+                <td>status</td>
+                <td>String (Enum)</td>
+                <td>Job state (queued / processing / completed / failed)</td>
+            </tr>
+            <tr>
+                <td>progress</td>
+                <td>Number</td>
+                <td>Conversion progress (0–100)</td>
+            </tr>
+            <tr>
+                <td>result.path</td>
+                <td>String</td>
+                <td>Server path of converted output file</td>
+            </tr>
+            <tr>
+                <td>result.filename</td>
+                <td>String</td>
+                <td>Output filename</td>
+            </tr>
+            <tr>
+                <td>result.size</td>
+                <td>Number</td>
+                <td>Output file size in bytes</td>
+            </tr>
+            <tr>
+                <td>result.mime</td>
+                <td>String</td>
+                <td>MIME type of output file</td>
+            </tr>
+            <tr>
+                <td>error.message</td>
+                <td>String</td>
+                <td>Error description if job failed</td>
+            </tr>
+            <tr>
+                <td>error.code</td>
+                <td>String</td>
+                <td>Error code identifier</td>
+            </tr>
+            <tr>
+                <td>error.details</td>
+                <td>Mixed</td>
+                <td>Additional error details</td>
+            </tr>
+            <tr>
+                <td>options.preserveMetadata</td>
+                <td>Boolean</td>
+                <td>Keep original file metadata</td>
+            </tr>
+            <tr>
+                <td>options.quality</td>
+                <td>String (Enum)</td>
+                <td>Conversion quality (lossless / high / balanced)</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>Date</td>
+                <td>Job creation timestamp (TTL index)</td>
+            </tr>
+            <tr>
+                <td>startedAt</td>
+                <td>Date</td>
+                <td>Processing start timestamp</td>
+            </tr>
+            <tr>
+                <td>completedAt</td>
+                <td>Date</td>
+                <td>Completion or failure timestamp</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- platformstats -->
+    <p class="coll-name"><span class="section-label lbl-mongo">MongoDB</span>&nbsp; COLLECTION NAME: platformstats</p>
+    <p class="sub">Aggregated daily usage counters. One document per day.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>_id</td>
+                <td>ObjectId</td>
+                <td>Unique identifier</td>
+            </tr>
+            <tr>
+                <td>date</td>
+                <td>String</td>
+                <td>Calendar date in YYYY-MM-DD format (unique index)</td>
+            </tr>
+            <tr>
+                <td>filesCleaned</td>
+                <td>Number</td>
+                <td>Files metadata-stripped today</td>
+            </tr>
+            <tr>
+                <td>pdfsConverted</td>
+                <td>Number</td>
+                <td>Files converted to/from PDF today</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>Date</td>
+                <td>Record creation timestamp</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>Date</td>
+                <td>Last update timestamp</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- threatlogs -->
+    <p class="coll-name"><span class="section-label lbl-mongo">MongoDB</span>&nbsp; COLLECTION NAME: threatlogs</p>
+    <p class="sub">Detected threats. Auto-deleted after 30 days (TTL on timestamp).</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>_id</td>
+                <td>ObjectId</td>
+                <td>Unique identifier</td>
+            </tr>
+            <tr>
+                <td>type</td>
+                <td>String (Enum)</td>
+                <td>Threat category (malware / phishing)</td>
+            </tr>
+            <tr>
+                <td>target</td>
+                <td>String</td>
+                <td>Scanned filename or URL</td>
+            </tr>
+            <tr>
+                <td>details</td>
+                <td>Array&lt;String&gt;</td>
+                <td>List of detected threat signatures</td>
+            </tr>
+            <tr>
+                <td>timestamp</td>
+                <td>Date</td>
+                <td>Detection time (TTL index)</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>Date</td>
+                <td>Record creation timestamp</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>Date</td>
+                <td>Last update timestamp</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- vaultitems -->
+    <p class="coll-name"><span class="section-label lbl-mongo">MongoDB</span>&nbsp; COLLECTION NAME: vaultitems</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>_id</td>
+                <td>ObjectId</td>
+                <td>Unique identifier</td>
+            </tr>
+            <tr>
+                <td>userId</td>
+                <td>String</td>
+                <td>Owner's Firebase UID</td>
+            </tr>
+            <tr>
+                <td>type</td>
+                <td>String (Enum)</td>
+                <td>Entry category (login / card / identity / note)</td>
+            </tr>
+            <tr>
+                <td>name</td>
+                <td>String</td>
+                <td>Display name of vault item</td>
+            </tr>
+            <tr>
+                <td>data</td>
+                <td>Mixed (Object)</td>
+                <td>Flexible payload (see sub-type table below)</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>Date</td>
+                <td>Record creation timestamp</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>Date</td>
+                <td>Last update timestamp</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="coll-name" style="font-size:.9rem;">↳ vaultitems.data — Sub-type Fields</p>
+    <table>
+        <thead>
+            <tr>
+                <th>type</th>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>login</td>
+                <td>data.username</td>
+                <td>String</td>
+                <td>Login username or email</td>
+            </tr>
+            <tr>
+                <td>login</td>
+                <td>data.password</td>
+                <td>String</td>
+                <td>Login password</td>
+            </tr>
+            <tr>
+                <td>login</td>
+                <td>data.url</td>
+                <td>String</td>
+                <td>Associated website URL</td>
+            </tr>
+            <tr>
+                <td>card</td>
+                <td>data.cardNumber</td>
+                <td>String</td>
+                <td>Payment card number</td>
+            </tr>
+            <tr>
+                <td>card</td>
+                <td>data.expiryDate</td>
+                <td>String</td>
+                <td>Card expiry (MM/YY)</td>
+            </tr>
+            <tr>
+                <td>card</td>
+                <td>data.cvv</td>
+                <td>String</td>
+                <td>Card CVV / security code</td>
+            </tr>
+            <tr>
+                <td>card</td>
+                <td>data.cardholderName</td>
+                <td>String</td>
+                <td>Name on card</td>
+            </tr>
+            <tr>
+                <td>identity</td>
+                <td>data.firstName</td>
+                <td>String</td>
+                <td>First name</td>
+            </tr>
+            <tr>
+                <td>identity</td>
+                <td>data.lastName</td>
+                <td>String</td>
+                <td>Last name</td>
+            </tr>
+            <tr>
+                <td>identity</td>
+                <td>data.idNumber</td>
+                <td>String</td>
+                <td>Government ID / passport number</td>
+            </tr>
+            <tr>
+                <td>note</td>
+                <td>data.content</td>
+                <td>String</td>
+                <td>Free-form note text</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ═══════════════════════════════ FIRESTORE ═══════════════════════════════ -->
+    <h2>Firestore Collection (Frontend)</h2>
+
+    <p class="coll-name"><span class="section-label lbl-fire">Firestore</span>&nbsp; COLLECTION NAME: admins</p>
+    <p class="sub">Written by SetupAdmin.jsx during initial admin setup.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>uid (doc ID)</td>
+                <td>String</td>
+                <td>Firebase UID of the admin user</td>
+            </tr>
+            <tr>
+                <td>email</td>
+                <td>String</td>
+                <td>Admin email address</td>
+            </tr>
+            <tr>
+                <td>role</td>
+                <td>String (Enum)</td>
+                <td>Admin role (super_admin / analyst / content_manager / support)</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>Timestamp</td>
+                <td>Record creation timestamp</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ═══════════════════════════════ FIREBASE AUTH ═══════════════════════════════ -->
+    <h2>Firebase Authentication (User Profiles)</h2>
+
+    <p class="coll-name"><span class="section-label lbl-auth">Firebase Auth</span>&nbsp; COLLECTION NAME: users</p>
+    <p class="sub">Managed by AuthContext.jsx and AdminAuthContext.jsx.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>uid</td>
+                <td>String</td>
+                <td>Unique Firebase user ID</td>
+            </tr>
+            <tr>
+                <td>email</td>
+                <td>String</td>
+                <td>User email address</td>
+            </tr>
+            <tr>
+                <td>displayName</td>
+                <td>String</td>
+                <td>User display name</td>
+            </tr>
+            <tr>
+                <td>photoURL</td>
+                <td>String</td>
+                <td>Profile photo URL</td>
+            </tr>
+            <tr>
+                <td>emailVerified</td>
+                <td>Boolean</td>
+                <td>Email verification status</td>
+            </tr>
+            <tr>
+                <td>multiFactor</td>
+                <td>Object</td>
+                <td>MFA enrollment info (TOTP)</td>
+            </tr>
+            <tr>
+                <td>providerData</td>
+                <td>Array&lt;Object&gt;</td>
+                <td>Linked auth providers (email, Google)</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>Timestamp</td>
+                <td>Account creation timestamp</td>
+            </tr>
+            <tr>
+                <td>lastLoginAt</td>
+                <td>Timestamp</td>
+                <td>Last sign-in timestamp</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ═══════════════════════════════ LOCALSTORAGE ═══════════════════════════════ -->
+    <h2>localStorage (Client-side)</h2>
+
+    <p class="coll-name"><span class="section-label lbl-local">localStorage</span>&nbsp; KEY: userActivityLog</p>
+    <p class="sub">Managed by activityLogger.js. Max 50 entries (LIFO).</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>id</td>
+                <td>Number</td>
+                <td>Unique entry ID (Date.now)</td>
+            </tr>
+            <tr>
+                <td>type</td>
+                <td>String (Enum)</td>
+                <td>Activity category (AUTH / SCAN / VAULT / SYSTEM)</td>
+            </tr>
+            <tr>
+                <td>description</td>
+                <td>String</td>
+                <td>Short activity description</td>
+            </tr>
+            <tr>
+                <td>details</td>
+                <td>String</td>
+                <td>Extra context info</td>
+            </tr>
+            <tr>
+                <td>timestamp</td>
+                <td>String (ISO 8601)</td>
+                <td>Activity timestamp</td>
+            </tr>
+            <tr>
+                <td>dateFormatted</td>
+                <td>String</td>
+                <td>Locale date string for display</td>
+            </tr>
+            <tr>
+                <td>timeFormatted</td>
+                <td>String</td>
+                <td>Locale time string (HH:MM) for display</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p style="text-align:center;color:#777;font-size:.8rem;margin-top:40px;">
+        CyberSafeHub &nbsp;·&nbsp; Database Collections Reference &nbsp;·&nbsp; 2026-02-26
+    </p>
+
+</body>
+
+</html>

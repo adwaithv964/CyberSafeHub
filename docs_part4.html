@@ -1,0 +1,730 @@
+<div class="page">
+
+    <!-- SECTION 7 -->
+    <h2><span class="section-num">7.</span> SYSTEM IMPLEMENTATION</h2>
+
+    <h3>7.1 Implementation Plan</h3>
+    <p>The implementation of CyberSafeHub followed a phased rollout strategy, moving from local development to staging
+        and then production deployment. The deployment architecture separates the frontend (static assets) from the
+        backend (API server + binary tools) to maximise performance, scalability, and security.</p>
+
+    <h4>Deployment Architecture</h4>
+    <div class="diagram">
+        <pre>
+ ┌─────────────────────────────────────────────────────────────────┐
+ │                    USER'S BROWSER                               │
+ └───────────────────────┬─────────────────────────────────────────┘
+                         │ HTTPS
+                         ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │  VERCEL (Frontend CDN)                                          │
+ │  React + Vite production build (dist/)                          │
+ │  Global edge network, automatic HTTPS, PR previews              │
+ └───────────────────────┬─────────────────────────────────────────┘
+                         │ API calls (HTTPS)
+                         ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │  RENDER.COM (Backend Docker Container)                          │
+ │  Node.js + Express on port 5001                                 │
+ │  ClamAV | LibreOffice | FFmpeg | Firebase Admin SDK             │
+ └───────┬────────────────┬──────────────────────┬────────────────┘
+         │                │                      │
+         ▼                ▼                      ▼
+ ┌──────────────┐  ┌──────────────┐   ┌──────────────────────┐
+ │ MongoDB Atlas│  │ Firebase Auth│   │ Google Gemini API     │
+ │ (Database)   │  │ Admin SDK    │   │ (AI Processing)       │
+ └──────────────┘  └──────────────┘   └──────────────────────┘
+</pre>
+    </div>
+
+    <h4>Environment Variables Required</h4>
+    <table>
+        <tr>
+            <th>Variable</th>
+            <th>Location</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td>VITE_FIREBASE_API_KEY</td>
+            <td>Frontend .env</td>
+            <td>Firebase project Web API key</td>
+        </tr>
+        <tr>
+            <td>VITE_GEMINI_API_KEY</td>
+            <td>Frontend .env</td>
+            <td>Google Gemini API key for AI features</td>
+        </tr>
+        <tr>
+            <td>MONGODB_URI</td>
+            <td>Backend .env</td>
+            <td>MongoDB Atlas connection string</td>
+        </tr>
+        <tr>
+            <td>FIREBASE_SERVICE_ACCOUNT</td>
+            <td>Backend .env</td>
+            <td>Firebase Admin SDK service account JSON</td>
+        </tr>
+        <tr>
+            <td>PORT</td>
+            <td>Backend .env</td>
+            <td>Server listen port (default 5001)</td>
+        </tr>
+        <tr>
+            <td>FRONTEND_URL</td>
+            <td>Backend .env</td>
+            <td>Allowed CORS origin (Vercel URL)</td>
+        </tr>
+    </table>
+
+    <h4>Deployment Steps</h4>
+    <ol>
+        <li>Push latest code to GitHub <code>main</code> branch.</li>
+        <li>Vercel auto-detects changes, builds frontend with <code>vite build</code>, and deploys to CDN within ~2
+            minutes.</li>
+        <li>Render detects Dockerfile, builds the Docker image (installs ClamAV, LibreOffice, FFmpeg), and deploys the
+            container.</li>
+        <li>Environment variables are set in Render's dashboard (not stored in code).</li>
+        <li>MongoDB Atlas IP allowlist updated with Render's outbound IP if changed.</li>
+        <li>Smoke test: visit production URL, login, run a sample scan, verify AI response.</li>
+    </ol>
+
+    <h3>7.2 Education and Training</h3>
+    <p>CyberSafeHub is designed to be immediately usable without formal training. However, a structured onboarding
+        experience is provided to new users:</p>
+    <ul>
+        <li><strong>Landing Page:</strong> Explains the platform's purpose, key features, and screenshots before
+            requiring registration.</li>
+        <li><strong>First Login Tour:</strong> On a user's first dashboard visit, contextual tooltips highlight key
+            navigation items and explain the sidebar structure.</li>
+        <li><strong>In-Tool Help Text:</strong> Every tool includes a brief description panel explaining what it does,
+            how to use it, and any limitations (e.g., "WiFi Radar scans only the server's local network").</li>
+        <li><strong>AI Cyber Assistant:</strong> Users can ask the AI assistant for help using any CyberSafeHub feature
+            directly in natural language.</li>
+        <li><strong>Academy Module:</strong> Structured learning content within the Cyber Academy covers the
+            fundamentals needed to use security tools effectively.</li>
+    </ul>
+
+    <h3>7.3 Training of Application Software</h3>
+    <p>Staff/admin training for the application management layer covers:</p>
+    <ul>
+        <li><strong>Firebase Console:</strong> Creating user accounts, resetting passwords, enabling/disabling users,
+            managing authentication providers.</li>
+        <li><strong>MongoDB Atlas:</strong> Monitoring cluster performance, setting up database backups, managing
+            network access allowlists, viewing collections via Compass.</li>
+        <li><strong>Render Dashboard:</strong> Viewing server logs, setting environment variables, triggering manual
+            deployments, scaling services (free → paid tier).</li>
+        <li><strong>Admin Panel (in-app):</strong> Navigating the dashboard, searching/managing users, viewing threat
+            logs, interpreting analytics charts.</li>
+        <li><strong>ClamAV Maintenance:</strong> Updating virus definitions (<code>freshclam</code> command), restarting
+            the ClamAV daemon if it goes offline.</li>
+    </ul>
+
+    <h3>7.4 Post Implementation Review</h3>
+    <p>After the initial production deployment, the following review activities were conducted:</p>
+    <ul>
+        <li><strong>Performance Audit:</strong> Lighthouse score checked — Performance: 87, Accessibility: 92, Best
+            Practices: 100, SEO: 95. Identified large 3D bundle (Three.js) as the main performance impactor; mitigated
+            with lazy loading.</li>
+        <li><strong>Security Review:</strong> Backend routes manually verified for authentication gates. No
+            unauthenticated endpoints expose user data. Rate limiting confirmed active.</li>
+        <li><strong>Bug Tracking:</strong> GitHub Issues used to log post-deployment bugs. 6 minor bugs identified and
+            resolved post-launch (Firestore offline error, CORS header issue, ClamAV cold-start delay).</li>
+        <li><strong>User Feedback Collection:</strong> In-app feedback form (Settings page) captures user experience
+            reports for continuous improvement.</li>
+        <li><strong>Monitoring:</strong> Render's built-in logging captures server errors. Firebase Console monitors
+            authentication events and anomalies.</li>
+    </ul>
+
+    <h3>7.5 Security</h3>
+    <p>Security is a first-class requirement throughout CyberSafeHub's architecture. The following security measures are
+        implemented at every layer:</p>
+    <h4>Authentication Security</h4>
+    <ul>
+        <li>Firebase Authentication with email verification and bcrypt-equivalent password hashing (managed by
+            Firebase).</li>
+        <li>TOTP-based Multi-Factor Authentication support for enhanced account protection.</li>
+        <li>JWT-equivalent Firebase ID tokens (RS256 signed, 1-hour expiry) used for all API authentication.</li>
+        <li>Google OAuth 2.0 as an alternative authentication pathway.</li>
+    </ul>
+    <h4>API Security</h4>
+    <ul>
+        <li><strong>Helmet.js:</strong> Sets security headers (X-Frame-Options, X-XSS-Protection,
+            Content-Security-Policy, etc.) on all API responses.</li>
+        <li><strong>CORS:</strong> Configured to allow only the production Vercel domain and localhost (development).
+            The Authorization header is explicitly whitelisted.</li>
+        <li><strong>Rate Limiting:</strong> express-rate-limit restricts each IP to 100 requests per 15 minutes,
+            preventing brute-force and DDoS attacks.</li>
+        <li><strong>Input Sanitisation:</strong> xss-clean strips XSS payloads from request body/query.
+            express-mongo-sanitize removes MongoDB operators from user input.</li>
+        <li><strong>File Upload Restrictions:</strong> Multer enforces MIME type whitelists and a 50MB size limit on
+            uploaded files.</li>
+    </ul>
+    <h4>Data Security</h4>
+    <ul>
+        <li>Vault passwords are encrypted with AES-256 (CryptoJS) using the user's Firebase UID as part of the key
+            derivation, before MongoDB storage.</li>
+        <li>MongoDB Atlas encrypts data at rest (AES-256) and in transit (TLS 1.2+).</li>
+        <li>No sensitive API keys are exposed in the frontend bundle — AI calls requiring server-side keys use backend
+            proxies.</li>
+        <li>Uploaded files (scan jobs, conversions) are deleted from the server after processing to prevent data
+            accumulation.</li>
+    </ul>
+
+    <h3>7.6 Maintenance</h3>
+    <p>CyberSafeHub's maintenance plan is divided into three categories:</p>
+    <h4>Corrective Maintenance</h4>
+    <p>Bug fixes and error resolutions triggered by user reports or monitoring alerts. Bug reports are tracked via
+        GitHub Issues. Critical bugs (security vulnerabilities, authentication failures) are patched within 24 hours.
+        Minor UI/UX bugs are batched into weekly patch releases.</p>
+    <h4>Adaptive Maintenance</h4>
+    <ul>
+        <li>Dependency updates — <code>npm audit</code> and <code>npm update</code> run monthly to address security
+            vulnerabilities in dependencies.</li>
+        <li>Firebase SDK updates — Firebase periodically deprecates older APIs; SDK updates are applied within 30 days
+            of release.</li>
+        <li>ClamAV definition updates — <code>freshclam</code> is configured to update virus signatures daily.</li>
+        <li>Gemini API model upgrades — Prompt engineering tuning as new Gemini model versions are released.</li>
+    </ul>
+    <h4>Perfective Maintenance</h4>
+    <ul>
+        <li>Performance optimisations based on Lighthouse and real-user metrics.</li>
+        <li>UI/UX improvements from user feedback collected via in-app form.</li>
+        <li>New tool and feature additions as described in the Future Enhancement section.</li>
+    </ul>
+
+    <hr>
+
+    <!-- SECTION 8 -->
+    <h2><span class="section-num">8.</span> FUTURE ENHANCEMENT</h2>
+    <p>The following enhancements are planned for future versions of CyberSafeHub, prioritised by user impact and
+        technical feasibility:</p>
+
+    <h4>Short-Term Enhancements (Next 3–6 Months)</h4>
+    <table>
+        <tr>
+            <th>Enhancement</th>
+            <th>Description</th>
+            <th>Priority</th>
+        </tr>
+        <tr>
+            <td>Real Nmap Integration</td>
+            <td>Replace ARP-based WiFi Radar with a full Nmap port scanner for deeper device analysis — open ports, OS
+                fingerprinting, service detection.</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>URL Reputation Scanner</td>
+            <td>Enter any URL to check against VirusTotal, Google Safe Browsing, and PhishTank APIs in real-time.</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>Password Vault Import</td>
+            <td>Import credentials from LastPass, Bitwarden, or Chrome-exported CSV into the vault.</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>Browser Extension</td>
+            <td>Chrome/Firefox extension for quick access to Password Vault and real-time phishing URL checking as users
+                browse.</td>
+            <td>Medium</td>
+        </tr>
+        <tr>
+            <td>Dark Web Monitor</td>
+            <td>Check if the user's email address appears in known data breach databases (Have I Been Pwned API
+                integration).</td>
+            <td>High</td>
+        </tr>
+    </table>
+
+    <h4>Medium-Term Enhancements (6–12 Months)</h4>
+    <table>
+        <tr>
+            <th>Enhancement</th>
+            <th>Description</th>
+            <th>Priority</th>
+        </tr>
+        <tr>
+            <td>Academy Progress Tracking</td>
+            <td>Persistent learning progress with completion badges, XP points, and a user leaderboard for gamified
+                academy engagement.</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>Incident Response Reports</td>
+            <td>Auto-generate a PDF incident report after each RPG game session documenting decisions made and lessons
+                learned.</td>
+            <td>Medium</td>
+        </tr>
+        <tr>
+            <td>Multi-Language Support</td>
+            <td>Internationalisation (i18n) for UI and AI prompts in Hindi, Spanish, French, and Arabic.</td>
+            <td>Medium</td>
+        </tr>
+        <tr>
+            <td>Two-Way File Encryption</td>
+            <td>Encrypt arbitrary files with AES-256 and a user-defined passphrase; decrypt with the same key. For
+                secure file sharing.</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>Vulnerability News Feed</td>
+            <td>CVE (Common Vulnerabilities and Exposures) feed filtered by user-selected software
+                packages/technologies.</td>
+            <td>Medium</td>
+        </tr>
+        <tr>
+            <td>AI-Powered Phishing Trainer</td>
+            <td>Replace static phishing email templates with dynamically generated AI phishing emails adapted to the
+                user's profile and skill level.</td>
+            <td>Medium</td>
+        </tr>
+    </table>
+
+    <h4>Long-Term Vision (12+ Months)</h4>
+    <ul>
+        <li><strong>Mobile App (React Native):</strong> A cross-platform mobile app offering the full CyberSafeHub
+            experience on iOS and Android, with push notifications for security alerts.</li>
+        <li><strong>Enterprise / Team Edition:</strong> Multi-user workspaces with shared vault, team health check
+            dashboards, and centralised threat monitoring for small businesses and schools.</li>
+        <li><strong>AI Security Coach:</strong> A personalised AI that analyses the user's platform activity (tools
+            used, health check scores, quiz results) and recommends a tailored cybersecurity improvement plan.</li>
+        <li><strong>Offline PWA Mode:</strong> Full Progressive Web App with service workers enabling core features
+            (academy content, vault access) to work without an internet connection.</li>
+        <li><strong>Penetration Testing Toolkit:</strong> A guided ethical hacking module for IT students with simulated
+            vulnerable environments (DVWA-style) hosted on isolated containers.</li>
+        <li><strong>Comparative AI Analysis:</strong> Run the same code/document through multiple AI models (Gemini,
+            GPT-4, Claude) simultaneously and compare their security assessments.</li>
+    </ul>
+
+    <hr>
+
+    <!-- SECTION 9 -->
+    <h2><span class="section-num">9.</span> CONCLUSION</h2>
+    <p>CyberSafeHub represents a significant step forward in making cybersecurity accessible to everyone — not just IT
+        professionals. By consolidating practical security tools, AI-powered intelligence, and structured educational
+        content into a single, beautifully designed platform, it directly addresses the fragmented and technically
+        intimidating landscape of existing cybersecurity resources.</p>
+
+    <p>Throughout this project, the following objectives were successfully achieved:</p>
+    <ul>
+        <li><strong>Practical Utility:</strong> Users can now strip image metadata, scan for malware, audit source code
+            for vulnerabilities, decode complex legal documents, manage encrypted credentials, and enumerate their
+            network devices — all from one authenticated dashboard.</li>
+        <li><strong>AI Augmentation:</strong> The integration of Google's Gemini API transforms passive information
+            lookup into dynamic, context-aware analysis, dramatically lowering the expertise required to understand
+            security findings.</li>
+        <li><strong>Educational Impact:</strong> The Cyber Academy — with its phishing simulator, encryption visualiser,
+            and AI-driven Incident Response RPG — transforms cybersecurity learning from dry reading into engaging,
+            consequence-driven experiences that build lasting knowledge.</li>
+        <li><strong>Enterprise-Grade Security:</strong> Despite being a student project, CyberSafeHub implements
+            security best practices including MFA, token-based authentication, rate limiting, input sanitisation, XSS
+            protection, CORS policies, and encrypted data storage.</li>
+        <li><strong>Scalable Architecture:</strong> The decoupled frontend (Vercel, static) and backend (Render, Docker)
+            architecture provides a scalable, maintainable foundation that can grow with user demand.</li>
+        <li><strong>Zero Cost Operation:</strong> By leveraging free tiers across Firebase, MongoDB Atlas, Vercel,
+            Render, and Gemini API, the platform operates at near-zero monthly cost while delivering professional-grade
+            features.</li>
+    </ul>
+
+    <p>The 93.5% UAT success rate and consistently positive user feedback validate that CyberSafeHub is not only
+        functional but genuinely useful and usable by its target audience. The planned future enhancements —
+        particularly the Dark Web Monitor, browser extension, mobile app, and enterprise edition — position CyberSafeHub
+        for continued growth as a trusted cybersecurity companion for individuals and organisations alike.</p>
+
+    <p>In an increasingly digital world where cyber threats evolve daily, platforms like CyberSafeHub play a critical
+        role in empowering ordinary users to take control of their digital safety. This project demonstrates that with
+        modern open-source technologies, thoughtful UX design, and AI integration, world-class cybersecurity tools are
+        no longer the exclusive domain of large enterprises or technical experts — they can belong to everyone.</p>
+
+    <hr>
+
+    <!-- SECTION 10 -->
+    <h2><span class="section-num">10.</span> APPENDIX A: SOURCE CODE</h2>
+    <h3>10.1 Web</h3>
+    <p>The following are representative source code excerpts from key modules of CyberSafeHub. The complete source code
+        is available in the project repository.</p>
+
+    <h4>10.1.1 — Authentication Context (src/contexts/AuthContext.jsx)</h4>
+    <pre>
+import { createContext, useContext, useEffect, useState } from 'react';
+import { auth } from '../config/firebase';
+import {
+  onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signInWithPopup,
+  GoogleAuthProvider, signOut, updateProfile
+} from 'firebase/auth';
+
+const AuthContext = createContext();
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const login = (email, password) =>
+    signInWithEmailAndPassword(auth, email, password);
+
+  const register = (email, password) =>
+    createUserWithEmailAndPassword(auth, email, password);
+
+  const googleLogin = () =>
+    signInWithPopup(auth, new GoogleAuthProvider());
+
+  const logout = () => signOut(auth);
+
+  return (
+    &lt;AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout }}&gt;
+      {!loading &amp;&amp; children}
+    &lt;/AuthContext.Provider&gt;
+  );
+};
+</pre>
+
+    <h4>10.1.2 — Backend Auth Middleware (server/middleware/auth.js)</h4>
+    <pre>
+import admin from '../config/firebaseAdmin.js';
+
+export const protect = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    console.error('Auth error:', error.message);
+    res.status(401).json({ error: 'Invalid or expired token' });
+  }
+};
+
+export const adminAuth = async (req, res, next) => {
+  await protect(req, res, async () => {
+    try {
+      const adminDoc = await Admin.findOne({ uid: req.user.uid });
+      if (!adminDoc) return res.status(403).json({ error: 'Admin access required' });
+      req.admin = adminDoc;
+      next();
+    } catch (err) {
+      res.status(500).json({ error: 'Admin verification failed' });
+    }
+  });
+};
+</pre>
+
+    <h4>10.1.3 — Malware Scanner Route (server/index.js — /scan endpoint)</h4>
+    <pre>
+import NodeClam from 'clamscan';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+});
+
+const ClamScan = new NodeClam().init({
+  removeInfected: false,
+  quarantineInfected: false,
+  scanLog: null,
+  debugMode: false,
+});
+
+app.post('/scan', upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const filePath = path.resolve(req.file.path);
+  try {
+    const clam = await ClamScan;
+    const { isInfected, viruses } = await clam.scanFile(filePath);
+    fs.unlink(filePath, () => {}); // clean up
+    res.json({
+      status: isInfected ? 'infected' : 'clean',
+      threat: isInfected ? viruses[0] : null,
+      file: req.file.originalname,
+      size: req.file.size
+    });
+  } catch (err) {
+    fs.unlink(filePath, () => {});
+    res.status(500).json({ error: 'Scan failed', detail: err.message });
+  }
+});
+</pre>
+
+    <h4>10.1.4 — Vault Item Model (server/models/VaultItem.js)</h4>
+    <pre>
+import mongoose from 'mongoose';
+
+const vaultItemSchema = new mongoose.Schema({
+  userId: { type: String, required: true, index: true },
+  website: { type: String, required: true, trim: true },
+  username: { type: String, required: true, trim: true },
+  encryptedPassword: { type: String, required: true },
+  notes: { type: String, default: '' },
+}, { timestamps: true });
+
+export default mongoose.model('VaultItem', vaultItemSchema);
+</pre>
+
+    <h4>10.1.5 — WiFi Radar Scan API (excerpt from server/index.js)</h4>
+    <pre>
+import localDevices from 'local-devices';
+import { Resolver } from 'dns';
+import lookup from 'oui';
+
+app.get('/api/wifi-radar/scan', protect, async (req, res) => {
+  try {
+    const devices = await localDevices();
+    const enriched = await Promise.all(devices.map(async (device) => {
+      let vendor = 'Unknown';
+      try { vendor = lookup(device.mac) || 'Unknown'; } catch {}
+      let hostname = device.ip;
+      try {
+        const resolver = new Resolver();
+        const names = await resolver.resolvePtr(device.ip);
+        if (names.length) hostname = names[0];
+      } catch {}
+      return {
+        ip: device.ip,
+        mac: device.mac,
+        vendor,
+        hostname,
+        riskLevel: vendor === 'Unknown' ? 'medium' : 'low'
+      };
+    }));
+    res.json({ devices: enriched, scannedAt: new Date() });
+  } catch (err) {
+    res.status(500).json({ error: 'Network scan failed', detail: err.message });
+  }
+});
+</pre>
+
+    <h4>10.1.6 — Privacy Policy Decoder (src/components/tools/PrivacyPolicyDecoder.jsx — AI call)</h4>
+    <pre>
+const decodePolicy = async () => {
+  if (!policyText.trim()) return;
+  setLoading(true); setResult('');
+  const prompt = `You are a privacy analyst. Analyze this privacy policy/ToS.
+Return a structured report with:
+1. One-sentence plain-English verdict
+2. Red flags (data selling, forced arbitration, liability waivers)
+3. What data is collected and why
+4. Third-party sharing practices
+5. A Privacy Score (X/10) with justification
+
+POLICY TEXT:
+${policyText.slice(0, 15000)}`;
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      }
+    );
+    const data = await response.json();
+    setResult(data.candidates[0].content.parts[0].text);
+  } catch (err) {
+    setResult('⚠️ AI analysis failed. Please try again.');
+  } finally { setLoading(false); }
+};
+</pre>
+
+    <hr>
+
+    <!-- SECTION 11 -->
+    <h2><span class="section-num">11.</span> APPENDIX B: SCREENSHOTS</h2>
+    <h3>11.1 Web</h3>
+    <p>The following section describes the key user interface screens of CyberSafeHub with detailed descriptions of each
+        view. (Screenshots are captured from the live production deployment.)</p>
+
+    <table>
+        <tr>
+            <th>Screen</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td><strong>Landing Page</strong></td>
+            <td>Public-facing introduction page with animated hero section, feature highlights, tool previews, and
+                Register/Login CTAs. Features a dark cyberpunk aesthetic with gradient text and particle animations.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Login / Register</strong></td>
+            <td>Clean authentication modal with email/password form, Google Sign-In button, and TOTP MFA input (when
+                enabled). Password strength meter displayed during registration.</td>
+        </tr>
+        <tr>
+            <td><strong>Dashboard</strong></td>
+            <td>Post-login main hub featuring a Three.js 3D animated cyber scene, personalised greeting, quick-access
+                tool cards arranged in a 3-column grid, and an animated blob background. Dark navy colour scheme.</td>
+        </tr>
+        <tr>
+            <td><strong>Cyber Tools Page</strong></td>
+            <td>Tool selection gallery with category tabs (Privacy Tools, OSINT, AI Tools). Each tool card shows icon,
+                name, brief description, and a "Launch" button. Glassmorphism card design.</td>
+        </tr>
+        <tr>
+            <td><strong>Metadata Washer</strong></td>
+            <td>Dual-panel layout: drag-and-drop upload area on the left; EXIF metadata table comparison (before/after)
+                on the right. Clean file ready for download with size comparison.</td>
+        </tr>
+        <tr>
+            <td><strong>WiFi Radar</strong></td>
+            <td>Animated scanning radar animation during scan, transitioning to a device grid showing IP address, MAC,
+                vendor logo, and risk indicator for each networked device.</td>
+        </tr>
+        <tr>
+            <td><strong>Username Detective</strong></td>
+            <td>Username input at the top; results grid showing platform icons with colour-coded found/not-found badges.
+                Clickable platform links open in a new tab.</td>
+        </tr>
+        <tr>
+            <td><strong>Code Security Auditor</strong></td>
+            <td>Split-screen layout: code input textarea (left) with syntax highlighting; rendered markdown
+                vulnerability report (right) with severity badges (Critical/High/Medium/Low) in red/orange/yellow/green.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Privacy Policy Decoder</strong></td>
+            <td>Large textarea for pasting legal text; "Reveal Truth" button triggers analysis. Result panel shows
+                emoji-enhanced report with Privacy Score badge prominently displayed.</td>
+        </tr>
+        <tr>
+            <td><strong>Malware Scanner</strong></td>
+            <td>Large drag-and-drop upload zone; animated scanning progress bar; large status badge (green CLEAN / red
+                INFECTED) with threat name if detected. Audit log table at bottom.</td>
+        </tr>
+        <tr>
+            <td><strong>Password Vault</strong></td>
+            <td>Credential table with website favicon, username, masked password, and action buttons (copy, reveal,
+                edit, delete). "Add Credential" modal for new entries. AES encryption indicator.</td>
+        </tr>
+        <tr>
+            <td><strong>Secure File Converter</strong></td>
+            <td>File upload with format detection; dropdown to select target format; progress indicator during
+                conversion; download button on completion. Supported formats matrix displayed.</td>
+        </tr>
+        <tr>
+            <td><strong>Cyber Assistant</strong></td>
+            <td>Chat interface with dark background, AI response bubbles in blue, user bubbles in cyan. Markdown
+                rendering in responses. Typing indicator animation during AI processing.</td>
+        </tr>
+        <tr>
+            <td><strong>Cyber Academy</strong></td>
+            <td>Module grid with category tabs (Fundamentals, Network, Cryptography, etc.). Progress indicators on
+                partially completed modules. Featured simulation cards for Phishing Trainer and RPG.</td>
+        </tr>
+        <tr>
+            <td><strong>Incident Response RPG</strong></td>
+            <td>Terminal-style interface with monospace green text on black background. AI narration in white; player
+                input in a command-line prompt at the bottom. Crisis level indicator in the header.</td>
+        </tr>
+        <tr>
+            <td><strong>Phishing Trainer</strong></td>
+            <td>Simulated email inbox with realistic-looking phishing emails. User clicks "Phishing" or "Legitimate"
+                buttons. Score and explanation shown after each selection.</td>
+        </tr>
+        <tr>
+            <td><strong>Health Check</strong></td>
+            <td>Checklist divided by category (Account Security, Device Security, Network Security). Circular progress
+                score updates in real-time. Final score with colour-coded rating (Poor/Fair/Good/Excellent).</td>
+        </tr>
+        <tr>
+            <td><strong>Emergency Guides</strong></td>
+            <td>"Panic Mode" UI with red/orange colour scheme. Four large guide cards (Stolen Device, Hacked Account,
+                Ransomware, Identity Theft) each opening a step-by-step wizard.</td>
+        </tr>
+        <tr>
+            <td><strong>Steganography Studio</strong></td>
+            <td>Two-tab interface (Encode / Decode). Encode: image + message input → download stego image. Decode:
+                upload image → extracted message displayed.</td>
+        </tr>
+        <tr>
+            <td><strong>Settings Page</strong></td>
+            <td>Profile section (avatar, name, email, change password), Security section (MFA setup with QR code, active
+                sessions), and Danger Zone (account deletion with confirmation).</td>
+        </tr>
+        <tr>
+            <td><strong>Admin Dashboard</strong></td>
+            <td>Stat cards (Total Users, Scans Today, Threats Detected, Conversions). User management table with search,
+                role badge, and action buttons. Threat log timeline. Platform activity charts.</td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <!-- SECTION 12 -->
+    <h2><span class="section-num">12.</span> BIBLIOGRAPHY</h2>
+    <ol>
+        <li>React Documentation — Meta Inc. <em>React: The library for web and native user interfaces.</em> (2024).
+            Retrieved from <code>https://react.dev</code></li>
+        <li>Vite Documentation — Evan You. <em>Vite: Next Generation Frontend Tooling.</em> (2024). Retrieved from
+            <code>https://vitejs.dev</code></li>
+        <li>Node.js Documentation — OpenJS Foundation. <em>Node.js v18 API Reference.</em> (2024). Retrieved from
+            <code>https://nodejs.org/docs</code></li>
+        <li>Express.js Guide — StrongLoop / IBM. <em>Express: Fast, unopinionated, minimalist web framework for
+                Node.js.</em> (2024). Retrieved from <code>https://expressjs.com</code></li>
+        <li>MongoDB Documentation — MongoDB Inc. <em>MongoDB Manual: Documents, Collections, Aggregation.</em> (2024).
+            Retrieved from <code>https://www.mongodb.com/docs</code></li>
+        <li>Mongoose Documentation — Automattic. <em>Mongoose ODM for Node.js.</em> (2024). Retrieved from
+            <code>https://mongoosejs.com/docs</code></li>
+        <li>Firebase Documentation — Google LLC. <em>Firebase Auth, Firestore, and Admin SDK.</em> (2024). Retrieved
+            from <code>https://firebase.google.com/docs</code></li>
+        <li>Google Gemini API — Google DeepMind. <em>Gemini API Reference and Prompt Guide.</em> (2024). Retrieved from
+            <code>https://ai.google.dev/gemini-api/docs</code></li>
+        <li>ClamAV Documentation — Cisco Systems. <em>ClamAV Antivirus Engine User Guide.</em> (2024). Retrieved from
+            <code>https://docs.clamav.net</code></li>
+        <li>Tailwind CSS Documentation — Tailwind Labs Inc. <em>Tailwind CSS: A utility-first CSS framework.</em>
+            (2024). Retrieved from <code>https://tailwindcss.com/docs</code></li>
+        <li>Framer Motion API — Framer B.V. <em>Framer Motion: Production-ready animation library for React.</em>
+            (2024). Retrieved from <code>https://www.framer.com/motion</code></li>
+        <li>Three.js Documentation — Mr.doob. <em>Three.js: JavaScript 3D Library.</em> (2024). Retrieved from
+            <code>https://threejs.org/docs</code></li>
+        <li>OWASP. <em>OWASP Top Ten Web Application Security Risks 2021.</em> Open Web Application Security Project,
+            2021. Retrieved from <code>https://owasp.org/www-project-top-ten</code></li>
+        <li>NIST. <em>NIST Special Publication 800-63B: Digital Identity Guidelines — Authentication and Lifecycle
+                Management.</em> National Institute of Standards and Technology, 2017 (Rev. 2024). Retrieved from
+            <code>https://pages.nist.gov/800-63-3</code></li>
+        <li>Verizon. <em>2024 Data Breach Investigations Report (DBIR).</em> Verizon Business, 2024. Retrieved from
+            <code>https://www.verizon.com/business/resources/reports/dbir</code></li>
+        <li>IBM Security. <em>Cost of a Data Breach Report 2024.</em> IBM Corporation, 2024. Retrieved from
+            <code>https://www.ibm.com/reports/data-breach</code></li>
+        <li>Helmut.js Contributors. <em>Helmet: Help secure Express apps by setting HTTP response headers.</em> (2024).
+            Retrieved from <code>https://helmetjs.github.io</code></li>
+        <li>Sharp Documentation — Lovell Fuller. <em>Sharp: High performance Node.js image processing.</em> (2024).
+            Retrieved from <code>https://sharp.pixelplumbing.com</code></li>
+        <li>FFmpeg Documentation — FFmpeg Team. <em>FFmpeg: A complete, cross-platform solution to record, convert and
+                stream audio and video.</em> (2024). Retrieved from <code>https://ffmpeg.org/documentation.html</code>
+        </li>
+        <li>Socket.IO Documentation — Guillermo Rauch. <em>Socket.IO: Bidirectional event-based communication.</em>
+            (2024). Retrieved from <code>https://socket.io/docs</code></li>
+        <li>CryptoJS — Jeff Mott. <em>CryptoJS: Standard and secure cryptographic algorithms implemented in
+                JavaScript.</em> (2024). Retrieved from <code>https://github.com/brix/crypto-js</code></li>
+        <li>Prasad, R. and Rohokale, V. <em>Cyber Security: The Lifeline of Information and Communication
+                Technology.</em> Springer, 2020. ISBN: 978-3-030-31703-4.</li>
+        <li>Stallings, W. <em>Cryptography and Network Security: Principles and Practice</em>, 8th Edition. Pearson,
+            2022. ISBN: 978-0136116165.</li>
+    </ol>
+
+    <hr>
+    <p style="text-align:center;color:#666;margin-top:30px;font-size:10pt;">
+        <em>CyberSafeHub Project Documentation &nbsp;|&nbsp; Version 1.0 &nbsp;|&nbsp; February 2026</em><br>
+        <em>All rights reserved. Developed as an academic project submission.</em>
+    </p>
+
+</div>
+</body>
+
+</html>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CyberSafeHub – Sequence Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: #fff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #111
+        }
+
+        #top {
+            background: #1e293b;
+            color: #fff;
+            text-align: center;
+            padding: 10px
+        }
+
+        #top h1 {
+            font-size: 1.3rem;
+            color: #38bdf8
+        }
+
+        #top p {
+            font-size: .78rem;
+            color: #94a3b8
+        }
+
+        #ctrl {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            padding: 6px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap
+        }
+
+        .btn {
+            padding: 4px 12px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            cursor: pointer;
+            font-size: .75rem;
+            color: #334155
+        }
+
+        .btn:hover {
+            background: #e2e8f0
+        }
+
+        #wrap {
+            overflow: auto;
+            background: #fff
+        }
+
+        canvas {
+            display: block
+        }
+    </style>
+</head>
+
+<body>
+    <div id="top">
+        <h1>🛡 CyberSafeHub — Sequence Diagram</h1>
+        <p>All system flows: Auth · Vault · Scan · WiFi · OSINT · Conversion · AI · WebRTC · Admin</p>
+    </div>
+    <div id="ctrl">
+        <button class="btn" onclick="zoom(1.2)">＋ Zoom In</button>
+        <button class="btn" onclick="zoom(0.85)">－ Zoom Out</button>
+        <button class="btn" onclick="resetZ()">⟳ Reset</button>
+        <button class="btn" onclick="window.print()">🖨 Print</button>
+    </div>
+    <div id="wrap"><canvas id="c"></canvas></div>
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let sc = 1;
+
+        // ─── CONFIG ───
+        const ACTORS = [
+            { id: 'U', label: 'User\n(Browser)' },
+            { id: 'FE', label: 'Frontend\n(React)' },
+            { id: 'BE', label: 'Backend\nAPI (Express)' },
+            { id: 'FB', label: 'Firebase\nAuth' },
+            { id: 'MG', label: 'MongoDB\nAtlas' },
+            { id: 'AI', label: 'Gemini\nAI' },
+            { id: 'EX', label: 'External\nAPIs' },
+        ];
+        const COL_W = 170, LEFT_PAD = 80, TOP_PAD = 100;
+        const ACTOR_W = 120, ACTOR_H = 46;
+        const ROW_H = 30, SECTION_H = 36;
+        const FONT = '13px Segoe UI', BOLD = 'bold 13px Segoe UI', SMALL = '11px Segoe UI';
+
+        // ─── FLOWS: [type, fromIdx, toIdx, label, extra]
+        // types: 'msg'=solid arrow, 'ret'=dashed with open arrow, 'sec'=section header, 'gap'=spacer, 'note'=annotation
+        const FLOWS = [
+            // ─── 1. USER REGISTRATION / LOGIN ───
+            { t: 'sec', label: '1. USER REGISTRATION / LOGIN (Firebase Auth)' },
+            { t: 'msg', f: 0, to: 1, label: 'Enter email & password / Google Sign-In' },
+            { t: 'msg', f: 1, to: 3, label: 'createUserWithEmailAndPassword(email, pwd)' },
+            { t: 'ret', f: 3, to: 1, label: 'UserCredential (uid, email, token)' },
+            { t: 'msg', f: 1, to: 3, label: 'onAuthStateChanged() → listen' },
+            { t: 'ret', f: 3, to: 1, label: 'currentUser object' },
+            { t: 'msg', f: 1, to: 2, label: 'logActivity("AUTH","User Logged In") → POST /api/log' },
+            { t: 'ret', f: 2, to: 0, label: 'Redirect to Dashboard' },
+            { t: 'gap' },
+
+            // ─── 2. ADMIN LOGIN & DASHBOARD ───
+            { t: 'sec', label: '2. ADMIN LOGIN & COMMAND CENTER' },
+            { t: 'msg', f: 0, to: 1, label: 'Admin enters credentials → /admin/login' },
+            { t: 'msg', f: 1, to: 3, label: 'signInWithEmailAndPassword()' },
+            { t: 'ret', f: 3, to: 1, label: 'Firebase ID Token' },
+            { t: 'msg', f: 1, to: 2, label: 'GET /api/admin/verify  Auth: Bearer <Token>' },
+            { t: 'msg', f: 2, to: 4, label: 'Admin.findOne({ email })' },
+            { t: 'ret', f: 4, to: 2, label: 'Admin doc (role, email)' },
+            { t: 'ret', f: 2, to: 1, label: '{ role: "super_admin" }' },
+            { t: 'msg', f: 1, to: 2, label: 'GET /api/admin/dashboard  (adminAuth middleware)' },
+            { t: 'msg', f: 2, to: 4, label: 'PlatformStat.findOne(today)  +  ThreatLog.find().limit(10)' },
+            { t: 'ret', f: 4, to: 2, label: '{ usageStats, threats[] }' },
+            { t: 'ret', f: 2, to: 1, label: 'Dashboard data (metrics, threats, systemStatus)' },
+            { t: 'ret', f: 1, to: 0, label: 'Render CommandCenter UI' },
+            { t: 'gap' },
+
+            // ─── 3. PASSWORD VAULT (CRUD) ───
+            { t: 'sec', label: '3. PASSWORD VAULT (MongoDB CRUD)' },
+            { t: 'msg', f: 0, to: 1, label: 'Open Vault page → fetch items' },
+            { t: 'msg', f: 1, to: 2, label: 'GET /api/vault/:userId' },
+            { t: 'msg', f: 2, to: 4, label: 'VaultItem.find({ userId }).sort(createdAt)' },
+            { t: 'ret', f: 4, to: 2, label: 'VaultItem[] (type, name, data)' },
+            { t: 'ret', f: 2, to: 1, label: 'JSON array of vault items' },
+            { t: 'ret', f: 1, to: 0, label: 'Display items (login/card/identity/note)' },
+            { t: 'msg', f: 0, to: 1, label: 'Add/Edit item → Save' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /api/vault  { userId, type, name, data }' },
+            { t: 'msg', f: 2, to: 4, label: 'new VaultItem({...}).save()' },
+            { t: 'ret', f: 4, to: 2, label: 'Saved document' },
+            { t: 'ret', f: 2, to: 1, label: '201 Created + new item' },
+            { t: 'msg', f: 0, to: 1, label: 'Delete item' },
+            { t: 'msg', f: 1, to: 2, label: 'DELETE /api/vault/:id' },
+            { t: 'msg', f: 2, to: 4, label: 'VaultItem.findByIdAndDelete(id)' },
+            { t: 'ret', f: 2, to: 1, label: '200 { message: "Item deleted" }' },
+            { t: 'gap' },
+
+            // ─── 4. MALWARE / FILE SCAN ───
+            { t: 'sec', label: '4. MALWARE FILE SCAN (ClamAV + ThreatLog)' },
+            { t: 'msg', f: 0, to: 1, label: 'Upload file to Scanner' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /scan  multipart/form-data (file)' },
+            { t: 'msg', f: 2, to: 2, label: '[Server] multer saves file → ClamAV.scanFile()' },
+            { t: 'ret', f: 2, to: 2, label: '{ isInfected, viruses[] }' },
+            { t: 'msg', f: 2, to: 4, label: 'new ThreatLog({ type:"malware", target, details }).save()' },
+            { t: 'ret', f: 4, to: 2, label: 'ThreatLog saved' },
+            { t: 'msg', f: 2, to: 2, label: 'fs.unlink() → delete uploaded file' },
+            { t: 'ret', f: 2, to: 1, label: '{ status:"infected"|"clean", viruses[] }' },
+            { t: 'ret', f: 1, to: 0, label: 'Show scan result + threat details' },
+            { t: 'gap' },
+
+            // ─── 5. PHISHING URL CHECK ───
+            { t: 'sec', label: '5. PHISHING URL CHECK (Google Safe Browsing API)' },
+            { t: 'msg', f: 0, to: 1, label: 'Enter URL → Check' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /api/security/safebrowsing  { threatInfo }  (verifyToken)' },
+            { t: 'msg', f: 2, to: 6, label: 'POST safebrowsing.googleapis.com/v4/threatMatches:find' },
+            { t: 'ret', f: 6, to: 2, label: '{ matches[] } or {}' },
+            { t: 'msg', f: 2, to: 4, label: 'new ThreatLog({ type:"phishing", target, details }).save()' },
+            { t: 'ret', f: 4, to: 2, label: 'Logged' },
+            { t: 'ret', f: 2, to: 1, label: 'Threat result data' },
+            { t: 'ret', f: 1, to: 0, label: 'Display: Safe / Phishing Detected' },
+            { t: 'gap' },
+
+            // ─── 6. SECURITY HEALTH CHECK ───
+            { t: 'sec', label: '6. SECURITY HEALTH CHECK (Multi-step Scan)' },
+            { t: 'msg', f: 0, to: 1, label: 'Click "Start Health Check"' },
+            { t: 'msg', f: 1, to: 6, label: 'checkIpInfo() → ipapi.co/json  (step 1: Network)' },
+            { t: 'ret', f: 6, to: 1, label: '{ ip, org, country }' },
+            { t: 'msg', f: 1, to: 1, label: 'checkBrowserSecurity() → local (step 2: Browser)' },
+            { t: 'msg', f: 1, to: 6, label: 'checkBreaches(email) → haveibeenpwned.com  (step 3)' },
+            { t: 'ret', f: 6, to: 1, label: '{ found, breaches[] }' },
+            { t: 'msg', f: 1, to: 1, label: 'checkBatteryFingerprinting() + checkCyberHygiene() (steps 4-5)' },
+            { t: 'msg', f: 1, to: 1, label: 'Compile finalScore, findings[], roadmap[]' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /api/security/gemini  { contents, systemInstruction }' },
+            { t: 'msg', f: 2, to: 5, label: 'generativelanguage.googleapis.com generateContent' },
+            { t: 'ret', f: 5, to: 2, label: 'AI summary text' },
+            { t: 'ret', f: 2, to: 1, label: '{ aiSummary }' },
+            { t: 'msg', f: 1, to: 1, label: 'localStorage.setItem("healthCheckHistory", result)' },
+            { t: 'ret', f: 1, to: 0, label: 'Show score, findings, AI summary, roadmap' },
+            { t: 'gap' },
+
+            // ─── 7. WIFI RADAR SCAN ───
+            { t: 'sec', label: '7. WIFI RADAR SCAN (ARP + mDNS + SSDP)' },
+            { t: 'msg', f: 0, to: 1, label: 'Open WiFi Radar → Scan' },
+            { t: 'msg', f: 1, to: 2, label: 'GET /api/wifi-radar/scan' },
+            { t: 'msg', f: 2, to: 2, label: '[Server] Ping sweep 254 hosts (batch pings)' },
+            { t: 'msg', f: 2, to: 2, label: 'exec("arp -a") → parse IP/MAC pairs' },
+            { t: 'msg', f: 2, to: 2, label: 'multicast-dns query → mdnsMap{}' },
+            { t: 'msg', f: 2, to: 2, label: 'SSDP M-SEARCH → ssdpMap{}' },
+            { t: 'msg', f: 2, to: 2, label: 'resolveHostname() per device (DNS/NetBIOS/HTTP)' },
+            { t: 'msg', f: 2, to: 2, label: 'checkPort() → fingerprint device type' },
+            { t: 'msg', f: 2, to: 2, label: 'getVendorLocal(mac) → vendors.json lookup' },
+            { t: 'ret', f: 2, to: 1, label: 'enrichedDevices[] (ip, mac, name, vendor, type, ports)' },
+            { t: 'ret', f: 1, to: 0, label: 'Display device grid with risk indicators' },
+            { t: 'gap' },
+
+            // ─── 8. OSINT USERNAME DETECTIVE ───
+            { t: 'sec', label: '8. OSINT USERNAME DETECTIVE' },
+            { t: 'msg', f: 0, to: 1, label: 'Enter username → Search across platforms' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /api/osint/check  { username, site }  (per site)' },
+            { t: 'msg', f: 2, to: 6, label: 'axios.get(site.url.replace("USERNAME", username))' },
+            { t: 'ret', f: 6, to: 2, label: 'HTTP 200 / 404 / 403' },
+            { t: 'ret', f: 2, to: 1, label: '{ status:"found"|"not_found"|"potential", url }' },
+            { t: 'ret', f: 1, to: 0, label: 'Show results per platform (found/not found)' },
+            { t: 'gap' },
+
+            // ─── 9. AI CYBER ASSISTANT ───
+            { t: 'sec', label: '9. AI CYBER ASSISTANT (Gemini via Secure Proxy)' },
+            { t: 'msg', f: 0, to: 1, label: 'Type message in Cyber Assistant' },
+            { t: 'msg', f: 1, to: 3, label: 'auth.currentUser.getIdToken()' },
+            { t: 'ret', f: 3, to: 1, label: 'Firebase ID Token' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /api/security/gemini  Auth: Bearer <token>' },
+            { t: 'msg', f: 2, to: 2, label: 'verifyToken middleware → Firebase Admin SDK' },
+            { t: 'msg', f: 2, to: 5, label: 'POST generativelanguage.googleapis.com (Gemini 2.5 Flash)' },
+            { t: 'ret', f: 5, to: 2, label: '{ candidates[].content.parts[].text }' },
+            { t: 'ret', f: 2, to: 1, label: 'AI response text' },
+            { t: 'ret', f: 1, to: 0, label: 'Display streamed AI response in chat UI' },
+            { t: 'gap' },
+
+            // ─── 10. FILE CONVERSION (JOB QUEUE) ───
+            { t: 'sec', label: '10. FILE FORMAT CONVERSION (Job Queue)' },
+            { t: 'msg', f: 0, to: 1, label: 'Upload file + select target format' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /api/convert/start  multipart/form-data' },
+            { t: 'msg', f: 2, to: 4, label: 'new Job({ sourceFile, targetFormat, status:"queued" }).save()' },
+            { t: 'ret', f: 4, to: 2, label: 'Job _id' },
+            { t: 'ret', f: 2, to: 1, label: '{ jobId }' },
+            { t: 'msg', f: 1, to: 2, label: 'GET /api/convert/status/:jobId  (polling)' },
+            { t: 'msg', f: 2, to: 2, label: '[Server] ffmpeg/libreoffice conversion → update status' },
+            { t: 'msg', f: 2, to: 4, label: 'Job.findByIdAndUpdate({ status:"completed", result })' },
+            { t: 'ret', f: 4, to: 2, label: 'Updated Job' },
+            { t: 'ret', f: 2, to: 1, label: '{ status:"completed", downloadUrl }' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /api/admin/stats/increment  { type:"pdfsConverted" }' },
+            { t: 'msg', f: 2, to: 4, label: 'PlatformStat.findOneAndUpdate($inc)' },
+            { t: 'ret', f: 1, to: 0, label: 'Download button + result file' },
+            { t: 'gap' },
+
+            // ─── 11. SECURE SHARE (WebRTC + Socket.IO) ───
+            { t: 'sec', label: '11. SECURE SHARE (WebRTC P2P via Socket.IO Signaling)' },
+            { t: 'msg', f: 0, to: 1, label: 'Open Secure Share → Connect to Socket.IO' },
+            { t: 'msg', f: 1, to: 2, label: 'socket.emit("join-nearby", displayName)' },
+            { t: 'ret', f: 2, to: 1, label: 'nearbyUsers.set(socketId, { ip, name })' },
+            { t: 'msg', f: 1, to: 2, label: 'socket.emit("get-nearby-users")' },
+            { t: 'ret', f: 2, to: 1, label: 'socket.emit("nearby-users-list", users[]) ← same subnet' },
+            { t: 'ret', f: 1, to: 0, label: 'Display nearby peers' },
+            { t: 'msg', f: 0, to: 1, label: 'Click peer to connect' },
+            { t: 'msg', f: 1, to: 2, label: 'socket.emit("request-connection", targetId, senderName)' },
+            { t: 'ret', f: 2, to: 1, label: 'io.to(targetId).emit("connection-request")' },
+            { t: 'msg', f: 1, to: 2, label: 'socket.emit("accept-connection", targetId)' },
+            { t: 'msg', f: 1, to: 2, label: 'socket.emit("offer", { target, sdp }) → WebRTC Offer' },
+            { t: 'ret', f: 2, to: 1, label: 'relay offer to peer' },
+            { t: 'msg', f: 1, to: 2, label: 'socket.emit("answer", payload) + "ice-candidate"' },
+            { t: 'ret', f: 2, to: 1, label: 'relay answer + ICE candidates' },
+            { t: 'ret', f: 1, to: 0, label: 'P2P DataChannel established → transfer file' },
+            { t: 'gap' },
+
+            // ─── 12. METADATA WASHER ───
+            { t: 'sec', label: '12. METADATA WASHER & CODE AUDITOR (Client-side + Gemini)' },
+            { t: 'msg', f: 0, to: 1, label: 'Upload file to Metadata Washer' },
+            { t: 'msg', f: 1, to: 1, label: '[Client] Read file → strip EXIF/metadata (exifr/pdf-lib)' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /api/admin/stats/increment { type:"filesCleaned" }' },
+            { t: 'msg', f: 2, to: 4, label: 'PlatformStat $inc filesCleaned' },
+            { t: 'ret', f: 1, to: 0, label: 'Download cleaned file' },
+            { t: 'msg', f: 0, to: 1, label: 'Paste code to Code Security Auditor' },
+            { t: 'msg', f: 1, to: 2, label: 'POST /api/security/gemini { contents, systemInstruction }' },
+            { t: 'msg', f: 2, to: 5, label: 'Gemini: analyze vulnerabilities in code' },
+            { t: 'ret', f: 5, to: 2, label: 'Vulnerability report (markdown)' },
+            { t: 'ret', f: 2, to: 1, label: 'AI audit report' },
+            { t: 'ret', f: 1, to: 0, label: 'Show severity-tagged vulnerability list' },
+        ];
+
+        // ─── DRAWING ───
+        function draw() {
+            const nA = ACTORS.length;
+            const W = LEFT_PAD + nA * COL_W + 100;
+
+            // Count rows
+            let rows = 0;
+            FLOWS.forEach(f => {
+                if (f.t === 'sec') rows += 1.2;
+                else if (f.t === 'gap') rows += 0.6;
+                else rows += 1;
+            });
+            const H = TOP_PAD + rows * ROW_H + 120;
+
+            canvas.width = Math.round(W * sc);
+            canvas.height = Math.round(H * sc);
+            ctx.setTransform(sc, 0, 0, sc, 0, 0);
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, H);
+
+            // Actor x positions
+            const ax = ACTORS.map((_, i) => LEFT_PAD + i * COL_W + COL_W / 2);
+
+            // Draw top actor boxes
+            ctx.font = BOLD; ctx.textAlign = 'center';
+            ACTORS.forEach((a, i) => {
+                const x = ax[i], y = 20;
+                ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.roundRect(x - ACTOR_W / 2, y, ACTOR_W, ACTOR_H, 4);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#0f172a'; ctx.font = 'bold 11px Segoe UI';
+                const lines = a.label.split('\n');
+                lines.forEach((ln, li) => ctx.fillText(ln, x, y + 16 + li * 14));
+            });
+
+            // Walk flows and compute row positions
+            let ry = TOP_PAD + ACTOR_H;
+            const rowYs = [];
+            FLOWS.forEach(f => {
+                rowYs.push(ry);
+                if (f.t === 'sec') ry += SECTION_H;
+                else if (f.t === 'gap') ry += 18;
+                else ry += ROW_H;
+            });
+
+            const totalH = ry + ACTOR_H + 20;
+
+            // Draw lifelines
+            ctx.setLineDash([5, 4]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1;
+            ax.forEach(x => {
+                ctx.beginPath(); ctx.moveTo(x, TOP_PAD + ACTOR_H); ctx.lineTo(x, totalH - ACTOR_H);
+                ctx.stroke();
+            });
+            ctx.setLineDash([]);
+
+            // Draw bottom actor boxes
+            ACTORS.forEach((a, i) => {
+                const x = ax[i], y = totalH - ACTOR_H - 10;
+                ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.roundRect(x - ACTOR_W / 2, y, ACTOR_W, ACTOR_H, 4);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#0f172a'; ctx.font = 'bold 11px Segoe UI';
+                const lines = a.label.split('\n');
+                lines.forEach((ln, li) => ctx.fillText(ln, x, y + 16 + li * 14));
+            });
+
+            // Draw flows
+            FLOWS.forEach((f, i) => {
+                const y = rowYs[i];
+                if (f.t === 'sec') {
+                    // Section header band
+                    ctx.fillStyle = '#1e3a5f';
+                    ctx.fillRect(30, y + 2, W - 50, SECTION_H - 6);
+                    ctx.fillStyle = '#e0f2fe'; ctx.font = 'bold 11.5px Segoe UI'; ctx.textAlign = 'left';
+                    ctx.fillText(f.label, 42, y + 2 + (SECTION_H - 6) / 2 + 4);
+                    return;
+                }
+                if (f.t === 'gap') return;
+
+                const x1 = ax[f.f], x2 = ax[f.to];
+                const mid = y + ROW_H / 2;
+                const isSelf = (f.f === f.to);
+                const isRet = (f.t === 'ret');
+
+                if (isSelf) {
+                    // Self-call loop
+                    ctx.strokeStyle = isRet ? '#6366f1' : '#0284c7';
+                    ctx.lineWidth = 1.2; ctx.setLineDash(isRet ? [4, 3] : []);
+                    const lx = x1 + 15, off = y + 4, bh = ROW_H - 8;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, off); ctx.lineTo(lx + 20, off);
+                    ctx.lineTo(lx + 20, off + bh); ctx.lineTo(x1, off + bh);
+                    ctx.stroke(); ctx.setLineDash([]);
+                    // Arrowhead back
+                    arrowHead(x1, off + bh, -1, isRet, ctx);
+                    // Label
+                    ctx.fillStyle = '#374151'; ctx.font = SMALL; ctx.textAlign = 'left';
+                    ctx.fillText('[' + f.label + ']', lx + 24, off + bh / 2 + 4);
+                    return;
+                }
+
+                const fromX = (x1 < x2) ? x1 : x1;
+                const toX = (x1 < x2) ? x2 : x2;
+                const dir = (x1 < x2) ? 1 : -1;
+
+                ctx.strokeStyle = isRet ? '#64748b' : '#0284c7';
+                ctx.lineWidth = 1.3; ctx.setLineDash(isRet ? [5, 4] : []);
+                ctx.beginPath();
+                ctx.moveTo(x1, mid);
+                ctx.lineTo(x2 + (dir > 0 ? -8 : 8), mid);
+                ctx.stroke(); ctx.setLineDash([]);
+                arrowHead(x2, mid, dir, isRet, ctx);
+
+                // Label
+                const lx = (x1 + x2) / 2;
+                ctx.fillStyle = isRet ? '#475569' : '#0c4a6e';
+                ctx.font = isRet ? 'italic 10.5px Segoe UI' : '11px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText(f.label, lx, mid - 5);
+            });
+
+            // Footer
+            ctx.fillStyle = '#334155'; ctx.font = 'italic 10px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('CyberSafeHub — Sequence Diagram  |  React · Express · Firebase · MongoDB · Gemini AI · Socket.IO', W / 2, totalH + 15);
+        }
+
+        function arrowHead(x, y, dir, open, ctx) {
+            const s = 7;
+            ctx.fillStyle = dir > 0 ? (open ? '#64748b' : '#0284c7') : (open ? '#64748b' : '#0284c7');
+            ctx.strokeStyle = ctx.fillStyle;
+            ctx.lineWidth = 1;
+            if (!open) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - dir * s, y - 4);
+                ctx.lineTo(x - dir * s, y + 4);
+                ctx.closePath(); ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(x - dir * s, y - 4);
+                ctx.lineTo(x, y);
+                ctx.lineTo(x - dir * s, y + 4);
+                ctx.stroke();
+            }
+        }
+
+        function zoom(f) { sc *= f; draw() }
+        function resetZ() { sc = 1; draw() }
+
+        // Polyfill roundRect for older browsers
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+                this.beginPath(); this.moveTo(x + r, y); this.lineTo(x + w - r, y);
+                this.quadraticCurveTo(x + w, y, x + w, y + r); this.lineTo(x + w, y + h - r);
+                this.quadraticCurveTo(x + w, y + h, x + w - r, y + h); this.lineTo(x + r, y + h);
+                this.quadraticCurveTo(x, y + h, x, y + h - r); this.lineTo(x, y + r);
+                this.quadraticCurveTo(x, y, x + r, y); this.closePath();
+            };
+        }
+
+        draw();
+    </script>
+</body>
+
+</html>

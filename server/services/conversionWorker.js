@@ -94,6 +94,21 @@ class ConversionWorker {
             };
             await job.save();
 
+            // 4. Update Global Platform Stats if PDF related
+            if (target === 'pdf' || sourceExt === 'pdf') {
+                try {
+                    const PlatformStat = require('../models/PlatformStat');
+                    const today = new Date().toISOString().split('T')[0];
+                    await PlatformStat.findOneAndUpdate(
+                        { date: today },
+                        { $inc: { pdfsConverted: 1 } },
+                        { upsert: true, new: true, setDefaultsOnInsert: true }
+                    );
+                } catch (statErr) {
+                    console.error('Failed to increment PDF stat:', statErr);
+                }
+            }
+
         } catch (err) {
             console.error(`Job ${jobId} Failed:`, err);
             job.status = 'failed';

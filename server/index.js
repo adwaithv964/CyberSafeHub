@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const VaultItem = require('./models/VaultItem');
-require('dotenv').config({ path: '../.env' }); // Load from root .env if running from server dir
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') }); // Absolute path so it works regardless of CWD
 
 const app = express();
 const http = require('http');
@@ -179,6 +179,10 @@ app.use('/api/security', securityRoute);
 const convertRoute = require('./routes/conversionApi');
 app.use('/api/convert', convertRoute);
 
+// --- Admin Routes ---
+const adminRoute = require('./routes/admin');
+app.use('/api/admin', adminRoute);
+
 // --- Vault API Routes ---
 
 // Get all items for a user
@@ -252,6 +256,17 @@ app.post('/scan', upload.single('file'), async (req, res) => {
         });
 
         if (isInfected) {
+            try {
+                const ThreatLog = require('./models/ThreatLog');
+                await new ThreatLog({
+                    type: 'malware',
+                    target: req.file.originalname,
+                    details: viruses || []
+                }).save();
+            } catch (err) {
+                console.error("Failed to log malware threat:", err);
+            }
+
             return res.json({
                 status: 'infected',
                 viruses: viruses,

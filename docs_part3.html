@@ -1,0 +1,703 @@
+<div class="page">
+
+    <!-- SECTION 5 -->
+    <h2><span class="section-num">5.</span> SYSTEM DEVELOPMENT</h2>
+
+    <h3>5.1 Coding Environment</h3>
+    <p>CyberSafeHub was developed using a modern, open-source toolchain optimised for developer productivity and code
+        quality.</p>
+    <table>
+        <tr>
+            <th>Tool</th>
+            <th>Purpose</th>
+            <th>Configuration</th>
+        </tr>
+        <tr>
+            <td>Visual Studio Code</td>
+            <td>Primary IDE</td>
+            <td>Extensions: ESLint, Prettier, ES7 React Snippets, Tailwind IntelliSense</td>
+        </tr>
+        <tr>
+            <td>Node.js v18 LTS</td>
+            <td>JavaScript Runtime</td>
+            <td>ESM modules (<code>type: module</code>) in frontend; CommonJS in backend server</td>
+        </tr>
+        <tr>
+            <td>npm</td>
+            <td>Package Manager</td>
+            <td>Separate <code>package.json</code> for frontend (root) and backend (<code>server/</code>)</td>
+        </tr>
+        <tr>
+            <td>Vite 7</td>
+            <td>Frontend Dev Server</td>
+            <td>HMR, React plugin, PWA plugin, proxy config for backend API</td>
+        </tr>
+        <tr>
+            <td>ESLint 8</td>
+            <td>Code Linting</td>
+            <td>React + React Hooks + React Refresh plugins</td>
+        </tr>
+        <tr>
+            <td>Git + GitHub</td>
+            <td>Version Control</td>
+            <td>Feature branches merged to <code>main</code>; GitHub Actions for CI</td>
+        </tr>
+        <tr>
+            <td>Postman</td>
+            <td>API Testing</td>
+            <td>Collections for all backend endpoints with environment variables</td>
+        </tr>
+        <tr>
+            <td>Docker Desktop</td>
+            <td>Containerisation</td>
+            <td>Multi-stage Dockerfile for backend; tested locally before push to Render</td>
+        </tr>
+    </table>
+
+    <h4>Dockerfile (Backend)</h4>
+    <pre>
+FROM node:18-slim
+WORKDIR /app
+# Install system dependencies (ClamAV, LibreOffice, FFmpeg)
+RUN apt-get update &amp;&amp; apt-get install -y \
+    clamav clamav-daemon libreoffice ffmpeg \
+    &amp;&amp; rm -rf /var/lib/apt/lists/*
+COPY server/package*.json ./
+RUN npm install
+COPY server/ .
+EXPOSE 5001
+CMD ["node", "index.js"]
+</pre>
+
+    <h4>Vite Configuration (vite.config.js)</h4>
+    <pre>
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    VitePWA({ registerType: 'autoUpdate', manifest: { name: 'CyberSafeHub' } })
+  ],
+  server: {
+    proxy: { '/api': 'http://localhost:5001', '/scan': 'http://localhost:5001' }
+  }
+})
+</pre>
+
+    <h3>5.2 Development Approach</h3>
+    <p>CyberSafeHub followed an <strong>Agile-Iterative</strong> development methodology, structured into two-week
+        sprints focusing on one major module per sprint. Key development principles:</p>
+    <ul>
+        <li><strong>Component-Driven Development:</strong> The React frontend was built using a bottom-up approach —
+            atomic components (Button, Input, Card) first, then composite tool components, then full pages.</li>
+        <li><strong>API-First Backend:</strong> All backend routes were designed and tested in Postman before frontend
+            integration. This enabled parallel frontend/backend development.</li>
+        <li><strong>Environment Isolation:</strong> <code>.env</code> files (never committed to Git) store all secrets.
+            Separate <code>.env.development</code> and <code>.env.production</code> configurations ensure clean
+            environment separation.</li>
+        <li><strong>Git Branching Strategy:</strong> Feature branches (e.g., <code>feature/wifi-radar</code>,
+            <code>feature/ai-auditor</code>) are developed independently and merged to <code>main</code> via pull
+            requests after self-review.</li>
+        <li><strong>Progressive Enhancement:</strong> Core functionality was implemented first (auth, dashboard, basic
+            tools), then AI features, then educational modules, and finally the admin panel.</li>
+        <li><strong>Error-First Design:</strong> All API handlers implement try-catch blocks. Frontend components have
+            error boundary fallbacks. Toast notifications surface errors usefully to the user.</li>
+        <li><strong>Security-First Coding:</strong> Backend routes validate Firebase tokens before processing any
+            request. Multer limits file sizes. Rate limiting is applied on public endpoints.</li>
+    </ul>
+
+    <h4>Folder Structure</h4>
+    <pre>
+CyberSafeHub/
+├── src/                          # Frontend (React + Vite)
+│   ├── App.jsx                   # Root component, routing logic
+│   ├── LandingPage.jsx           # Public landing page
+│   ├── components/
+│   │   ├── tools/                # Cyber tool components (6 tools)
+│   │   │   ├── MetadataWasher.jsx
+│   │   │   ├── WiFiRadar.jsx
+│   │   │   ├── UsernameDetective.jsx
+│   │   │   ├── CodeSecurityAuditor.jsx
+│   │   │   ├── PrivacyPolicyDecoder.jsx
+│   │   │   ├── SecureShare.jsx   # File converter hub
+│   │   │   └── conversion/      # 34 format conversion components
+│   │   ├── academy/             # Educational components
+│   │   └── admin/               # Admin panel components
+│   ├── pages/                   # Full page views (13 pages)
+│   ├── contexts/                # AuthContext
+│   ├── config/                  # Firebase config
+│   └── utils/                   # API helper, QR streamer, logger
+├── server/                      # Backend (Node.js + Express)
+│   ├── index.js                 # Main server (all routes)
+│   ├── models/                  # Mongoose schemas (5 models)
+│   ├── middleware/              # auth.js, adminAuth.js
+│   ├── routes/                  # Feature route files
+│   ├── services/                # conversionWorker.js
+│   └── config/                  # Firebase Admin, conversionMatrix
+├── public/                      # Static assets
+├── Dockerfile                   # Backend Docker configuration
+└── render.yaml                  # Render deployment blueprint
+</pre>
+
+    <h3>5.3 Database Servers</h3>
+    <h4>MongoDB Atlas (Primary Database)</h4>
+    <p>MongoDB Atlas M0 (shared cluster) is used as the primary NoSQL database. The connection is established in
+        <code>server/index.js</code> using Mongoose's <code>connect()</code> method with automatic reconnection.</p>
+    <pre>
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000
+}).then(() => console.log('MongoDB Atlas connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
+</pre>
+    <p><strong>Security measures:</strong> MongoDB Atlas Network Access is configured to allow only the Render server's
+        IP (via IP allowlist). Mongoose sanitizer middleware prevents NoSQL injection. No raw query strings from user
+        input reach MongoDB.</p>
+
+    <h4>Firebase Firestore (Supplementary)</h4>
+    <p>Firebase Firestore is used for admin role verification and real-time user metadata. The Firebase Admin SDK
+        (<code>server/config/firebaseAdmin.js</code>) is initialised with a service account certificate stored as an
+        environment variable, enabling server-side token verification without client SDK limitations.</p>
+
+    <h4>In-Memory / Session Storage</h4>
+    <p>Temporary data (scan results, conversion progress, AI conversation history) is held in server memory or passed
+        via Socket.IO events. No persistent session storage is required as Firebase Auth manages session tokens in the
+        browser's localStorage.</p>
+
+    <h3>5.4 Programming Languages</h3>
+    <table>
+        <tr>
+            <th>Language</th>
+            <th>Usage Area</th>
+            <th>Key Features Used</th>
+        </tr>
+        <tr>
+            <td><strong>JavaScript (ES2023)</strong></td>
+            <td>Frontend + Backend</td>
+            <td>Async/await, destructuring, optional chaining, modules (ESM/CJS), template literals</td>
+        </tr>
+        <tr>
+            <td><strong>JSX</strong></td>
+            <td>React Components</td>
+            <td>Component templates, conditional rendering, hooks (useState, useEffect, useContext, useRef)</td>
+        </tr>
+        <tr>
+            <td><strong>CSS (via Tailwind)</strong></td>
+            <td>Styling</td>
+            <td>Utility classes, custom @layer directives, dark-mode variants, responsive breakpoints</td>
+        </tr>
+        <tr>
+            <td><strong>HTML5</strong></td>
+            <td>SPA Shell + Canvas</td>
+            <td>Semantic elements, canvas API (steganography), drag-and-drop file API</td>
+        </tr>
+        <tr>
+            <td><strong>YAML</strong></td>
+            <td>Deployment</td>
+            <td>render.yaml blueprint, Docker Compose (dev)</td>
+        </tr>
+        <tr>
+            <td><strong>JSON</strong></td>
+            <td>Config + Data</td>
+            <td>package.json, Firebase service account, vendors.json (MAC OUI database)</td>
+        </tr>
+    </table>
+
+    <h4>Key JavaScript Patterns Used</h4>
+    <pre>
+// React Context — AuthContext.jsx
+const AuthContext = createContext();
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => { setUser(u); setLoading(false); });
+    return unsub;
+  }, []);
+  return &lt;AuthContext.Provider value={{ user, loading }}&gt;{children}&lt;/AuthContext.Provider&gt;;
+};
+
+// Backend route with Firebase token verification — middleware/auth.js
+export const protect = async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.user = decoded;
+    next();
+  } catch { res.status(401).json({ error: 'Invalid token' }); }
+};
+</pre>
+
+    <hr>
+
+    <!-- SECTION 6 -->
+    <h2><span class="section-num">6.</span> SYSTEM TESTING</h2>
+    <p>CyberSafeHub underwent multiple levels of testing to ensure functionality, security, and reliability. All testing
+        was conducted manually and through automated scripts using Postman and Node.js test files.</p>
+
+    <h3>6.1 White-Box Testing</h3>
+    <p>White-box (structural) testing examines internal code logic, branches, and paths. The following internal
+        components were tested:</p>
+    <table>
+        <tr>
+            <th>Component</th>
+            <th>Test Focus</th>
+            <th>Method</th>
+            <th>Result</th>
+        </tr>
+        <tr>
+            <td>auth.js middleware</td>
+            <td>Token extraction, Firebase verification, 401 rejection on invalid token</td>
+            <td>Direct function calls with mock request objects</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>adminAuth.js middleware</td>
+            <td>Admin role check, 403 on non-admin tokens</td>
+            <td>Manual testing with admin vs. regular token</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>VaultItem.js model</td>
+            <td>Schema validation (required fields, types)</td>
+            <td>Mongoose validation errors on incomplete inserts</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>conversionWorker.js</td>
+            <td>Format routing logic, FFmpeg vs. LibreOffice branch selection</td>
+            <td>Unit test with different format pairs</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>ARP scan logic</td>
+            <td>Local device enumeration, MAC lookup, result merging</td>
+            <td>Script tests on local network (test_diagnose.js)</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>ClamAV integration</td>
+            <td>File path passing, result parsing (FOUND/OK), error on missing ClamAV</td>
+            <td>test files in Testing files/ folder</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Steganography LSB algorithm</td>
+            <td>Bit encoding / decoding correctness; message fidelity after encode→decode</td>
+            <td>Round-trip test with known message strings</td>
+            <td>✅ Pass</td>
+        </tr>
+    </table>
+
+    <h3>6.2 Black-Box Testing</h3>
+    <p>Black-box testing validates system behaviour from the user's perspective without knowledge of internal
+        implementation:</p>
+    <table>
+        <tr>
+            <th>Test Case</th>
+            <th>Input</th>
+            <th>Expected Output</th>
+            <th>Actual Output</th>
+            <th>Status</th>
+        </tr>
+        <tr>
+            <td>BB-01: Valid Login</td>
+            <td>Correct email + password</td>
+            <td>Redirect to Dashboard</td>
+            <td>Redirected to Dashboard</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>BB-02: Invalid Login</td>
+            <td>Wrong password</td>
+            <td>Error: invalid credential</td>
+            <td>Toast: "Invalid email or password"</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>BB-03: Google Sign-In</td>
+            <td>Google Account popup</td>
+            <td>User created + Dashboard</td>
+            <td>Account created, Dashboard shown</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>BB-04: Metadata Washer</td>
+            <td>JPG with GPS metadata</td>
+            <td>Cleaned file, GPS removed</td>
+            <td>GPS data absent in output</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>BB-05: Malware Scan (clean)</td>
+            <td>Clean PDF file</td>
+            <td>"No threats detected"</td>
+            <td>"File is CLEAN"</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>BB-06: Malware Scan (EICAR)</td>
+            <td>EICAR test string file</td>
+            <td>"Infected" with threat name</td>
+            <td>"Eicar-Test-Signature" detected</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>BB-07: Username Detective</td>
+            <td>"johndoe"</td>
+            <td>List of platforms with found/not-found</td>
+            <td>50+ platform results displayed</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>BB-08: Policy Decoder</td>
+            <td>Google Privacy Policy text</td>
+            <td>Simplified report with score</td>
+            <td>Report with Privacy Score 4/10</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>BB-09: Vault CRUD</td>
+            <td>Add "Gmail" credentials</td>
+            <td>Item saved and listed</td>
+            <td>Item appeared in vault table</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>BB-10: File Converter PDF→DOCX</td>
+            <td>Sample PDF file</td>
+            <td>DOCX download offered</td>
+            <td>DOCX file downloaded correctly</td>
+            <td>✅ Pass</td>
+        </tr>
+    </table>
+
+    <h3>6.3 Condition Testing</h3>
+    <p>Condition testing validates all logical conditions (if/else branches) produce correct results:</p>
+    <table>
+        <tr>
+            <th>Condition</th>
+            <th>True Case</th>
+            <th>False Case</th>
+            <th>Status</th>
+        </tr>
+        <tr>
+            <td>Firebase token valid?</td>
+            <td>Proceed with API request</td>
+            <td>Return 401 Unauthorized</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>User is admin?</td>
+            <td>Allow /api/admin routes</td>
+            <td>Return 403 Forbidden</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>File size ≤ 50MB?</td>
+            <td>Accept file upload</td>
+            <td>Reject with "File too large"</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>ClamAV running?</td>
+            <td>Scan proceeds normally</td>
+            <td>Return 503 "Scanner unavailable"</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Gemini API responds?</td>
+            <td>Render AI response</td>
+            <td>Show "AI unavailable" error</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Vault item belongs to user?</td>
+            <td>Allow read/update/delete</td>
+            <td>Return 403 Forbidden</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Image has EXIF data?</td>
+            <td>Show before/after comparison</td>
+            <td>Show "No metadata found"</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Network scan returns devices?</td>
+            <td>Render device grid</td>
+            <td>Show "No devices found"</td>
+            <td>✅ Pass</td>
+        </tr>
+    </table>
+
+    <h3>6.4 Loop Testing</h3>
+    <p>Loop testing validates iterative constructs for boundary conditions and correct termination:</p>
+    <table>
+        <tr>
+            <th>Loop Location</th>
+            <th>Test Scenario</th>
+            <th>Expected</th>
+            <th>Result</th>
+        </tr>
+        <tr>
+            <td>Username Detective — platform checks</td>
+            <td>Loop through 50 platform URLs</td>
+            <td>All 50 requests completed, no hang</td>
+            <td>✅ Pass (avg 8s)</td>
+        </tr>
+        <tr>
+            <td>Vault list render</td>
+            <td>0 items, 1 item, 100 items</td>
+            <td>Empty state, single row, 100 rows</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>WiFi scan retry loop</td>
+            <td>Max 3 retries on scan failure</td>
+            <td>Stops at 3 attempts, error shown</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>AI chat message loop</td>
+            <td>20 consecutive messages</td>
+            <td>All sent/received; history maintained</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>File conversion batch</td>
+            <td>Upload 5 files sequentially</td>
+            <td>Each processed and available for download</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Incident RPG game loop</td>
+            <td>30 player turns</td>
+            <td>Game continues until VICTORY or GAME OVER</td>
+            <td>✅ Pass</td>
+        </tr>
+    </table>
+
+    <h3>6.5 Unit Testing</h3>
+    <p>Individual functions and modules were tested in isolation:</p>
+    <table>
+        <tr>
+            <th>Unit</th>
+            <th>Test Description</th>
+            <th>Tool Used</th>
+            <th>Result</th>
+        </tr>
+        <tr>
+            <td><code>protect()</code> middleware</td>
+            <td>Verifies token, attaches <code>req.user</code></td>
+            <td>Node.js test script</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td><code>VaultItem</code> Mongoose model</td>
+            <td>Required field validation; encryption field storage</td>
+            <td>MongoDB test inserts</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>AES encryption (CryptoJS)</td>
+            <td>Encrypt → Decrypt round-trip produces original string</td>
+            <td>Browser console test</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>MAC OUI lookup</td>
+            <td>Given MAC → Returns vendor name</td>
+            <td><code>test_identification.js</code></td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>EXIF strip (Sharp)</td>
+            <td>Output image lacks GPS/camera EXIF tags</td>
+            <td>ExifTool verification</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>PDF page count reader</td>
+            <td>Returns correct page count for multi-page PDF</td>
+            <td>Unit test with sample PDFs</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>LSB Steganography encode/decode</td>
+            <td>Hidden message recoverable after encode</td>
+            <td>Browser test with known strings</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Rate limiter</td>
+            <td>Blocks after 100 requests/15min window</td>
+            <td>Postman Runner (100+ rapid requests)</td>
+            <td>✅ Pass</td>
+        </tr>
+    </table>
+
+    <h3>6.6 Integration Testing</h3>
+    <p>Integration testing validated inter-component communication and data flow across modules:</p>
+    <table>
+        <tr>
+            <th>Integration Pair</th>
+            <th>Test Scenario</th>
+            <th>Result</th>
+        </tr>
+        <tr>
+            <td>React Frontend ↔ Express Backend</td>
+            <td>Axios POST from MetadataWasher to /api/wash returns cleaned file</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Express Backend ↔ MongoDB Atlas</td>
+            <td>Create VaultItem → retrieve from DB → verify fields match</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Express Backend ↔ Firebase Admin</td>
+            <td>Token from Firebase Auth client verified by Firebase Admin SDK</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Express Backend ↔ ClamAV</td>
+            <td>Uploaded file passed to ClamAV; result returned to frontend</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>React Frontend ↔ Gemini API</td>
+            <td>Code sent from CodeAuditor.jsx; AI response rendered as markdown</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Socket.IO Client ↔ Server</td>
+            <td>Scan progress events emitted by server received and rendered in real-time</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>AuthContext ↔ Protected Routes</td>
+            <td>Unauthenticated user redirected; authenticated user allowed through</td>
+            <td>✅ Pass</td>
+        </tr>
+        <tr>
+            <td>Multer ↔ FFmpeg (File Converter)</td>
+            <td>Uploaded file at temp path handed to fluent-ffmpeg; output returned</td>
+            <td>✅ Pass</td>
+        </tr>
+    </table>
+
+    <h3>6.7 Output Testing</h3>
+    <p>Output testing validates that all system outputs are accurate, formatted correctly, and meet user expectations:
+    </p>
+    <table>
+        <tr>
+            <th>Output</th>
+            <th>Verification Method</th>
+            <th>Result</th>
+        </tr>
+        <tr>
+            <td>Cleaned image (Metadata Washer)</td>
+            <td>ExifTool on output file — GPS/Camera tags absent</td>
+            <td>✅ Verified</td>
+        </tr>
+        <tr>
+            <td>ClamAV scan verdict</td>
+            <td>EICAR test file returned "Infected"; clean file returned "CLEAN"</td>
+            <td>✅ Verified</td>
+        </tr>
+        <tr>
+            <td>AI vulnerability report formatting</td>
+            <td>Markdown headings, code blocks, severity badges render correctly</td>
+            <td>✅ Verified</td>
+        </tr>
+        <tr>
+            <td>Converted PDF from DOCX</td>
+            <td>Output PDF opened correctly in Adobe; content preserved</td>
+            <td>✅ Verified</td>
+        </tr>
+        <tr>
+            <td>Steganography decoded message</td>
+            <td>Decoded text matched original hidden message exactly</td>
+            <td>✅ Verified</td>
+        </tr>
+        <tr>
+            <td>Admin analytics figures</td>
+            <td>MongoDB counts cross-checked against Compass GUI</td>
+            <td>✅ Verified</td>
+        </tr>
+        <tr>
+            <td>WiFi device list</td>
+            <td>Device IPs, MACs, and vendor names verified against router admin panel</td>
+            <td>✅ Verified</td>
+        </tr>
+    </table>
+
+    <h3>6.8 User Acceptance Testing</h3>
+    <p>UAT was conducted with a test group of 5 participants (2 non-technical users, 2 IT students, 1 working
+        professional) over a structured test session:</p>
+    <table>
+        <tr>
+            <th>Test Scenario</th>
+            <th>Participants</th>
+            <th>Pass Rate</th>
+            <th>Key Feedback</th>
+        </tr>
+        <tr>
+            <td>Complete registration and login</td>
+            <td>5/5</td>
+            <td>100%</td>
+            <td>"Straightforward; Google login was easy"</td>
+        </tr>
+        <tr>
+            <td>Upload image and download clean version</td>
+            <td>5/5</td>
+            <td>100%</td>
+            <td>"Clear drag-and-drop area; before/after was helpful"</td>
+        </tr>
+        <tr>
+            <td>Scan a file for malware</td>
+            <td>5/5</td>
+            <td>100%</td>
+            <td>"The result badge was very clear; appreciated the audit log"</td>
+        </tr>
+        <tr>
+            <td>Decode a privacy policy</td>
+            <td>4/5</td>
+            <td>80%</td>
+            <td>"1 user confused about paste vs. URL input (URL not supported — clarified)"</td>
+        </tr>
+        <tr>
+            <td>Complete phishing trainer game</td>
+            <td>5/5</td>
+            <td>100%</td>
+            <td>"Very realistic; learned to spot red flags"</td>
+        </tr>
+        <tr>
+            <td>Play Incident Response RPG</td>
+            <td>4/5</td>
+            <td>80%</td>
+            <td>"Loved the terminal style; 1 user wanted a hint button (added)"</td>
+        </tr>
+        <tr>
+            <td>Add and retrieve vault credential</td>
+            <td>5/5</td>
+            <td>100%</td>
+            <td>"Encryption indicator was reassuring"</td>
+        </tr>
+        <tr>
+            <td>Convert a PDF to DOCX</td>
+            <td>5/5</td>
+            <td>100%</td>
+            <td>"Fast and accurate; output was clean"</td>
+        </tr>
+    </table>
+    <p><strong>Overall UAT Score: 93.5% task success rate.</strong> All critical path workflows were completed
+        successfully. Minor UX feedback items (hint button in RPG, clearer placeholder text in Policy Decoder) were
+        addressed in the final release.</p>
+
+</div>

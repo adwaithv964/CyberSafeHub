@@ -1,0 +1,3 @@
+/api/admin/verify: 401
+/api/admin/dashboard: 404
+/: 200

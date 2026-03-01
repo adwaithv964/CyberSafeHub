@@ -1,5 +1,7 @@
 const admin = require('firebase-admin');
-require('dotenv').config({ path: '../.env' });
+const path = require('path');
+// Load .env from the project root regardless of where `node` is invoked from
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 // Check if credentials are provided via environment variables
 let serviceAccount;

@@ -77,7 +77,27 @@ router.post('/safebrowsing', async (req, res) => {
             headers: { 'Content-Type': 'application/json' }
         });
 
-        res.json(response.data);
+        const data = response.data;
+
+        // Log threat if found
+        if (data && data.matches && data.matches.length > 0) {
+            try {
+                const ThreatLog = require('../models/ThreatLog');
+                const threatTypes = data.matches.map(m => m.threatType);
+                // Ensure we only log the first URL checked to avoid massive logs if array
+                const targetUrl = threatInfo.threatEntries[0]?.url || 'Unknown URL';
+
+                await new ThreatLog({
+                    type: 'phishing',
+                    target: targetUrl,
+                    details: threatTypes
+                }).save();
+            } catch (err) {
+                console.error("Failed to log phishing threat:", err);
+            }
+        }
+
+        res.json(data);
 
     } catch (error) {
         console.error("Safe Browsing API Proxy Error:", error.response?.data || error.message);
