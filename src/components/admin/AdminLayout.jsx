@@ -83,6 +83,7 @@ export default function AdminLayout() {
                         <NavLink to="/admin" icon="layoutDashboard" allowedRoles={['super_admin', 'analyst', 'support']}>Command Center</NavLink>
                         <NavLink to="/admin/users" icon="users" allowedRoles={['super_admin', 'support']}>User Manager</NavLink>
                         <NavLink to="/admin/threats" icon="alertTriangle" allowedRoles={['super_admin', 'analyst']}>Threat Intel</NavLink>
+                        <NavLink to="/admin/cyber-tools" icon="tool" allowedRoles={['super_admin', 'analyst']}>Cyber Tool Manager</NavLink>
                         <NavLink to="/admin/academy" icon="academicCap" allowedRoles={['super_admin', 'content_manager']}>Academy LMS</NavLink>
                         <NavLink to="/admin/content" icon="newspaper" allowedRoles={['super_admin', 'content_manager']}>Content CMS</NavLink>
                         <NavLink to="/admin/ai" icon="bot" allowedRoles={['super_admin']}>AI Governance</NavLink>

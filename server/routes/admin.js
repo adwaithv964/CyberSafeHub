@@ -6,6 +6,7 @@ const ThreatLog = require('../models/ThreatLog');
 const AuditLog = require('../models/AuditLog');
 const Announcement = require('../models/Announcement');
 const Article = require('../models/Article');
+const CyberTool = require('../models/CyberTool');
 const adminAuthMiddleware = require('../middleware/adminAuth');
 const requireRole = require('../middleware/requireRole');
 const admin = require('../config/firebaseAdmin');
@@ -492,6 +493,175 @@ router.put('/ai/prompts/:tool', adminAuthMiddleware, requireRole(...SUPER), asyn
         res.json({ success: true, tool: req.params.tool });
     } catch (err) {
         res.status(500).json({ error: 'Failed to update AI prompt' });
+    }
+});
+
+
+// ─── Cyber Tool Manager ─────────────────────────────────────────────────────────
+// GET /api/admin/cyber-tools — list all tools (admin)
+router.get('/cyber-tools', adminAuthMiddleware, requireRole(...SUPER_ANALYST), async (req, res) => {
+    try {
+        const tools = await CyberTool.find({}).sort({ order: 1, createdAt: 1 }).lean();
+        res.json({ tools, total: tools.length });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch tools' });
+    }
+});
+
+// GET /api/admin/cyber-tools/:id — single tool
+router.get('/cyber-tools/:id', adminAuthMiddleware, requireRole(...SUPER_ANALYST), async (req, res) => {
+    try {
+        const tool = await CyberTool.findById(req.params.id).lean();
+        if (!tool) return res.status(404).json({ error: 'Tool not found' });
+        res.json({ tool });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch tool' });
+    }
+});
+
+// POST /api/admin/cyber-tools — create a new custom tool
+router.post('/cyber-tools', adminAuthMiddleware, requireRole(...SUPER), async (req, res) => {
+    try {
+        const { name, description, icon, emoji, color, route, isExternal, category, order, badge } = req.body;
+        if (!name || !description || !route) return res.status(400).json({ error: 'name, description, and route are required' });
+        const maxOrder = await CyberTool.findOne({}).sort({ order: -1 }).select('order').lean();
+        const tool = new CyberTool({
+            name, description,
+            icon: icon || 'tool',
+            emoji: emoji || '',
+            color: color || 'cyan',
+            route, isExternal: isExternal || false,
+            category: category || 'utility',
+            order: order !== undefined ? order : ((maxOrder?.order || 0) + 1),
+            badge: badge || '',
+            isBuiltIn: false,
+            isActive: true,
+        });
+        await tool.save();
+        await writeAudit(req.user.email, 'CYBER_TOOL_CREATED', tool._id.toString(), name, req.ip);
+        res.status(201).json({ tool });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to create tool' });
+    }
+});
+
+// PATCH /api/admin/cyber-tools/:id — update a tool
+router.patch('/cyber-tools/:id', adminAuthMiddleware, requireRole(...SUPER), async (req, res) => {
+    try {
+        const { name, description, icon, emoji, color, route, isExternal, category, isActive, order, badge } = req.body;
+        const update = {};
+        if (name !== undefined) update.name = name;
+        if (description !== undefined) update.description = description;
+        if (icon !== undefined) update.icon = icon;
+        if (emoji !== undefined) update.emoji = emoji;
+        if (color !== undefined) update.color = color;
+        if (route !== undefined) update.route = route;
+        if (isExternal !== undefined) update.isExternal = isExternal;
+        if (category !== undefined) update.category = category;
+        if (isActive !== undefined) update.isActive = isActive;
+        if (order !== undefined) update.order = order;
+        if (badge !== undefined) update.badge = badge;
+        const tool = await CyberTool.findByIdAndUpdate(req.params.id, update, { new: true });
+        if (!tool) return res.status(404).json({ error: 'Tool not found' });
+        await writeAudit(req.user.email, 'CYBER_TOOL_UPDATED', req.params.id, tool.name, req.ip);
+        res.json({ tool });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update tool' });
+    }
+});
+
+// DELETE /api/admin/cyber-tools/:id — delete a custom tool (built-in tools are protected)
+router.delete('/cyber-tools/:id', adminAuthMiddleware, requireRole(...SUPER), async (req, res) => {
+    try {
+        const tool = await CyberTool.findById(req.params.id);
+        if (!tool) return res.status(404).json({ error: 'Tool not found' });
+        if (tool.isBuiltIn) return res.status(403).json({ error: 'Built-in tools cannot be deleted. You can disable them instead.' });
+        const name = tool.name;
+        await tool.deleteOne();
+        await writeAudit(req.user.email, 'CYBER_TOOL_DELETED', req.params.id, name, req.ip);
+        res.json({ success: true, message: `"${name}" deleted.` });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete tool' });
+    }
+});
+
+// PATCH /api/admin/cyber-tools/:id/reorder — update just the order field
+router.patch('/cyber-tools/:id/reorder', adminAuthMiddleware, requireRole(...SUPER), async (req, res) => {
+    try {
+        const { order } = req.body;
+        const tool = await CyberTool.findByIdAndUpdate(req.params.id, { order }, { new: true });
+        if (!tool) return res.status(404).json({ error: 'Tool not found' });
+        res.json({ tool });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to reorder tool' });
+    }
+});
+
+// ─── Academy Module Routes ─────────────────────────────────────────────────────
+const AcademyModule = require('../models/AcademyModule');
+
+// GET /api/admin/academy — list all modules (admin view, includes drafts)
+router.get('/academy', adminAuthMiddleware, requireRole(...SUPER_CONTENT), async (req, res) => {
+    try {
+        const modules = await AcademyModule.find().sort({ order: 1, createdAt: 1 }).lean();
+        res.json({ modules });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch modules' });
+    }
+});
+
+// GET /api/admin/academy/:id
+router.get('/academy/:id', adminAuthMiddleware, requireRole(...SUPER_CONTENT), async (req, res) => {
+    try {
+        const mod = await AcademyModule.findById(req.params.id).lean();
+        if (!mod) return res.status(404).json({ error: 'Module not found' });
+        res.json({ module: mod });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch module' });
+    }
+});
+
+// POST /api/admin/academy — create new module
+router.post('/academy', adminAuthMiddleware, requireRole(...SUPER_CONTENT), async (req, res) => {
+    try {
+        const { title, description, icon, category, difficulty, route, published, order } = req.body;
+        if (!title) return res.status(400).json({ error: 'Title is required' });
+        const mod = await new AcademyModule({
+            title, description, icon: icon || '📚', category, difficulty,
+            route: route || '', published: !!published,
+            order: order || 99, isBuiltIn: false
+        }).save();
+        await writeAudit(req.user.email, 'ACADEMY_MODULE_CREATE', mod._id, { title }, req.ip);
+        res.status(201).json({ module: mod });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to create module' });
+    }
+});
+
+// PATCH /api/admin/academy/:id — update module
+router.patch('/academy/:id', adminAuthMiddleware, requireRole(...SUPER_CONTENT), async (req, res) => {
+    try {
+        const updates = req.body;
+        const mod = await AcademyModule.findByIdAndUpdate(req.params.id, updates, { new: true });
+        if (!mod) return res.status(404).json({ error: 'Module not found' });
+        await writeAudit(req.user.email, 'ACADEMY_MODULE_UPDATE', mod._id, updates, req.ip);
+        res.json({ module: mod });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update module' });
+    }
+});
+
+// DELETE /api/admin/academy/:id — delete (only non-built-in)
+router.delete('/academy/:id', adminAuthMiddleware, requireRole(...SUPER_CONTENT), async (req, res) => {
+    try {
+        const mod = await AcademyModule.findById(req.params.id);
+        if (!mod) return res.status(404).json({ error: 'Module not found' });
+        if (mod.isBuiltIn) return res.status(403).json({ error: 'Built-in modules cannot be deleted.' });
+        await AcademyModule.findByIdAndDelete(req.params.id);
+        await writeAudit(req.user.email, 'ACADEMY_MODULE_DELETE', req.params.id, { title: mod.title }, req.ip);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete module' });
     }
 });
 

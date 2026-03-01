@@ -16,21 +16,28 @@ const adminAuthMiddleware = async (req, res, next) => {
             return res.status(503).json({ error: 'Server Auth Configuration Error: Firebase Admin not initialized.' });
         }
 
-        // Verify Firebase token
-        const decodedToken = await admin.auth().verifyIdToken(token);
+        // Verify Firebase token (skip revocation check to avoid extra round-trip)
+        let decodedToken;
+        try {
+            decodedToken = await admin.auth().verifyIdToken(token, false);
+        } catch (tokenErr) {
+            // Token is invalid or expired — client should refresh and retry
+            return res.status(401).json({ error: 'Unauthorized: Token invalid or expired. Please re-authenticate.', details: tokenErr.message });
+        }
+
         req.user = decodedToken;
 
         // Look up admin role from MongoDB — attach to req for requireRole middleware
         const adminDoc = await Admin.findOne({ email: decodedToken.email }).lean();
         if (!adminDoc) {
-            return res.status(403).json({ error: 'Unauthorized: No admin privileges found for this account.' });
+            return res.status(403).json({ error: 'Forbidden: No admin privileges found for this account.' });
         }
 
         req.adminRole = adminDoc.role; // e.g. 'super_admin', 'analyst', 'content_manager', 'support'
         next();
     } catch (error) {
-        console.error('Token verification failed:', error.message);
-        return res.status(403).json({ error: 'Unauthorized: Invalid token', details: error.message });
+        console.error('[adminAuth] Unexpected error:', error.message);
+        return res.status(500).json({ error: 'Internal auth error', details: error.message });
     }
 };
 

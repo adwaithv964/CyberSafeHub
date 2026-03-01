@@ -26,6 +26,8 @@ function AnnouncementsTab({ getToken }) {
     const [submitting, setSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
     const [togglingId, setTogglingId] = useState(null);
+    const [validationErr, setValidationErr] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
 
     const fetch_ = useCallback(async () => {
         setLoading(true);
@@ -41,20 +43,40 @@ function AnnouncementsTab({ getToken }) {
 
     const create = async (e) => {
         e.preventDefault();
-        if (!title.trim() || !body.trim()) return;
+        setValidationErr('');
+        setSuccessMsg('');
+
+        // Only title is required — body is optional
+        if (!title.trim()) {
+            setValidationErr('Title is required before publishing.');
+            return;
+        }
+
         setSubmitting(true);
         try {
             const token = await getToken();
             const res = await fetch(`${API_BASE_URL}/api/admin/announcements`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, body, type })
+                body: JSON.stringify({ title: title.trim(), body: body.trim(), type, active: true })
             });
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || `Server error ${res.status}`);
+            }
             const data = await res.json();
             setItems(prev => [data.announcement, ...prev]);
-            setTitle(''); setBody('');
-        } catch (e) { alert('Error: ' + e.message); } finally { setSubmitting(false); }
+            setTitle('');
+            setBody('');
+            setSuccessMsg(`✅ "${data.announcement.title}" published and pushed to all users!`);
+            setTimeout(() => setSuccessMsg(''), 4000);
+        } catch (e) {
+            setValidationErr('Error: ' + e.message);
+        } finally {
+            setSubmitting(false);
+        }
     };
+
 
     const toggle = async (id, cur) => {
         setTogglingId(id);
@@ -83,12 +105,20 @@ function AnnouncementsTab({ getToken }) {
 
     return (
         <div className="space-y-5">
+            {/* Success toast */}
+            {successMsg && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 border border-success/30 text-success text-sm">
+                    <Icon name="checkCircle" className="w-4 h-4 shrink-0" />
+                    {successMsg}
+                </div>
+            )}
+
             {/* Create Form */}
             <div className="glass-panel p-5 border-l-4 border-l-accent">
                 <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2"><Icon name="plus" className="w-4 h-4 text-accent" /> New Announcement</h3>
                 <form onSubmit={create} className="space-y-3">
                     <div className="grid grid-cols-3 gap-3">
-                        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title..." className="col-span-2 input-field" />
+                        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title (required)..." className={`col-span-2 input-field ${validationErr && !title.trim() ? 'border-danger/60' : ''}`} />
                         <select value={type} onChange={e => setType(e.target.value)} className="input-field">
                             <option value="info">ℹ️ Info</option>
                             <option value="warning">⚠️ Warning</option>
@@ -96,15 +126,27 @@ function AnnouncementsTab({ getToken }) {
                             <option value="success">✅ Success</option>
                         </select>
                     </div>
-                    <textarea value={body} onChange={e => setBody(e.target.value)} rows={2} placeholder="Body..." className="input-field resize-none w-full" />
+                    <textarea value={body} onChange={e => setBody(e.target.value)} rows={2} placeholder="Body message (optional)..." className="input-field resize-none w-full" />
+
+                    {/* Validation error */}
+                    {validationErr && (
+                        <p className="text-danger text-xs flex items-center gap-1.5">
+                            <Icon name="alertCircle" className="w-3.5 h-3.5 shrink-0" />
+                            {validationErr}
+                        </p>
+                    )}
+
+                    {/* Live preview */}
                     {(title || body) && (
                         <div className={`p-3 rounded-lg border text-sm ${cfg.cls}`}>
                             <p className="font-semibold">{title || 'Title'}</p>
-                            <p className="text-xs opacity-80 mt-0.5">{body}</p>
+                            {body && <p className="text-xs opacity-80 mt-0.5">{body}</p>}
                         </div>
                     )}
-                    <button type="submit" disabled={submitting} className="btn-primary text-sm">
-                        {submitting ? 'Publishing...' : 'Publish'}
+
+                    <button type="submit" disabled={submitting} className="btn-primary text-sm flex items-center gap-2">
+                        <Icon name="send" className="w-4 h-4" />
+                        {submitting ? 'Publishing...' : 'Publish to All Users'}
                     </button>
                 </form>
             </div>

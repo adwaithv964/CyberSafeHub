@@ -9,7 +9,11 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const VaultItem = require('./models/VaultItem');
-require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') }); // Absolute path so it works regardless of CWD
+const CyberTool = require('./models/CyberTool');
+const AcademyModule = require('./models/AcademyModule');
+const seedCyberTools = require('./utils/seedCyberTools');
+const seedAcademyModules = require('./utils/seedAcademyModules');
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 
 const app = express();
 const http = require('http');
@@ -160,7 +164,10 @@ const connectDB = async () => {
     }
 };
 
-connectDB();
+connectDB().then(() => {
+    seedCyberTools();
+    seedAcademyModules();
+});
 
 // --- Security Middleware ---
 const helmet = require('helmet');
@@ -182,6 +189,54 @@ app.use('/api/convert', convertRoute);
 // --- Admin Routes ---
 const adminRoute = require('./routes/admin');
 app.use('/api/admin', adminRoute);
+
+// --- Public Cyber Tools API (no auth required) ---
+app.get('/api/cyber-tools', async (req, res) => {
+    try {
+        const tools = await CyberTool.find({ isActive: true }).sort({ order: 1, createdAt: 1 }).lean();
+        res.json({ tools });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch tools' });
+    }
+});
+
+// Increment usage count when a tool is opened
+app.post('/api/cyber-tools/:id/use', async (req, res) => {
+    try {
+        await CyberTool.findByIdAndUpdate(req.params.id, { $inc: { usageCount: 1 } });
+        res.json({ success: true });
+    } catch (err) {
+        res.json({ success: false }); // Non-critical — never block the user
+    }
+});
+
+// --- Public Announcements API (no auth — shown to all logged-in users) ---
+const Announcement = require('./models/Announcement');
+app.get('/api/announcements', async (req, res) => {
+    try {
+        const announcements = await Announcement.find({ active: true })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('title body type createdAt createdBy')
+            .lean();
+        res.json({ announcements });
+    } catch (err) {
+        res.status(500).json({ announcements: [] });
+    }
+});
+
+// --- Public Academy API (no auth — only published modules) ---
+app.get('/api/academy', async (req, res) => {
+    try {
+        const modules = await AcademyModule.find({ published: true })
+            .sort({ order: 1, createdAt: 1 })
+            .select('title description icon category difficulty route isBuiltIn order')
+            .lean();
+        res.json({ modules });
+    } catch (err) {
+        res.status(500).json({ modules: [] });
+    }
+});
 
 // --- Vault API Routes ---
 

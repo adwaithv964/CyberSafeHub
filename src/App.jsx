@@ -26,6 +26,7 @@ import CyberAcademyPage from './pages/CyberAcademyPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import BackgroundBlobs from './components/BackgroundBlobs';
 import SEO from './components/SEO';
+import AnnouncementBanner from './components/AnnouncementBanner';
 
 // Admin Imports
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
@@ -39,6 +40,7 @@ import ContentManager from './pages/admin/ContentManager';
 import AIGovernance from './pages/admin/AIGovernance';
 import AuditLogs from './pages/admin/AuditLogs';
 import AdminManager from './pages/admin/AdminManager';
+import CyberToolManager from './pages/admin/CyberToolManager';
 
 function AppContent() {
     const { currentUser, logout } = useAuth();
@@ -102,6 +104,8 @@ function AppContent() {
     return (
         <div className="h-screen w-full flex flex-col font-sans text-text-primary relative overflow-hidden">
             <BackgroundBlobs />
+            {/* Global Announcement Banner — polls every 30s, shows up for all users */}
+            <AnnouncementBanner />
             {/* Mobile Header - Flex-none ensures it takes only necessary space */}
             <div className="md:hidden flex-none flex items-center p-4 glass-panel m-2 z-50 gap-3">
                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-text-primary p-1 hover:text-accent transition-colors">
@@ -278,6 +282,7 @@ function MainApp() {
                 <Route path="ai" element={<AIGovernance />} />
                 <Route path="logs" element={<AuditLogs />} />
                 <Route path="admin-manager" element={<AdminManager />} />
+                <Route path="cyber-tools" element={<CyberToolManager />} />
             </Route>
             <Route path="/*" element={<AppContent />} />
         </Routes>

@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth, db } from '../config/firebase';
+import { auth } from '../config/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const AdminAuthContext = createContext();
 
@@ -11,34 +12,35 @@ export function useAdminAuth() {
 
 export function AdminAuthProvider({ children }) {
     const [currentAdmin, setCurrentAdmin] = useState(null);
-    const [adminRole, setAdminRole] = useState(null); // 'super_admin', 'analyst', 'content_manager', 'support'
+    const [adminRole, setAdminRole] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    async function verifyWithBackend(user) {
+        // Always force-refresh the token before verifying to avoid stale-token 403
+        const token = await user.getIdToken(/* forceRefresh= */ true);
+        const response = await axios.get(`${API_BASE_URL}/api/admin/verify`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data; // { role, email }
+    }
+
     async function loginAdmin(email, password) {
-        // Sign in with Firebase Auth
         const result = await signInWithEmailAndPassword(auth, email, password);
-
-        // Verify this user is an admin by checking the backend API attached to MongoDB
         try {
-            const token = await result.user.getIdToken();
-            const response = await axios.get('http://localhost:3001/api/admin/verify', {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-
-            if (response.data && response.data.role) {
-                setAdminRole(response.data.role);
+            const data = await verifyWithBackend(result.user);
+            if (data && data.role) {
+                setAdminRole(data.role);
                 setCurrentAdmin(result.user);
                 return result;
-            } else {
-                throw new Error("Invalid admin response");
             }
+            throw new Error('Invalid admin response');
         } catch (error) {
-            console.error("Admin verification error:", error);
-            // If they are a normal user who tried to log in here, immediately sign them out
+            console.error('Admin verification error:', error);
             await signOut(auth);
-            throw new Error("Unauthorized access. Admin privileges required.");
+            const msg = error?.response?.status === 403
+                ? 'Unauthorized access. Admin privileges required.'
+                : 'Login failed: ' + (error?.response?.data?.error || error.message);
+            throw new Error(msg);
         }
     }
 
@@ -54,24 +56,21 @@ export function AdminAuthProvider({ children }) {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
-                    const token = await user.getIdToken();
-                    const response = await axios.get('http://localhost:3001/api/admin/verify', {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-
+                    const data = await verifyWithBackend(user);
                     if (isMounted) {
-                        setAdminRole(response.data.role);
+                        setAdminRole(data.role || null);
                         setCurrentAdmin(user);
                         setLoading(false);
                     }
                 } catch (error) {
-                    // console.error("Error fetching admin role stream:", error);
-                    // If it fails (e.g., unauthorized)
+                    // If verify fails during token refresh (transient 401/403), keep existing session.
+                    // Only clear state on initial load (i.e., when no admin was set yet).
                     if (isMounted) {
-                        setCurrentAdmin(null);
-                        setAdminRole(null);
+                        // Preserve the session if we already have a valid admin role loaded
+                        if (!adminRole) {
+                            setCurrentAdmin(null);
+                            setAdminRole(null);
+                        }
                         setLoading(false);
                     }
                 }
@@ -88,15 +87,10 @@ export function AdminAuthProvider({ children }) {
             isMounted = false;
             unsubscribe();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const value = {
-        currentAdmin,
-        adminRole,
-        loading,
-        loginAdmin,
-        logoutAdmin
-    };
+    const value = { currentAdmin, adminRole, loading, loginAdmin, logoutAdmin };
 
     return (
         <AdminAuthContext.Provider value={value}>
