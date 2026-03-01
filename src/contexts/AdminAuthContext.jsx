@@ -54,7 +54,12 @@ export function AdminAuthProvider({ children }) {
         let isMounted = true;
 
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
+            // ─── Key fix: skip admin verify when NOT on an admin route ───────────────
+            // AdminAuthProvider wraps the whole app, so this fires for regular
+            // user logins too. We don't want to spam /api/admin/verify with 403s.
+            const isAdminRoute = window.location.pathname.startsWith('/admin');
+
+            if (user && isAdminRoute) {
                 try {
                     const data = await verifyWithBackend(user);
                     if (isMounted) {
@@ -75,10 +80,17 @@ export function AdminAuthProvider({ children }) {
                     }
                 }
             } else {
+                // Not on admin route OR no user — just stop loading
                 if (isMounted) {
-                    setCurrentAdmin(null);
-                    setAdminRole(null);
-                    setLoading(false);
+                    if (!isAdminRoute) {
+                        // Keep any existing admin session intact for when they navigate back
+                        setLoading(false);
+                    } else {
+                        // On admin route but no user → show login
+                        setCurrentAdmin(null);
+                        setAdminRole(null);
+                        setLoading(false);
+                    }
                 }
             }
         });
