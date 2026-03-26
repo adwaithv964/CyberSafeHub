@@ -31,7 +31,7 @@ export const callGeminiAPI = async (messages, systemPrompt) => {
             return "Please sign in to use the Cyber Assistant.";
         }
 
-        const token = await user.getIdToken();
+        const token = await user.getIdToken(true);
 
         const response = await fetch(`${API_BASE_URL}/api/security/gemini`, {
             method: 'POST',

@@ -41,6 +41,8 @@ if (!admin.apps.length) {
             });
             console.log("Firebase Admin Initialized with Environment Config");
         } else {
+            console.error("CRITICAL: Missing Firebase credentials in environment variables.");
+            console.error("Check Render dashboard and ensure FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY are set.");
             // Fallback: This expects GOOGLE_APPLICATION_CREDENTIALS env var or standard path
             admin.initializeApp();
             console.log("Firebase Admin Initialized with Default Credentials");
