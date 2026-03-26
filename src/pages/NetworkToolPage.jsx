@@ -307,8 +307,118 @@ const NetworkToolPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* ── VPN Suggestion Banner (shown when exposed) ── */}
+            {!loading && !isSafe && (
+                <div style={{
+                    marginTop: '1.25rem',
+                    background: 'linear-gradient(135deg, rgba(234,179,8,0.08) 0%, rgba(239,68,68,0.06) 100%)',
+                    border: '1px solid rgba(234,179,8,0.25)',
+                    borderRadius: '0.75rem',
+                    padding: '1.25rem',
+                    backdropFilter: 'blur(12px)',
+                }}>
+                    {/* Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                        <div style={{
+                            width: '2rem', height: '2rem', borderRadius: '50%', flexShrink: 0,
+                            background: 'rgba(234,179,8,0.15)',
+                            boxShadow: '0 0 12px rgba(234,179,8,0.3)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                            <Icon name="shieldAlert" className="w-4 h-4" style={{ color: 'rgb(234,179,8)' }} />
+                        </div>
+                        <div>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'rgb(234,179,8)', margin: 0 }}>
+                                Your IP is Visible to Your ISP
+                            </h4>
+                            <p style={{ fontSize: '0.75rem', color: 'rgb(148,163,184)', margin: 0 }}>
+                                Your internet provider can see every website you visit
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* What ISP can see */}
+                    <div style={{
+                        background: 'rgba(239,68,68,0.07)',
+                        border: '1px solid rgba(239,68,68,0.15)',
+                        borderRadius: '0.5rem',
+                        padding: '0.75rem',
+                        marginBottom: '1rem',
+                    }}>
+                        <p style={{ fontSize: '0.78rem', color: 'rgb(252,165,165)', fontWeight: 600, marginBottom: '0.4rem' }}>
+                            ⚠ Without a VPN, your ISP can log:
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                            {['All websites you visit', 'Your real location', 'Browsing timestamps', 'App usage patterns'].map(item => (
+                                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <span style={{ color: 'rgb(239,68,68)', fontSize: '0.7rem' }}>✗</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'rgb(203,213,225)' }}>{item}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* What VPN fixes */}
+                    <div style={{
+                        background: 'rgba(52,211,153,0.06)',
+                        border: '1px solid rgba(52,211,153,0.15)',
+                        borderRadius: '0.5rem',
+                        padding: '0.75rem',
+                        marginBottom: '1rem',
+                    }}>
+                        <p style={{ fontSize: '0.78rem', color: 'rgb(110,231,183)', fontWeight: 600, marginBottom: '0.4rem' }}>
+                            ✓ A VPN encrypts your traffic and hides it from your ISP:
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                            {['Hides your real IP address', 'Encrypts all traffic', 'Masks your location', 'Prevents ISP tracking'].map(item => (
+                                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <span style={{ color: 'rgb(52,211,153)', fontSize: '0.7rem' }}>✓</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'rgb(203,213,225)' }}>{item}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: '0.85rem' }} />
+
+                    {/* Recommended VPNs */}
+                    <p style={{ fontSize: '0.75rem', color: 'rgb(148,163,184)', fontWeight: 600, marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Trusted VPN Options
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '0.85rem' }}>
+                        {[
+                            { name: 'ProtonVPN', tag: 'Free tier', color: 'rgb(109,167,255)', tagColor: 'rgba(52,211,153,0.15)', tagText: 'rgb(52,211,153)' },
+                            { name: 'Mullvad', tag: 'No logs', color: 'rgb(251,191,36)', tagColor: 'rgba(251,191,36,0.15)', tagText: 'rgb(251,191,36)' },
+                            { name: 'Windscribe', tag: '10GB free', color: 'rgb(167,139,250)', tagColor: 'rgba(167,139,250,0.15)', tagText: 'rgb(167,139,250)' },
+                        ].map(vpn => (
+                            <div key={vpn.name} style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.07)',
+                                borderRadius: '0.5rem',
+                                padding: '0.6rem 0.5rem',
+                                textAlign: 'center',
+                            }}>
+                                <p style={{ fontSize: '0.8rem', fontWeight: 700, color: vpn.color, marginBottom: '0.25rem' }}>{vpn.name}</p>
+                                <span style={{
+                                    fontSize: '0.6rem', fontWeight: 600,
+                                    background: vpn.tagColor, color: vpn.tagText,
+                                    borderRadius: '999px', padding: '0.1rem 0.4rem',
+                                }}>{vpn.tag}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Note */}
+                    <p style={{ fontSize: '0.7rem', color: 'rgb(100,116,139)', lineHeight: 1.5 }}>
+                        💡 <strong style={{ color: 'rgb(148,163,184)' }}>Tip:</strong> For maximum privacy, combine a VPN with a privacy-respecting DNS (e.g., 1.1.1.1 or 9.9.9.9) so even your DNS queries are hidden from your ISP.
+                    </p>
+                </div>
+            )}
         </>
     );
 };
 
 export default NetworkToolPage;
+
