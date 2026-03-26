@@ -100,13 +100,25 @@ const PasswordVaultPage = () => {
     };
 
     // --- Vault Logic ---
+
+    // Helper: get Firebase ID token for Authorization header
+    const getAuthHeaders = async () => {
+        if (!currentUser) throw new Error('Not authenticated');
+        const token = await currentUser.getIdToken();
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        };
+    };
+
     const fetchVaultItems = useCallback(async () => {
         if (!currentUser) return;
         setIsLoading(true);
         setVaultError('');
         try {
-            const res = await fetch(`${API_BASE_URL}/${currentUser.uid}`);
-            if (!res.ok) throw new Error('Failed to fetch vault items');
+            const headers = await getAuthHeaders();
+            const res = await fetch(`${API_BASE_URL}/${currentUser.uid}`, { headers });
+            if (!res.ok) throw new Error(`Server returned ${res.status}`);
             const data = await res.json();
             setVaultItems(data);
         } catch (err) {
@@ -124,6 +136,7 @@ const PasswordVaultPage = () => {
     const handleSaveItem = async (itemData) => {
         if (!currentUser) return;
         try {
+            const headers = await getAuthHeaders();
             const payload = {
                 userId: currentUser.uid,
                 ...itemData
@@ -134,21 +147,21 @@ const PasswordVaultPage = () => {
                 // Update
                 res = await fetch(`${API_BASE_URL}/${editingItem._id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify(itemData)
                 });
             } else {
                 // Create
                 res = await fetch(API_BASE_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify(payload)
                 });
             }
 
             if (!res.ok) throw new Error('Failed to save item');
 
-            fetchVaultItems(); // Refresh list
+            fetchVaultItems();
             logActivity('VAULT', editingItem ? 'Updated Item' : 'New Item Added', `Type: ${itemData.type}`);
         } catch (err) {
             console.error(err);
@@ -161,7 +174,8 @@ const PasswordVaultPage = () => {
     const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this item?')) return;
         try {
-            const res = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
+            const headers = await getAuthHeaders();
+            const res = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE', headers });
             if (!res.ok) throw new Error('Failed to delete');
             fetchVaultItems();
             logActivity('VAULT', 'Deleted Item', 'Permanently removed vault item');

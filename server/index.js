@@ -1,10 +1,11 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const helmet = require('helmet'); // ← Security headers first
 
 const multer = require('multer');
 const NodeClam = require('clamscan');
-const find = require('local-devices'); // Import local-devices
+const find = require('local-devices');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -14,6 +15,9 @@ const AcademyModule = require('./models/AcademyModule');
 const seedCyberTools = require('./utils/seedCyberTools');
 const seedAcademyModules = require('./utils/seedAcademyModules');
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+const verifyToken = require('./middleware/auth');
+const { generalLimiter, scanLimiter, osintLimiter, vaultLimiter, adminLimiter } = require('./middleware/rateLimiter');
+const Admin = require('./models/Admin');
 
 const app = express();
 const http = require('http');
@@ -112,12 +116,56 @@ io.on('connection', (socket) => {
 });
 
 
-// Enable CORS for frontend
-app.use(cors());
-app.use(express.json()); // Enable JSON body parsing for Vault API
+// ─── Security Middleware (must be first) ─────────────────────────────────
+app.use(helmet({
+    crossOriginEmbedderPolicy: false, // Allow embeds (needed for some tools)
+    contentSecurityPolicy: false,     // CSP handled by Vercel headers
+}));
 
-// Configure Multer for file uploads
-const upload = multer({ dest: 'uploads/' });
+// ─── CORS — only accept requests from known origins ───────────────────────
+const ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://cyber-safe-hub.vercel.app',
+    'https://cybersafehub.in',
+    'https://www.cybersafehub.in',
+    process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow server-to-server calls (no origin header) and whitelisted origins
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS: Origin not allowed — ${origin}`));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// ─── Body size limits (protect against large payload attacks) ────────────
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// ─── Apply general rate limiter to all routes ─────────────────────────────
+app.use(generalLimiter);
+
+// ─── Configure Multer — enforce 50MB max + validated by ClamAV ────────────
+const upload = multer({
+    dest: 'uploads/',
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB hard limit
+    fileFilter: (req, file, cb) => {
+        // Block obviously dangerous executable file extensions
+        const blocked = /\.(exe|bat|cmd|sh|ps1|vbs|js|msi|dll|com)$/i;
+        if (blocked.test(file.originalname)) {
+            return cb(new Error('File type not permitted for direct upload'));
+        }
+        cb(null, true);
+    },
+});
 
 // Initialize ClamScan config
 const clamscanConfig = {
@@ -169,12 +217,9 @@ connectDB().then(() => {
     seedAcademyModules();
 });
 
-// --- Security Middleware ---
-const helmet = require('helmet');
+// ─── Mongo Sanitize + XSS Clean ──────────────────────────────────────────
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
-
-app.use(helmet());
 app.use(mongoSanitize());
 app.use(xss());
 
@@ -186,9 +231,9 @@ app.use('/api/security', securityRoute);
 const convertRoute = require('./routes/conversionApi');
 app.use('/api/convert', convertRoute);
 
-// --- Admin Routes ---
+// --- Admin Routes (rate limited) ---
 const adminRoute = require('./routes/admin');
-app.use('/api/admin', adminRoute);
+app.use('/api/admin', adminLimiter, adminRoute);
 
 // --- Public Cyber Tools API (no auth required) ---
 app.get('/api/cyber-tools', async (req, res) => {
@@ -238,24 +283,32 @@ app.get('/api/academy', async (req, res) => {
     }
 });
 
-// --- Vault API Routes ---
+// ─── Vault API Routes (auth required on all) ─────────────────────────────
 
-// Get all items for a user
-app.get('/api/vault/:userId', async (req, res) => {
+// Get all items for a user — must be the authenticated user themselves
+app.get('/api/vault/:userId', vaultLimiter, verifyToken, async (req, res) => {
     try {
+        // Ensure the requesting user can only access their own vault
+        if (req.user.uid !== req.params.userId) {
+            return res.status(403).json({ error: 'Forbidden: You can only access your own vault' });
+        }
         const items = await VaultItem.find({ userId: req.params.userId }).sort({ createdAt: -1 });
-        // In a real app, decrypt data here before sending
         res.json(items);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Add a new item
-app.post('/api/vault', async (req, res) => {
+// Add a new item — enforce userId matches authenticated user
+app.post('/api/vault', vaultLimiter, verifyToken, async (req, res) => {
     try {
         const { userId, type, name, data } = req.body;
-        // In a real app, encrypt 'data' here before saving
+        if (!userId || !type || !name) {
+            return res.status(400).json({ error: 'userId, type, and name are required' });
+        }
+        if (req.user.uid !== userId) {
+            return res.status(403).json({ error: 'Forbidden: userId does not match authenticated user' });
+        }
         const newItem = new VaultItem({ userId, type, name, data });
         await newItem.save();
         res.status(201).json(newItem);
@@ -264,9 +317,14 @@ app.post('/api/vault', async (req, res) => {
     }
 });
 
-// Update an item
-app.put('/api/vault/:id', async (req, res) => {
+// Update an item — verify ownership before update
+app.put('/api/vault/:id', vaultLimiter, verifyToken, async (req, res) => {
     try {
+        const existing = await VaultItem.findById(req.params.id);
+        if (!existing) return res.status(404).json({ error: 'Item not found' });
+        if (existing.userId !== req.user.uid) {
+            return res.status(403).json({ error: 'Forbidden: You do not own this vault item' });
+        }
         const { name, data } = req.body;
         const updatedItem = await VaultItem.findByIdAndUpdate(
             req.params.id,
@@ -279,9 +337,14 @@ app.put('/api/vault/:id', async (req, res) => {
     }
 });
 
-// Delete an item
-app.delete('/api/vault/:id', async (req, res) => {
+// Delete an item — verify ownership before delete
+app.delete('/api/vault/:id', vaultLimiter, verifyToken, async (req, res) => {
     try {
+        const existing = await VaultItem.findById(req.params.id);
+        if (!existing) return res.status(404).json({ error: 'Item not found' });
+        if (existing.userId !== req.user.uid) {
+            return res.status(403).json({ error: 'Forbidden: You do not own this vault item' });
+        }
         await VaultItem.findByIdAndDelete(req.params.id);
         res.json({ message: 'Item deleted' });
     } catch (err) {
@@ -289,8 +352,8 @@ app.delete('/api/vault/:id', async (req, res) => {
     }
 });
 
-// Route to scan file
-app.post('/scan', upload.single('file'), async (req, res) => {
+// Route to scan file — rate limited + auth required
+app.post('/scan', scanLimiter, verifyToken, upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded.' });
     }
@@ -351,39 +414,60 @@ app.post('/scan', upload.single('file'), async (req, res) => {
 
 
 
-// --- OSINT API Routes ---
+// ─── OSINT API Routes (auth + rate limited) ─────────────────────────────
 
-app.post('/api/osint/check', async (req, res) => {
+app.post('/api/osint/check', osintLimiter, verifyToken, async (req, res) => {
     const { username, site } = req.body;
     if (!username || !site || !site.url) {
         return res.status(400).json({ status: 'error', message: 'Missing username or site info' });
     }
 
-    const targetUrl = site.url.replace('USERNAME', username);
+    // Validate username — only alphanumeric, dots, underscores, hyphens
+    if (!/^[a-zA-Z0-9._-]{1,50}$/.test(username)) {
+        return res.status(400).json({ status: 'error', message: 'Invalid username format' });
+    }
+
+    const targetUrl = site.url.replace('USERNAME', encodeURIComponent(username));
+
+    // Ensure the resolved URL is http/https only (prevent SSRF to internal services)
+    try {
+        const parsed = new URL(targetUrl);
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+            return res.status(400).json({ status: 'error', message: 'Invalid URL protocol' });
+        }
+        // Block requests to private/internal IP ranges
+        const hostname = parsed.hostname;
+        if (
+            hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname.startsWith('192.168.') ||
+            hostname.startsWith('10.') ||
+            hostname.startsWith('172.')
+        ) {
+            return res.status(400).json({ status: 'error', message: 'Internal network URLs are not permitted' });
+        }
+    } catch {
+        return res.status(400).json({ status: 'error', message: 'Malformed URL in site configuration' });
+    }
 
     try {
         const response = await axios.get(targetUrl, {
             timeout: 5000,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (compatible; CyberSafeHub/1.0)'
             },
-            validateStatus: function (status) {
-                return status < 500; // Resolve only if the status code is less than 500
-            }
+            validateStatus: (status) => status < 500,
+            maxRedirects: 3,
         });
 
         if (response.status === 200) {
-            // Some sites return 200 even for 404 pages, but most standard ones don't.
-            // We can add specific logic for sites like Instagram if needed later.
             res.json({ status: 'found', url: targetUrl });
         } else if (response.status === 404) {
             res.json({ status: 'not_found' });
         } else {
-            // Other codes like 403, 401 might mean "Protected" or "Login Required"
             res.json({ status: 'potential', url: targetUrl });
         }
     } catch (error) {
-        // Network error or timeout
         res.json({ status: 'error', message: error.message, url: targetUrl });
     }
 });

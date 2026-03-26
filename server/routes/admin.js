@@ -35,17 +35,22 @@ router.get('/verify', adminAuthMiddleware, (req, res) => {
     res.json({ role: req.adminRole, email: req.user.email });
 });
 
-// ─── Setup Admin ──────────────────────────────────────────────────────────────────
-// POST /api/admin/setup — one-time bootstrap, unprotected
+// ─── Setup Admin ─────────────────────────────────────────────────────────────────
+// POST /api/admin/setup — one-time bootstrap, disabled once any admin exists
 router.post('/setup', async (req, res) => {
     try {
+        // Security: disable setup endpoint after first admin is created
+        const existingCount = await Admin.countDocuments();
+        if (existingCount > 0) {
+            return res.status(403).json({ error: 'Setup is disabled. Admin accounts already exist. Use the admin panel to add more admins.' });
+        }
+
         const { email, role } = req.body;
-        const existingAdmin = await Admin.findOne({ email });
-        if (existingAdmin) return res.status(400).json({ error: 'Admin already exists' });
+        if (!email) return res.status(400).json({ error: 'email is required' });
 
         const newAdmin = new Admin({ email, role: role || 'super_admin' });
         await newAdmin.save();
-        res.status(201).json({ message: 'Admin created successfully', admin: newAdmin });
+        res.status(201).json({ message: 'First admin created successfully', admin: { email: newAdmin.email, role: newAdmin.role } });
     } catch (err) {
         console.error('Admin setup error:', err);
         res.status(500).json({ error: 'Failed to create admin' });
