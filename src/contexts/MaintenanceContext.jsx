@@ -13,10 +13,21 @@ export const MaintenanceProvider = ({ children }) => {
         const fetchSettings = async () => {
             try {
                 const res = await fetch(`${API_BASE_URL}/api/settings/maintenance`);
-                const data = await res.json();
-                setMaintenanceData(data.maintenanceData || {});
+                
+                // Read Content-Type before calling res.json()
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const data = await res.json();
+                    setMaintenanceData(data.maintenanceData || {});
+                } else {
+                    // It returned HTML or Text (Server Error, Proxy issue, or wrong VITE_API_URL)
+                    const text = await res.text();
+                    console.error(`Expected JSON but got HTML/Text. Check VITE_API_URL. Response starts with:`, text.substring(0, 50));
+                    setMaintenanceData({}); // fail open
+                }
             } catch (err) {
-                console.error("Failed to fetch maintenance settings:", err);
+                console.error("Failed to fetch maintenance settings:", err.message);
+                setMaintenanceData({}); // fail open
             } finally {
                 setLoading(false);
             }

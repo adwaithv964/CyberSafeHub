@@ -69,10 +69,27 @@ export default function MaintenanceManager() {
             const res = await fetch(`${API_BASE_URL}/api/admin/settings/maintenance`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!res.ok) throw new Error('Failed to fetch settings');
-            const data = await res.json();
-            setSettings(data.maintenanceData || {});
-            setOriginalSettings(data.maintenanceData || {});
+            
+            const contentType = res.headers.get("content-type");
+            if (!res.ok) {
+                if (contentType && contentType.includes("application/json")) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || 'Failed to fetch settings');
+                } else {
+                    const text = await res.text();
+                    throw new Error(`Server returned HTML/Text (Check VITE_API_URL). Status ${res.status}`);
+                }
+            }
+
+            if (contentType && contentType.includes("application/json")) {
+                const data = await res.json();
+                setSettings(data.maintenanceData || {});
+                setOriginalSettings(data.maintenanceData || {});
+            } else {
+                const text = await res.text();
+                throw new Error(`Invalid response format. Expected JSON, got HTML (Starts with: ${text.substring(0, 20)}...)`);
+            }
+            
         } catch (err) {
             setError(err.message);
         } finally {
