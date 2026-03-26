@@ -555,14 +555,16 @@ const BreachDetector = () => {
     );
 };
 
+import MaintenanceGuard from '../components/MaintenanceGuard';
+
 const ScannersPage = () => {
     const [activeScanner, setActiveScanner] = useState('malware');
     const renderScanner = () => {
         switch (activeScanner) {
-            case 'malware': return <MalwareScanner />;
-            case 'phishing': return <PhishingScanner />;
-            case 'breach': return <BreachDetector />;
-            default: return <MalwareScanner />;
+            case 'malware': return <MaintenanceGuard featureKey="scanners_malware" isPage={false}><MalwareScanner /></MaintenanceGuard>;
+            case 'phishing': return <MaintenanceGuard featureKey="scanners_phishing" isPage={false}><PhishingScanner /></MaintenanceGuard>;
+            case 'breach': return <MaintenanceGuard featureKey="scanners_breach" isPage={false}><BreachDetector /></MaintenanceGuard>;
+            default: return <MaintenanceGuard featureKey="scanners_malware" isPage={false}><MalwareScanner /></MaintenanceGuard>;
         }
     };
     const TabButton = ({ scannerName, children }) => (

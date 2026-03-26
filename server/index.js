@@ -255,6 +255,21 @@ app.post('/api/cyber-tools/:id/use', async (req, res) => {
     }
 });
 
+// --- Public Settings API (no auth required) ---
+const PlatformSettings = require('./models/PlatformSettings');
+app.get('/api/settings/maintenance', async (req, res) => {
+    try {
+        const settings = await PlatformSettings.findOne({ settingsKey: 'global' }).lean();
+        if (!settings) {
+            // Default open if not created yet
+            return res.json({ maintenanceData: {} });
+        }
+        res.json({ maintenanceData: settings.maintenanceData || {} });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+});
+
 // --- Public Announcements API (no auth — shown to all logged-in users) ---
 const Announcement = require('./models/Announcement');
 app.get('/api/announcements', async (req, res) => {

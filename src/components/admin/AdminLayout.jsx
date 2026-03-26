@@ -88,6 +88,7 @@ export default function AdminLayout() {
                         <NavLink to="/admin/content" icon="newspaper" allowedRoles={['super_admin', 'content_manager']}>Content CMS</NavLink>
                         <NavLink to="/admin/ai" icon="bot" allowedRoles={['super_admin']}>AI Governance</NavLink>
                         <NavLink to="/admin/admin-manager" icon="userCog" allowedRoles={['super_admin']}>Admin Manager</NavLink>
+                        <NavLink to="/admin/maintenance" icon="settings" allowedRoles={['super_admin']}>Maintenance Mode</NavLink>
                     </nav>
 
                     <div className="mt-auto space-y-2 p-4 border-t border-glass-border">

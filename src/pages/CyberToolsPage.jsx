@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { API_BASE_URL } from '../config';
+import MaintenanceGuard from '../components/MaintenanceGuard';
 
 // Colour mapping from the admin tool color field → Tailwind classes
 const COLOR_MAP = {
@@ -27,6 +28,16 @@ const CATEGORY_LABELS = {
     ai: '🤖 AI',
     crypto: '🔐 Crypto',
     utility: '🛠️ Utility',
+};
+
+const ROUTE_TO_KEY = {
+    '/tools/metadata-washer': 'tools_metadata',
+    '/tools/wifi-radar': 'tools_wifi',
+    '/tools/secure-share': 'tools_share',
+    '/tools/conversion-system': 'tools_converter',
+    '/tools/code-auditor': 'tools_auditor',
+    '/tools/privacy-decoder': 'tools_policy',
+    '/tools/username-detective': 'tools'
 };
 
 export default function CyberToolsPage() {
@@ -107,42 +118,44 @@ export default function CyberToolsPage() {
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filtered.map((tool, i) => {
                         const colors = COLOR_MAP[tool.color] || DEFAULT_COLOR;
+                        const featureKey = ROUTE_TO_KEY[tool.route] || 'tools';
                         return (
-                            <motion.div
-                                key={tool._id}
-                                initial={{ opacity: 0, y: 16 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.04 }}
-                                whileHover={{ scale: 1.02, translateY: -5 }}
-                                className={`bg-glass-panel p-6 rounded-xl border border-glass-border cursor-pointer ${colors.hover} ${colors.shadow} transition-all group relative overflow-hidden`}
-                                onClick={() => handleToolSelect(tool)}
-                            >
-                                {/* Badge */}
-                                {tool.badge && (
-                                    <span className={`absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold ${colors.bg} ${colors.text} border border-current/30`}>
-                                        {tool.badge}
-                                    </span>
-                                )}
-                                {/* External link indicator */}
-                                {tool.isExternal && (
-                                    <span className="absolute top-3 right-3 text-text-secondary opacity-40 text-xs">↗</span>
-                                )}
+                            <MaintenanceGuard key={tool._id} featureKey={featureKey} isPage={false}>
+                                <motion.div
+                                    initial={{ opacity: 0, y: 16 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.04 }}
+                                    whileHover={{ scale: 1.02, translateY: -5 }}
+                                    className={`bg-glass-panel p-6 rounded-xl border border-glass-border cursor-pointer ${colors.hover} ${colors.shadow} transition-all group relative overflow-hidden`}
+                                    onClick={() => handleToolSelect(tool)}
+                                >
+                                    {/* Badge */}
+                                    {tool.badge && (
+                                        <span className={`absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold ${colors.bg} ${colors.text} border border-current/30`}>
+                                            {tool.badge}
+                                        </span>
+                                    )}
+                                    {/* External link indicator */}
+                                    {tool.isExternal && (
+                                        <span className="absolute top-3 right-3 text-text-secondary opacity-40 text-xs">↗</span>
+                                    )}
 
-                                {/* Icon */}
-                                <div className={`w-12 h-12 rounded-lg ${colors.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-2xl`}>
-                                    {tool.emoji
-                                        ? <span>{tool.emoji}</span>
-                                        : <Icon name={tool.icon || 'tool'} className={`w-6 h-6 ${colors.text}`} />
-                                    }
-                                </div>
+                                    {/* Icon */}
+                                    <div className={`w-12 h-12 rounded-lg ${colors.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-2xl`}>
+                                        {tool.emoji
+                                            ? <span>{tool.emoji}</span>
+                                            : <Icon name={tool.icon || 'tool'} className={`w-6 h-6 ${colors.text}`} />
+                                        }
+                                    </div>
 
-                                <h3 className="text-xl font-semibold text-text-primary mb-2">{tool.name}</h3>
-                                <p className="text-text-secondary text-sm leading-relaxed">{tool.description}</p>
+                                    <h3 className="text-xl font-semibold text-text-primary mb-2">{tool.name}</h3>
+                                    <p className="text-text-secondary text-sm leading-relaxed">{tool.description}</p>
 
-                                <div className={`mt-3 text-xs font-medium capitalize opacity-0 group-hover:opacity-100 transition-opacity ${colors.text}`}>
-                                    {CATEGORY_LABELS[tool.category] || tool.category} →
-                                </div>
-                            </motion.div>
+                                    <div className={`mt-3 text-xs font-medium capitalize opacity-0 group-hover:opacity-100 transition-opacity ${colors.text}`}>
+                                        {CATEGORY_LABELS[tool.category] || tool.category} →
+                                    </div>
+                                </motion.div>
+                            </MaintenanceGuard>
                         );
                     })}
                 </div>

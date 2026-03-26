@@ -670,4 +670,42 @@ router.delete('/academy/:id', adminAuthMiddleware, requireRole(...SUPER_CONTENT)
     }
 });
 
+// ─── Platform Settings ─────────────────────────────────────────────────────────
+const PlatformSettings = require('../models/PlatformSettings');
+
+// GET /api/admin/settings/maintenance
+router.get('/settings/maintenance', adminAuthMiddleware, requireRole(...SUPER), async (req, res) => {
+    try {
+        let settings = await PlatformSettings.findOne({ settingsKey: 'global' });
+        if (!settings) {
+            settings = await new PlatformSettings().save();
+        }
+        // Use Object.fromEntries since we fetched without .lean() and maintenanceData is a Map
+        res.json({ maintenanceData: Object.fromEntries(settings.maintenanceData) });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+});
+
+// PUT /api/admin/settings/maintenance
+router.put('/settings/maintenance', adminAuthMiddleware, requireRole(...SUPER), async (req, res) => {
+    try {
+        const { maintenanceData } = req.body;
+        if (!maintenanceData || typeof maintenanceData !== 'object') {
+            return res.status(400).json({ error: 'maintenanceData map is required' });
+        }
+        
+        const settings = await PlatformSettings.findOneAndUpdate(
+            { settingsKey: 'global' },
+            { $set: { maintenanceData } },
+            { new: true, upsert: true }
+        );
+        
+        await writeAudit(req.user.email, 'SETTINGS_UPDATED', 'Platform Settings', 'Updated maintenance mode flags', req.ip);
+        res.json({ maintenanceData: Object.fromEntries(settings.maintenanceData) });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update settings' });
+    }
+});
+
 module.exports = router;

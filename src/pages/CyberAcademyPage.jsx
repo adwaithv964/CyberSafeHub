@@ -8,6 +8,7 @@ import EncryptionVisualizer from '../components/academy/EncryptionVisualizer';
 import SteganographyPage from './SteganographyPage';
 import IncidentSimulator from '../components/academy/IncidentSimulator';
 import { API_BASE_URL } from '../config';
+import MaintenanceGuard from '../components/MaintenanceGuard';
 
 // Map route IDs → interactive React components (built-in interactive labs)
 const INTERACTIVE_RENDERERS = {
@@ -17,6 +18,15 @@ const INTERACTIVE_RENDERERS = {
     stego: () => <SteganographyPage />,
     incident: () => <IncidentSimulator />,
 };
+
+// Map route IDs -> feature keys
+const MOD_ROUTE_TO_KEY = {
+    phishing: 'academy_phishing',
+    cracker: 'academy_cracker',
+    crypto: 'academy_crypto',
+    stego: 'academy_stego',
+    incident: 'academy_incident'
+}
 
 // Card colour schemes cycled by module index
 const CARD_COLORS = [
@@ -52,6 +62,8 @@ const CyberAcademyPage = () => {
     const routeKey = activeDoc?.route || moduleId;
     const Renderer = routeKey ? INTERACTIVE_RENDERERS[routeKey] : null;
 
+    const currentFeatureKey = MOD_ROUTE_TO_KEY[routeKey] || 'academy';
+
     return (
         <div className="space-y-8">
             <Header
@@ -69,15 +81,17 @@ const CyberAcademyPage = () => {
                         <Icon name="arrowLeft" className="w-4 h-4 mr-2" />
                         Back to Academy Hub
                     </button>
-                    <div className="bg-background/30 backdrop-blur-md border border-white/5 rounded-2xl p-6 min-h-[600px]">
-                        {Renderer ? <Renderer /> : (
-                            <div className="flex flex-col items-center justify-center h-64 text-text-secondary">
-                                <span className="text-5xl mb-4">{activeDoc?.icon || '📚'}</span>
-                                <h3 className="text-xl font-bold text-text-primary mb-2">{activeDoc?.title || 'Module'}</h3>
-                                <p className="text-sm opacity-70">Interactive content for this module is coming soon.</p>
-                            </div>
-                        )}
-                    </div>
+                    <MaintenanceGuard featureKey={currentFeatureKey} isPage={true}>
+                        <div className="bg-background/30 backdrop-blur-md border border-white/5 rounded-2xl p-6 min-h-[600px]">
+                            {Renderer ? <Renderer /> : (
+                                <div className="flex flex-col items-center justify-center h-64 text-text-secondary">
+                                    <span className="text-5xl mb-4">{activeDoc?.icon || '📚'}</span>
+                                    <h3 className="text-xl font-bold text-text-primary mb-2">{activeDoc?.title || 'Module'}</h3>
+                                    <p className="text-sm opacity-70">Interactive content for this module is coming soon.</p>
+                                </div>
+                            )}
+                        </div>
+                    </MaintenanceGuard>
                 </div>
             ) : (
                 // ── Hub grid ─────────────────────────────────────────────────
@@ -98,45 +112,47 @@ const CyberAcademyPage = () => {
                                 const cc = CARD_COLORS[i % CARD_COLORS.length];
                                 const routeTo = mod.route || mod._id;
                                 const hasInteractive = !!INTERACTIVE_RENDERERS[routeTo];
+                                const fKey = MOD_ROUTE_TO_KEY[mod.route] || 'academy';
                                 return (
-                                    <div
-                                        key={mod._id}
-                                        onClick={() => navigate(`/academy/${routeTo}`)}
-                                        className="group cursor-pointer relative overflow-hidden bg-glass-gradient p-8 rounded-2xl border border-white/5 hover:border-accent/50 transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1"
-                                    >
-                                        {/* Faded background icon */}
-                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                            <Icon name={cc.icon} className="w-32 h-32" />
-                                        </div>
+                                    <MaintenanceGuard key={mod._id} featureKey={fKey} isPage={false}>
+                                        <div
+                                            onClick={() => navigate(`/academy/${routeTo}`)}
+                                            className="group cursor-pointer relative overflow-hidden bg-glass-gradient p-8 rounded-2xl border border-white/5 hover:border-accent/50 transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1 h-full"
+                                        >
+                                            {/* Faded background icon */}
+                                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                <Icon name={cc.icon} className="w-32 h-32" />
+                                            </div>
 
-                                        {/* Icon circle */}
-                                        <div className={`w-14 h-14 rounded-full bg-background/50 flex items-center justify-center mb-6 border ${cc.border} text-3xl`}>
-                                            {mod.icon && mod.icon.length <= 2
-                                                ? <span>{mod.icon}</span>
-                                                : <Icon name={cc.icon} className={`w-8 h-8 ${cc.text}`} />
-                                            }
-                                        </div>
+                                            {/* Icon circle */}
+                                            <div className={`w-14 h-14 rounded-full bg-background/50 flex items-center justify-center mb-6 border ${cc.border} text-3xl`}>
+                                                {mod.icon && mod.icon.length <= 2
+                                                    ? <span>{mod.icon}</span>
+                                                    : <Icon name={cc.icon} className={`w-8 h-8 ${cc.text}`} />
+                                                }
+                                            </div>
 
-                                        <h3 className="text-xl font-bold text-text-primary mb-2">{mod.title}</h3>
-                                        <p className="text-text-secondary text-sm leading-relaxed mb-4">{mod.description}</p>
+                                            <h3 className="text-xl font-bold text-text-primary mb-2">{mod.title}</h3>
+                                            <p className="text-text-secondary text-sm leading-relaxed mb-4">{mod.description}</p>
 
-                                        <div className="flex flex-wrap gap-1.5 mb-4">
-                                            {mod.difficulty && (
-                                                <span className={`text-xs px-2 py-0.5 rounded-full border capitalize ${mod.difficulty === 'beginner' ? 'text-success border-success/30 bg-success/10' :
-                                                        mod.difficulty === 'intermediate' ? 'text-warning border-warning/30 bg-warning/10' :
-                                                            'text-danger border-danger/30 bg-danger/10'
-                                                    }`}>{mod.difficulty}</span>
-                                            )}
-                                            {mod.category && (
-                                                <span className="text-xs px-2 py-0.5 rounded-full border border-glass-border text-text-secondary">{mod.category}</span>
-                                            )}
-                                        </div>
+                                            <div className="flex flex-wrap gap-1.5 mb-4">
+                                                {mod.difficulty && (
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full border capitalize ${mod.difficulty === 'beginner' ? 'text-success border-success/30 bg-success/10' :
+                                                            mod.difficulty === 'intermediate' ? 'text-warning border-warning/30 bg-warning/10' :
+                                                                'text-danger border-danger/30 bg-danger/10'
+                                                        }`}>{mod.difficulty}</span>
+                                                )}
+                                                {mod.category && (
+                                                    <span className="text-xs px-2 py-0.5 rounded-full border border-glass-border text-text-secondary">{mod.category}</span>
+                                                )}
+                                            </div>
 
-                                        <div className={`flex items-center font-semibold text-sm group-hover:gap-2 transition-all ${hasInteractive ? 'text-accent' : 'text-text-secondary'}`}>
-                                            {hasInteractive ? 'Start Module' : 'View Module'}
-                                            <Icon name="arrowLeft" className="w-4 h-4 rotate-180 ml-1" />
+                                            <div className={`flex items-center font-semibold text-sm group-hover:gap-2 transition-all ${hasInteractive ? 'text-accent' : 'text-text-secondary'}`}>
+                                                {hasInteractive ? 'Start Module' : 'View Module'}
+                                                <Icon name="arrowLeft" className="w-4 h-4 rotate-180 ml-1" />
+                                            </div>
                                         </div>
-                                    </div>
+                                    </MaintenanceGuard>
                                 );
                             })}
                         </div>

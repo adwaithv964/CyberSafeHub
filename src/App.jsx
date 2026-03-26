@@ -24,6 +24,8 @@ import SteganographyPage from './pages/SteganographyPage';
 import CyberToolsPage from './pages/CyberToolsPage';
 import CyberAcademyPage from './pages/CyberAcademyPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { MaintenanceProvider } from './contexts/MaintenanceContext';
+import MaintenanceGuard from './components/MaintenanceGuard';
 import BackgroundBlobs from './components/BackgroundBlobs';
 import SEO from './components/SEO';
 import AnnouncementBanner from './components/AnnouncementBanner';
@@ -41,6 +43,7 @@ import AIGovernance from './pages/admin/AIGovernance';
 import AuditLogs from './pages/admin/AuditLogs';
 import AdminManager from './pages/admin/AdminManager';
 import CyberToolManager from './pages/admin/CyberToolManager';
+import MaintenanceManager from './pages/admin/MaintenanceManager';
 
 function AppContent() {
     const { currentUser, logout } = useAuth();
@@ -167,92 +170,128 @@ function AppContent() {
                             } />
                             <Route path="/network" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <NetworkToolPage />
+                                    <MaintenanceGuard featureKey="network">
+                                        <NetworkToolPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/scanners" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <ScannersPage />
+                                    <MaintenanceGuard featureKey="scanners">
+                                        <ScannersPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/news" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <CyberNewsPage />
+                                    <MaintenanceGuard featureKey="news">
+                                        <CyberNewsPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/assistant" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <CyberAssistantPage />
+                                    <MaintenanceGuard featureKey="assistant">
+                                        <CyberAssistantPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/healthcheck" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <HealthCheckPage />
+                                    <MaintenanceGuard featureKey="healthcheck">
+                                        <HealthCheckPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/vault" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <PasswordVaultPage />
+                                    <MaintenanceGuard featureKey="vault">
+                                        <PasswordVaultPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/privacy" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <DigitalPrivacyPage />
+                                    <MaintenanceGuard featureKey="privacy">
+                                        <DigitalPrivacyPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/emergency" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <EmergencyGuidesPage />
+                                    <MaintenanceGuard featureKey="emergency">
+                                        <EmergencyGuidesPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/academy" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <CyberAcademyPage />
+                                    <MaintenanceGuard featureKey="academy">
+                                        <CyberAcademyPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/academy/:moduleId" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <CyberAcademyPage />
+                                    <MaintenanceGuard featureKey="academy">
+                                        <CyberAcademyPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/tools" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <CyberToolsPage />
+                                    <MaintenanceGuard featureKey="tools">
+                                        <CyberToolsPage />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/tools/metadata-washer" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <MetadataWasher />
+                                    <MaintenanceGuard featureKey="tools_metadata">
+                                        <MetadataWasher />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/tools/username-detective" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <UsernameDetective />
+                                    <MaintenanceGuard featureKey="tools">
+                                        <UsernameDetective />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/tools/wifi-radar" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <WiFiRadar />
+                                    <MaintenanceGuard featureKey="tools_wifi">
+                                        <WiFiRadar />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/tools/secure-share" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <SecureShare />
+                                    <MaintenanceGuard featureKey="tools_share">
+                                        <SecureShare />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/tools/conversion-system" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <ConversionSystem />
+                                    <MaintenanceGuard featureKey="tools_converter">
+                                        <ConversionSystem />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/tools/code-auditor" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <CodeSecurityAuditor />
+                                    <MaintenanceGuard featureKey="tools_auditor">
+                                        <CodeSecurityAuditor />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/tools/privacy-decoder" element={
                                 <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                                    <PrivacyPolicyDecoder />
+                                    <MaintenanceGuard featureKey="tools_policy">
+                                        <PrivacyPolicyDecoder />
+                                    </MaintenanceGuard>
                                 </motion.div>
                             } />
                             <Route path="/settings" element={
@@ -283,6 +322,7 @@ function MainApp() {
                 <Route path="logs" element={<AuditLogs />} />
                 <Route path="admin-manager" element={<AdminManager />} />
                 <Route path="cyber-tools" element={<CyberToolManager />} />
+                <Route path="maintenance" element={<MaintenanceManager />} />
             </Route>
             <Route path="/*" element={<AppContent />} />
         </Routes>
@@ -294,8 +334,10 @@ export default function App() {
         <BrowserRouter>
             <AuthProvider>
                 <AdminAuthProvider>
-                    <SEO />
-                    <MainApp />
+                    <MaintenanceProvider>
+                        <SEO />
+                        <MainApp />
+                    </MaintenanceProvider>
                 </AdminAuthProvider>
             </AuthProvider>
         </BrowserRouter>
