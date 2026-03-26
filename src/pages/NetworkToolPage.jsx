@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import Card from '../components/Card';
 import Icon from '../components/Icon';
 import Button from '../components/Button';
 import { checkIpInfo } from '../utils/securityScanners';
@@ -9,10 +8,8 @@ const NetworkToolPage = () => {
     const [ipData, setIpData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [analysis, setAnalysis] = useState('analyzing'); // 'safe', 'exposed', 'analyzing'
+    const [analysis, setAnalysis] = useState('analyzing');
     const [isVpnLikely, setIsVpnLikely] = useState(false);
-
-
 
     const fetchIpData = async () => {
         setLoading(true);
@@ -35,135 +32,279 @@ const NetworkToolPage = () => {
 
     const isSafe = analysis === 'safe';
 
+    /* Inline styles so they work even when Tailwind purges/misses arbitrary values */
+    const cardBorder = isSafe
+        ? '1px solid rgba(52, 211, 153, 0.4)'
+        : '1px solid rgba(239, 68, 68, 0.4)';
+
+    const cardGlow = isSafe
+        ? '0 0 30px rgba(52,211,153,0.15), 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.05)'
+        : '0 0 30px rgba(239,68,68,0.15), 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.05)';
+
+    const iconBg = isSafe
+        ? 'rgba(52, 211, 153, 0.2)'
+        : 'rgba(239, 68, 68, 0.2)';
+
+    const iconGlow = isSafe
+        ? '0 0 20px rgba(52,211,153,0.4)'
+        : '0 0 20px rgba(239,68,68,0.4)';
+
+    const accentColor = isSafe ? 'rgb(52, 211, 153)' : 'rgb(239, 68, 68)';
+    const barBg = isSafe ? 'rgb(52, 211, 153)' : 'rgb(239, 68, 68)';
+
     return (
         <>
             <Header title="Network Tools" subtitle="Analyze your network connection and visibility." />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Main Scan Card */}
-                <Card className={`p-6 md:p-8 flex flex-col items-center justify-center text-center space-y-4 relative overflow-hidden transition-colors duration-500 ${isSafe ? 'border-success/50 shadow-glow-success' : 'border-danger/50 shadow-glow-danger'}`}>
+            <div className="flex flex-col md:grid md:grid-cols-2 gap-6">
 
-                    {/* Status Indicator Bar */}
-                    <div className={`absolute top-0 inset-x-0 h-1 ${isSafe ? 'bg-success' : 'bg-danger'}`} />
+                {/* ── Main Status Card ── */}
+                <div
+                    style={{
+                        background: 'linear-gradient(to bottom right, rgba(30,41,59,0.85), rgba(15,23,42,0.85))',
+                        border: cardBorder,
+                        boxShadow: cardGlow,
+                        backdropFilter: 'blur(12px)',
+                        borderRadius: '0.75rem',
+                        position: 'relative',
+                        padding: '1.5rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        textAlign: 'center',
+                        gap: '1rem',
+                    }}
+                >
+                    {/* Top colored bar */}
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '3px',
+                        background: barBg,
+                        borderRadius: '0.75rem 0.75rem 0 0',
+                    }} />
 
-                    <div className={`p-4 rounded-full transition-colors duration-500 ${isSafe ? 'bg-success/20' : 'bg-danger/20'}`} style={{boxShadow: isSafe ? '0 0 30px rgba(34,197,94,0.2)' : '0 0 30px rgba(239,68,68,0.2)'}}>
-                        <Icon name={isSafe ? "shieldCheck" : "shieldAlert"} className={`w-14 h-14 md:w-16 md:h-16 ${isSafe ? 'text-success' : 'text-danger'}`} />
+                    {/* Shield Icon */}
+                    <div style={{
+                        padding: '1rem',
+                        borderRadius: '50%',
+                        background: iconBg,
+                        boxShadow: iconGlow,
+                        marginTop: '0.5rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                        <Icon
+                            name={isSafe ? 'shieldCheck' : 'shieldAlert'}
+                            style={{ width: '3.5rem', height: '3.5rem', color: accentColor }}
+                            className={isSafe ? 'text-success' : 'text-danger'}
+                        />
                     </div>
 
+                    {/* Status Label */}
                     <div>
-                        <h2 className="text-2xl font-bold text-text-primary">
-                            {isSafe ? 'Likely Protected' : 'Likely Exposed'}
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'rgb(241,245,249)', marginBottom: '0.25rem' }}>
+                            {loading ? 'Scanning...' : isSafe ? 'Likely Protected' : 'Likely Exposed'}
                         </h2>
-                        <p className={`text-sm font-medium uppercase tracking-widest mt-1 ${isSafe ? 'text-success' : 'text-danger'}`}>
-                            {isSafe ? 'VPN / Proxy Detected' : 'Residential ISP Detected'}
+                        <p style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: accentColor }}>
+                            {loading ? 'Analyzing network' : isSafe ? 'VPN / Proxy Detected' : 'Residential ISP Detected'}
                         </p>
                     </div>
 
-                    {loading ? (
-                        <p className="text-text-primary animate-pulse flex items-center gap-2"><Icon name="refreshCw" className="w-4 h-4 animate-spin" /> Scanning network...</p>
-                    ) : (
-                        ipData && (
-                            <div className="w-full space-y-6 mt-4 relative z-10">
-                                <div className="bg-background/50 p-4 md:p-6 rounded-xl border border-border-color backdrop-blur-sm">
-                                    <p className="text-sm text-text-secondary uppercase tracking-wider mb-1">Public IP Address</p>
-                                    <p className={`text-lg sm:text-2xl md:text-3xl font-mono font-bold drop-shadow-lg break-all leading-snug ${isSafe ? 'text-success' : 'text-danger'}`}>
-                                        {ipData.ip}
+                    {/* Loading spinner */}
+                    {loading && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'rgb(148,163,184)' }}>
+                            <Icon name="refreshCw" className="w-4 h-4 animate-spin" />
+                            <span>Scanning network...</span>
+                        </div>
+                    )}
+
+                    {/* IP Data */}
+                    {!loading && ipData && (
+                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+                            {/* IP Address Box */}
+                            <div style={{
+                                background: 'rgba(2, 6, 23, 0.6)',
+                                border: '1px solid rgba(56,189,248,0.15)',
+                                borderRadius: '0.75rem',
+                                padding: '1rem',
+                                backdropFilter: 'blur(8px)',
+                            }}>
+                                <p style={{ fontSize: '0.75rem', color: 'rgb(148,163,184)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+                                    Public IP Address
+                                </p>
+                                <p style={{
+                                    fontFamily: 'monospace',
+                                    fontWeight: 700,
+                                    color: accentColor,
+                                    wordBreak: 'break-all',
+                                    overflowWrap: 'anywhere',
+                                    lineHeight: 1.4,
+                                    fontSize: 'clamp(0.85rem, 4vw, 1.5rem)',
+                                }}>
+                                    {ipData.ip}
+                                </p>
+                            </div>
+
+                            {/* ISP + Location row */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', textAlign: 'left' }}>
+
+                                {/* ISP */}
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.03)',
+                                    border: '1px solid rgba(255,255,255,0.06)',
+                                    borderRadius: '0.5rem',
+                                    padding: '0.75rem',
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.4rem' }}>
+                                        <Icon name="database" className="w-3.5 h-3.5 text-text-secondary" style={{ flexShrink: 0 }} />
+                                        <span style={{ fontSize: '0.65rem', color: 'rgb(148,163,184)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ISP</span>
+                                    </div>
+                                    <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'rgb(226,232,240)', wordBreak: 'break-word', overflowWrap: 'anywhere', lineHeight: 1.35 }}>
+                                        {ipData.org || 'Unknown'}
+                                    </p>
+                                    <p style={{ fontSize: '0.65rem', color: 'rgb(100,116,139)', marginTop: '0.2rem' }}>
+                                        {isVpnLikely ? '(Datacenter)' : '(Residential)'}
                                     </p>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-                                    <div className="p-4 bg-background/30 rounded-lg border border-white/5">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Icon name="database" className="w-4 h-4 text-text-secondary flex-shrink-0" />
-                                            <p className="text-xs text-text-secondary uppercase">ISP Classification</p>
-                                        </div>
-                                        <p className="font-semibold text-text-primary break-words" title={ipData.org}>
-                                            {ipData.org}
-                                        </p>
-                                        <p className="text-xs text-text-secondary mt-1">
-                                            {isVpnLikely ? '(Datacenter/Hosting)' : '(Residential/Standard)'}
-                                        </p>
+                                {/* Location */}
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.03)',
+                                    border: '1px solid rgba(255,255,255,0.06)',
+                                    borderRadius: '0.5rem',
+                                    padding: '0.75rem',
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.4rem' }}>
+                                        <Icon name="globe" className="w-3.5 h-3.5 text-text-secondary" style={{ flexShrink: 0 }} />
+                                        <span style={{ fontSize: '0.65rem', color: 'rgb(148,163,184)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Location</span>
                                     </div>
-                                    <div className="p-4 bg-background/30 rounded-lg border border-white/5">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Icon name="globe" className="w-4 h-4 text-text-secondary flex-shrink-0" />
-                                            <p className="text-xs text-text-secondary uppercase">Visible Location</p>
-                                        </div>
-                                        <p className="font-semibold text-text-primary break-words">{ipData.city}, {ipData.country_code}</p>
-                                    </div>
+                                    <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'rgb(226,232,240)', wordBreak: 'break-word', lineHeight: 1.35 }}>
+                                        {ipData.city}{ipData.country_code ? `, ${ipData.country_code}` : ''}
+                                    </p>
                                 </div>
                             </div>
-                        )
-                    )}
-
-                    {error && (
-                        <div className="text-danger flex items-center gap-2 bg-danger/10 p-3 rounded-lg">
-                            <Icon name="alertTriangle" className="w-5 h-5" />
-                            <span>{error}</span>
                         </div>
                     )}
-                </Card>
 
-                <div className="space-y-6">
-                    {/* Status & Analysis */}
-                    <Card className="p-6">
-                        <h3 className="text-xl font-semibold text-text-primary mb-4 flex items-center gap-2">
+                    {/* Error */}
+                    {error && (
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                            borderRadius: '0.5rem', padding: '0.75rem', color: 'rgb(239,68,68)',
+                            width: '100%', textAlign: 'left',
+                        }}>
+                            <Icon name="alertTriangle" className="w-5 h-5 flex-shrink-0" />
+                            <span style={{ fontSize: '0.85rem' }}>{error}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Right Column ── */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+                    {/* Detailed Analysis Card */}
+                    <div style={{
+                        background: 'linear-gradient(to bottom right, rgba(30,41,59,0.85), rgba(15,23,42,0.85))',
+                        border: '1px solid rgba(56,189,248,0.1)',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.05)',
+                        backdropFilter: 'blur(12px)',
+                        borderRadius: '0.75rem',
+                        padding: '1.25rem',
+                    }}>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem', fontWeight: 600, color: 'rgb(241,245,249)', marginBottom: '1rem' }}>
                             <Icon name="radio" className={`w-5 h-5 ${isSafe ? 'text-success' : 'text-danger'}`} />
                             Detailed Analysis
                         </h3>
-                        <div className="space-y-4">
-                            <div className="flex items-start gap-4 p-4 bg-background/30 rounded-lg border border-border-color">
-                                <div className={`w-3 h-3 mt-1.5 rounded-full ${isSafe ? 'bg-success shadow-glow-success' : 'bg-danger shadow-glow-danger'}`}></div>
-                                <div>
-                                    <p className="text-text-primary font-bold">
-                                        {isSafe ? 'Traffic Appears Masked' : 'Traffic Appears Direct'}
-                                    </p>
-                                    <p className="text-sm text-text-secondary mt-1">
-                                        {isSafe
-                                            ? "Your IP belongs to a hosting/VPN provider, which usually means your identity is masked."
-                                            : "Your IP belongs to a standard residential ISP, meaning your physical location is likely visible."}
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className="bg-gradient-to-r from-primary/50 to-transparent p-4 rounded-lg flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <p className="text-sm text-text-secondary">
-                                        Accuracy 85% • Heuristic Analysis
-                                    </p>
-                                </div>
-                                <Button
-                                    onClick={fetchIpData}
-                                    className="w-full sm:w-auto text-white hover:bg-white/10"
-                                    variant="secondary"
-                                >
-                                    <Icon name="refreshCw" className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                                    Re-scan
-                                </Button>
+                        {/* Traffic status item */}
+                        <div style={{
+                            display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(56,189,248,0.1)',
+                            borderRadius: '0.5rem', padding: '0.75rem', marginBottom: '1rem',
+                        }}>
+                            <div style={{
+                                width: '0.65rem', height: '0.65rem', borderRadius: '50%', flexShrink: 0, marginTop: '0.3rem',
+                                background: accentColor,
+                                boxShadow: `0 0 8px ${accentColor}`,
+                            }} />
+                            <div>
+                                <p style={{ fontWeight: 700, color: 'rgb(226,232,240)', fontSize: '0.9rem' }}>
+                                    {isSafe ? 'Traffic Appears Masked' : 'Traffic Appears Direct'}
+                                </p>
+                                <p style={{ fontSize: '0.8rem', color: 'rgb(148,163,184)', marginTop: '0.25rem', lineHeight: 1.5 }}>
+                                    {isSafe
+                                        ? 'Your IP belongs to a hosting/VPN provider, which usually means your identity is masked.'
+                                        : 'Your IP belongs to a standard residential ISP, meaning your physical location is likely visible.'}
+                                </p>
                             </div>
                         </div>
-                    </Card>
 
-                    <Card className="p-6">
-                        <h3 className="text-xl font-semibold text-text-primary mb-4 flex items-center gap-2">
+                        {/* Re-scan button row */}
+                        <div style={{
+                            background: 'linear-gradient(to right, rgba(56,189,248,0.08), transparent)',
+                            borderRadius: '0.5rem', padding: '0.75rem',
+                            display: 'flex', flexDirection: 'column', gap: '0.5rem',
+                        }} className="sm:flex-row sm:items-center sm:justify-between">
+                            <p style={{ fontSize: '0.78rem', color: 'rgb(148,163,184)' }}>
+                                Accuracy 85% • Heuristic Analysis
+                            </p>
+                            <Button
+                                onClick={fetchIpData}
+                                className="w-full sm:w-auto text-white hover:bg-white/10"
+                                variant="secondary"
+                            >
+                                <Icon name="refreshCw" className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                                Re-scan
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Privacy Details Card */}
+                    <div style={{
+                        background: 'linear-gradient(to bottom right, rgba(30,41,59,0.85), rgba(15,23,42,0.85))',
+                        border: '1px solid rgba(56,189,248,0.1)',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.05)',
+                        backdropFilter: 'blur(12px)',
+                        borderRadius: '0.75rem',
+                        padding: '1.25rem',
+                    }}>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem', fontWeight: 600, color: 'rgb(241,245,249)', marginBottom: '1rem' }}>
                             <Icon name="info" className="w-5 h-5 text-accent" />
                             Privacy Details
                         </h3>
-                        <div className="space-y-3 text-sm">
-                            <div className="flex justify-between items-center py-2 border-b border-white/5">
-                                <span className="text-text-secondary">Connection Protocol</span>
-                                <span className="text-text-primary font-mono bg-background/50 px-2 py-1 rounded">IPv4</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-white/5">
-                                <span className="text-text-secondary">Timezone</span>
-                                <span className="text-text-primary">{ipData?.timezone || 'Scanning...'}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-text-secondary">Region Code</span>
-                                <span className="text-text-primary">{ipData?.region_code || '...'}</span>
-                            </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                            {[
+                                { label: 'Connection Protocol', value: ipData?.ip?.includes(':') ? 'IPv6' : 'IPv4' },
+                                { label: 'Timezone', value: ipData?.timezone || (loading ? 'Scanning...' : '—') },
+                                { label: 'Region Code', value: ipData?.region_code || (loading ? '...' : '—') },
+                            ].map((row, i, arr) => (
+                                <div key={row.label} style={{
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    padding: '0.6rem 0',
+                                    borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                                    gap: '0.5rem',
+                                }}>
+                                    <span style={{ fontSize: '0.85rem', color: 'rgb(148,163,184)', flexShrink: 0 }}>{row.label}</span>
+                                    <span style={{
+                                        fontSize: '0.85rem', color: 'rgb(226,232,240)', fontFamily: i === 0 ? 'monospace' : undefined,
+                                        background: i === 0 ? 'rgba(15,23,42,0.6)' : undefined,
+                                        padding: i === 0 ? '0.1rem 0.4rem' : undefined,
+                                        borderRadius: i === 0 ? '0.25rem' : undefined,
+                                        textAlign: 'right',
+                                        wordBreak: 'break-all',
+                                    }}>
+                                        {row.value}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
-                    </Card>
+                    </div>
                 </div>
             </div>
         </>
