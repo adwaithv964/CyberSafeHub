@@ -5,6 +5,8 @@ import ThemedModal from './components/ThemedModal';
 import Input from './components/Input';
 import Button from './components/Button';
 import Icon from './components/Icon';
+import CyberBackground3D from './components/3d/CyberBackground3D';
+import Shield3D from './components/3d/Shield3D';
 
 const TypingText = ({ text, delay = 0 }) => {
   const letters = Array.from(text);
@@ -145,26 +147,17 @@ export const LandingPage = () => {
 
   return (
     <div className="relative flex flex-col items-center justify-center h-screen w-screen bg-background overflow-hidden">
-      {/* Background Glitch Effect */}
-      <div className="absolute inset-0 bg-black opacity-70 z-0">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `linear-gradient(0deg, rgba(0, 168, 232, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 168, 232, 0.1) 1px, transparent 1px)`,
-            backgroundSize: '20px 20px',
-            animation: 'pan 60s linear infinite',
-          }}
-        ></div>
-      </div>
+      {/* 3D Particle Tunnel Background */}
+      <CyberBackground3D />
 
-      <div className="relative z-10 text-center flex flex-col items-center p-4">
+      <div className="relative z-10 text-center flex flex-col items-center p-4 pointer-events-none">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, ease: "easeOut" }}
-          className="mb-4"
+          className="mb-4 pointer-events-auto"
         >
-          <Icon name="shield" className="w-24 h-24 text-accent drop-shadow-[0_0_10px_rgba(0,168,232,0.8)]" />
+          <Shield3D className="w-48 h-48 drop-shadow-[0_0_20px_rgba(0,168,232,0.5)] cursor-pointer" />
         </motion.div>
 
         <h1 className="text-5xl md:text-7xl font-bold text-text-primary mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
@@ -182,7 +175,7 @@ export const LandingPage = () => {
 
         <motion.button
           onClick={openLogin}
-          className="px-8 py-4 bg-accent text-background font-bold rounded-lg text-lg tracking-widest uppercase transition-all duration-300 transform hover:scale-105 hover:bg-accent-hover focus:outline-none focus:ring-4 focus:ring-accent-glow shadow-lg shadow-accent-glow"
+          className="pointer-events-auto px-8 py-4 bg-accent text-background font-bold rounded-lg text-lg tracking-widest uppercase transition-all duration-300 transform hover:scale-105 hover:bg-accent-hover focus:outline-none focus:ring-4 focus:ring-accent-glow shadow-lg shadow-accent-glow"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 2, type: 'spring' }}
