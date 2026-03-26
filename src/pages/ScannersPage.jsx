@@ -184,21 +184,26 @@ const MalwareScanner = () => {
             <div className="glass-panel p-8 flex flex-col items-center">
                 <div className="w-full max-w-2xl">
                     {!file && !isScanning && !scanResult && (
-                        <div
-                            className={`p-10 border-2 border-dashed rounded-lg transition-colors ${isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40' : 'border-gray-300 dark:border-gray-600'}`}
-                            onDragEnter={(e) => handleDragEvents(e, true)}
-                            onDragLeave={(e) => handleDragEvents(e, false)}
-                            onDragOver={(e) => handleDragEvents(e, true)}
-                            onDrop={handleDrop}
-                        >
-                            <Icon name="uploadCloud" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
-                            <p className="mt-4 text-lg font-semibold text-gray-700 dark:text-gray-200">Drag & drop your file here</p>
-                            <p className="text-gray-500 dark:text-gray-400">or</p>
-                            <label className="mt-2 inline-block px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold cursor-pointer hover:bg-blue-700 transition-colors">
-                                Browse File
-                                <input type="file" className="hidden" onChange={(e) => handleFileSelect(e.target.files[0])} />
-                            </label>
-                            <p className="mt-4 text-sm text-gray-400 dark:text-gray-500">Maximum file size: 50MB</p>
+                        <div className="text-center mb-6">
+                            <Icon name="shield" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 inline-block mb-2" />
+                            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200">Malware Scanner</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto mb-8">Upload any suspicious file to securely scan it against known virus and malware signatures before opening it on your device.</p>
+                            <div
+                                className={`p-10 border-2 border-dashed rounded-lg transition-colors ${isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40' : 'border-gray-300 dark:border-gray-600'}`}
+                                onDragEnter={(e) => handleDragEvents(e, true)}
+                                onDragLeave={(e) => handleDragEvents(e, false)}
+                                onDragOver={(e) => handleDragEvents(e, true)}
+                                onDrop={handleDrop}
+                            >
+                                <Icon name="uploadCloud" className="w-10 h-10 mx-auto text-gray-400 dark:text-gray-500 mb-2 inline-block" />
+                                <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">Drag & drop your file here</p>
+                                <p className="text-gray-500 dark:text-gray-400">or</p>
+                                <label className="mt-2 inline-block px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold cursor-pointer hover:bg-blue-700 transition-colors">
+                                    Browse File
+                                    <input type="file" className="hidden" onChange={(e) => handleFileSelect(e.target.files[0])} />
+                                </label>
+                                <p className="mt-4 text-sm text-gray-400 dark:text-gray-500">Maximum file size: 50MB</p>
+                            </div>
                         </div>
                     )}
 
@@ -372,10 +377,9 @@ const PhishingScanner = () => {
             <div className="w-full max-w-2xl">
                 {!scanResult && !error ? (
                     <div className="max-w-xl mx-auto text-center">
-                        <Icon name="link" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
-                        <h3 className="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Google Safe Browsing Scanner</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mt-2">Check URLs against Google's massive blacklist.</p>
-
+                        <Icon name="link" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 inline-block" />
+                        <h3 className="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Phishing Scanner</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2">Enter a URL to verify its safety. This prevents you from falling victim to phishing attacks or visiting malicious websites designed to steal your data.</p>
 
 
                         <div className="mt-6 flex flex-col md:flex-row gap-2">
@@ -493,9 +497,9 @@ const BreachDetector = () => {
             <div className="w-full max-w-2xl">
                 {!checkResult ? (
                     <div className="max-w-xl mx-auto text-center">
-                        <Icon name="user" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
+                        <Icon name="user" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 inline-block" />
                         <h3 className="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Data Breach Detector</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mt-2">Enter an email address to see if it has been exposed in a known data breach.</p>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2">Enter your email address to check if your personal information or passwords have been exposed in any known public data breaches.</p>
                         <div className="mt-6 flex flex-col md:flex-row gap-2">
                             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" className="flex-grow p-3 glass-input" />
                             <button onClick={handleCheck} disabled={isChecking || !email} className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-500">{isChecking ? 'Checking...' : 'Check Email'}</button>
@@ -558,13 +562,13 @@ const BreachDetector = () => {
 import MaintenanceGuard from '../components/MaintenanceGuard';
 
 const ScannersPage = () => {
-    const [activeScanner, setActiveScanner] = useState('malware');
+    const [activeScanner, setActiveScanner] = useState('phishing');
     const renderScanner = () => {
         switch (activeScanner) {
-            case 'malware': return <MaintenanceGuard featureKey="scanners_malware" isPage={false}><MalwareScanner /></MaintenanceGuard>;
             case 'phishing': return <MaintenanceGuard featureKey="scanners_phishing" isPage={false}><PhishingScanner /></MaintenanceGuard>;
+            case 'malware': return <MaintenanceGuard featureKey="scanners_malware" isPage={false}><MalwareScanner /></MaintenanceGuard>;
             case 'breach': return <MaintenanceGuard featureKey="scanners_breach" isPage={false}><BreachDetector /></MaintenanceGuard>;
-            default: return <MaintenanceGuard featureKey="scanners_malware" isPage={false}><MalwareScanner /></MaintenanceGuard>;
+            default: return <MaintenanceGuard featureKey="scanners_phishing" isPage={false}><PhishingScanner /></MaintenanceGuard>;
         }
     };
     const TabButton = ({ scannerName, children }) => (
@@ -579,9 +583,9 @@ const ScannersPage = () => {
         <>
             <Header title="Security Scanners" subtitle="Proactively check for threats to your digital security." />
             <div className="flex justify-center mb-6">
-                <div className="flex space-x-2 p-1.5 glass-panel rounded-xl bg-glass-200">
-                    <TabButton scannerName="malware">Malware Scanner</TabButton>
+                <div className="flex space-x-2 p-1.5 glass-panel rounded-xl bg-glass-200 flex-wrap justify-center gap-y-2">
                     <TabButton scannerName="phishing">Phishing Scanner</TabButton>
+                    <TabButton scannerName="malware">Malware Scanner</TabButton>
                     <TabButton scannerName="breach">Breach Detector</TabButton>
                 </div>
             </div>

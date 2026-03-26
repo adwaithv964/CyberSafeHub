@@ -5,11 +5,16 @@
 // --- 1. IP & Network Scanner ---
 export const checkIpInfo = async () => {
     try {
-        const response = await fetch('https://ipapi.co/json/');
+        // Using ipinfo.io as it has generous limits and proper CORS headers
+        const response = await fetch('https://ipinfo.io/json');
         if (!response.ok) throw new Error('Failed to fetch IP data');
         const data = await response.json();
 
-        // Heuristic to detect VPN/Datacenter
+        // Map ipinfo.io fields to what the UI expects (which was designed for ipapi.co)
+        data.country_code = data.country;
+        data.region_code = data.region;
+
+        // Heuristic to detect VPN/Datacenter based on Organization name (ISP)
         const keywords = ['VPN', 'Hosting', 'Cloud', 'M247', 'Datacamp', 'DigitalOcean', 'Linode', 'AWS', 'Google', 'Microsoft', 'Oracle', 'Leaseweb', 'Hetzner', 'OVH', 'NForce', 'Choopa', 'Vultr', 'Contabo', 'Hostinger', 'Tencent', 'Alibaba'];
         const isVpn = data.org ? keywords.some(keyword => data.org.toLowerCase().includes(keyword.toLowerCase())) : false;
 
