@@ -157,7 +157,7 @@ function AppContent() {
                     </div>
                 </aside>
 
-                <main className="flex-1 glass-panel h-full overflow-y-auto p-8 relative scroll-smooth">
+                <main className="flex-1 glass-panel h-full overflow-y-auto overflow-x-hidden p-4 md:p-8 relative scroll-smooth">
                     <AnimatePresence mode="wait">
                         <Routes location={location} key={location.pathname}>
                             <Route path="/" element={

@@ -46,8 +46,8 @@ const NetworkToolPage = () => {
                     {/* Status Indicator Bar */}
                     <div className={`absolute top-0 inset-x-0 h-1 ${isSafe ? 'bg-success' : 'bg-danger'}`} />
 
-                    <div className={`p-4 rounded-full transition-colors duration-500 ${isSafe ? 'bg-success/20' : 'bg-danger/20'}`}>
-                        <Icon name={isSafe ? "shieldCheck" : "shieldAlert"} className={`w-16 h-16 ${isSafe ? 'text-success' : 'text-danger'}`} />
+                    <div className={`p-4 rounded-full transition-colors duration-500 ${isSafe ? 'bg-success/20' : 'bg-danger/20'}`} style={{boxShadow: isSafe ? '0 0 30px rgba(34,197,94,0.2)' : '0 0 30px rgba(239,68,68,0.2)'}}>
+                        <Icon name={isSafe ? "shieldCheck" : "shieldAlert"} className={`w-14 h-14 md:w-16 md:h-16 ${isSafe ? 'text-success' : 'text-danger'}`} />
                     </div>
 
                     <div>
@@ -64,9 +64,9 @@ const NetworkToolPage = () => {
                     ) : (
                         ipData && (
                             <div className="w-full space-y-6 mt-4 relative z-10">
-                                <div className="bg-background/50 p-6 rounded-xl border border-border-color backdrop-blur-sm">
+                                <div className="bg-background/50 p-4 md:p-6 rounded-xl border border-border-color backdrop-blur-sm">
                                     <p className="text-sm text-text-secondary uppercase tracking-wider mb-1">Public IP Address</p>
-                                    <p className={`text-3xl md:text-4xl font-mono font-bold drop-shadow-lg ${isSafe ? 'text-success' : 'text-danger'}`}>
+                                    <p className={`text-lg sm:text-2xl md:text-3xl font-mono font-bold drop-shadow-lg break-all leading-snug ${isSafe ? 'text-success' : 'text-danger'}`}>
                                         {ipData.ip}
                                     </p>
                                 </div>
@@ -74,10 +74,10 @@ const NetworkToolPage = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                                     <div className="p-4 bg-background/30 rounded-lg border border-white/5">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <Icon name="database" className="w-4 h-4 text-text-secondary" />
+                                            <Icon name="database" className="w-4 h-4 text-text-secondary flex-shrink-0" />
                                             <p className="text-xs text-text-secondary uppercase">ISP Classification</p>
                                         </div>
-                                        <p className="font-semibold text-text-primary truncate" title={ipData.org}>
+                                        <p className="font-semibold text-text-primary break-words" title={ipData.org}>
                                             {ipData.org}
                                         </p>
                                         <p className="text-xs text-text-secondary mt-1">
@@ -86,10 +86,10 @@ const NetworkToolPage = () => {
                                     </div>
                                     <div className="p-4 bg-background/30 rounded-lg border border-white/5">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <Icon name="globe" className="w-4 h-4 text-text-secondary" />
+                                            <Icon name="globe" className="w-4 h-4 text-text-secondary flex-shrink-0" />
                                             <p className="text-xs text-text-secondary uppercase">Visible Location</p>
                                         </div>
-                                        <p className="font-semibold text-text-primary">{ipData.city}, {ipData.country_code}</p>
+                                        <p className="font-semibold text-text-primary break-words">{ipData.city}, {ipData.country_code}</p>
                                     </div>
                                 </div>
                             </div>
